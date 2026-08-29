@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/services/api";
 import { useGamesStore } from "@/store/gamesStore";
 import { toDisplaySrc } from "@/utils/asset";
+import { Select, type SelectOption } from "@/components/ui/Select";
 import type { Game, GameInput } from "@/types/pywebview";
 
 interface AddGameModalProps {
@@ -57,7 +58,7 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
       setPoster(defaults?.poster ?? "");
       setShowOnMain(true);
     }
-  }, [open, initial]);
+  }, [open, initial, assets]);
 
   /** Re-adjust default media when the expansion changes. */
   function handleExpansionChange(value: string) {
@@ -113,159 +114,180 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
 
   if (!open) return null;
 
-  const expansionOptions = assets ? Object.entries(assets.expansions) : [];
-  const videoOptions = [...new Set([bgVideo, ...(assets?.available_videos ?? [])])].filter(Boolean);
-  const iconOptions = [...new Set([icon, ...(assets?.available_icons ?? [])])].filter(Boolean);
-  const posterOptions = [...new Set([poster, ...(assets?.available_posters ?? [])])].filter(Boolean);
+  const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
+
+  const expansionOptions: SelectOption[] = assets
+    ? Object.entries(assets.expansions).map(([key, value]) => ({
+        value: key,
+        label: value.name,
+        thumb: toDisplaySrc(value.icon),
+      }))
+    : [];
+
+  const videoOptions: SelectOption[] = [...new Set([bgVideo, ...(assets?.available_videos ?? [])])]
+    .filter(Boolean)
+    .map((path) => ({ value: path, label: fileName(path) }));
+
+  const iconOptions: SelectOption[] = [...new Set([icon, ...(assets?.available_icons ?? [])])]
+    .filter(Boolean)
+    .map((path) => ({ value: path, label: fileName(path), thumb: toDisplaySrc(path) }));
+
+  const posterOptions: SelectOption[] = [...new Set([poster, ...(assets?.available_posters ?? [])])]
+    .filter(Boolean)
+    .map((path) => ({ value: path, label: fileName(path), thumb: toDisplaySrc(path) }));
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6"
+      className="modal-backdrop fade-in fixed inset-0 z-50 flex items-center justify-center p-6"
       onClick={onClose}
     >
       <div
-        className="max-h-[88vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-(--border-strong) bg-(--bg-card) p-6 shadow-2xl"
+        className="modal-card pop-in flex max-h-[88vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-(--text)">
-            {initial ? "Editar juego" : "Añadir juego"}
-          </h2>
-          <button className="ghost-btn rounded-lg px-3 py-1.5" onClick={onClose}>
-            <i className="fa-solid fa-xmark" />
+        <div className="flex shrink-0 items-center justify-between border-b border-(--border) px-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-(--border-strong) bg-(--primary-soft)">
+              <i className="fa-solid fa-gamepad text-[13px] text-(--primary-hover)" />
+            </div>
+            <h2 className="text-[14.5px] font-semibold text-(--text)">
+              {initial ? "Editar juego" : "Añadir juego"}
+            </h2>
+          </div>
+          <button className="icon-btn" onClick={onClose}>
+            <i className="fa-solid fa-xmark text-[13px]" />
           </button>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div className="flex flex-col gap-2">
-            <label className="field-label">Nombre</label>
-            <input
-              className="field-input"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Mi WoW 3.3.5a"
-            />
-          </div>
+        <div className="flex flex-col gap-6 overflow-y-auto px-6 py-5">
+          <div className="flex flex-col gap-3">
+            <span className="section-label">
+              <i className="fa-solid fa-circle-info" />
+              Información básica
+            </span>
 
-          <div className="flex flex-col gap-2">
-            <label className="field-label">Expansión</label>
-            <select
-              className="field-input"
-              value={expansion}
-              onChange={(event) => handleExpansionChange(event.target.value)}
-            >
-              {expansionOptions.map(([key, value]) => (
-                <option key={key} value={key}>
-                  {value.name}
-                </option>
-              ))}
-            </select>
-          </div>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div className="flex flex-col gap-1.5">
+                <label className="field-label">Nombre</label>
+                <input
+                  className="field-input"
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  placeholder="Mi WoW 3.3.5a"
+                />
+              </div>
 
-          <div className="flex flex-col gap-2 md:col-span-2">
-            <label className="field-label">Ejecutable (.exe)</label>
-            <div className="flex gap-2">
-              <input
-                className="field-input flex-1"
-                value={exePath}
-                readOnly
-                placeholder="Selecciona wow.exe"
-              />
-              <button className="ghost-btn whitespace-nowrap rounded-lg px-3" onClick={pickExe}>
-                <i className="fa-solid fa-folder-open mr-1" /> Buscar
-              </button>
+              <div className="flex flex-col gap-1.5">
+                <label className="field-label">Expansión</label>
+                <Select value={expansion} options={expansionOptions} onChange={handleExpansionChange} />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="field-label">Ejecutable (.exe)</label>
+              <div className="flex items-center gap-2">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-(--border-strong) bg-(--bg-input)">
+                  <i className="fa-solid fa-file-invoice text-[13px] text-(--muted)" />
+                </div>
+                <input
+                  className="field-input flex-1 truncate"
+                  value={exePath}
+                  readOnly
+                  placeholder="Selecciona wow.exe"
+                  title={exePath}
+                />
+                <button className="ghost-btn shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-[12px]" onClick={pickExe}>
+                  <i className="fa-solid fa-folder-open mr-1.5" />
+                  Buscar
+                </button>
+              </div>
             </div>
           </div>
 
-          <div className="flex flex-col gap-2">
-            <label className="field-label">Video de fondo</label>
-            <select
-              className="field-input"
-              value={bgVideo}
-              onChange={(event) => setBgVideo(event.target.value)}
-            >
-              {videoOptions.map((video) => (
-                <option key={video} value={video}>
-                  {video.split("/").pop()}
-                </option>
-              ))}
-            </select>
-            <button className="ghost-btn self-start rounded-lg px-3 py-1.5 text-[12px]" onClick={() => pickCustom("scenes")}>
-              <i className="fa-solid fa-image mr-1" /> Personalizado
-            </button>
-          </div>
+          <div className="flex flex-col gap-3">
+            <span className="section-label">
+              <i className="fa-solid fa-photo-film" />
+              Multimedia
+            </span>
 
-          <div className="flex flex-col gap-2">
-            <label className="field-label">Ícono</label>
-            <select
-              className="field-input"
-              value={icon}
-              onChange={(event) => setIcon(event.target.value)}
-            >
-              {iconOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option.split("/").pop()}
-                </option>
-              ))}
-            </select>
-            <button className="ghost-btn self-start rounded-lg px-3 py-1.5 text-[12px]" onClick={() => pickCustom("icos")}>
-              <i className="fa-solid fa-image mr-1" /> Personalizado
-            </button>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="field-label">Póster</label>
-            <select
-              className="field-input"
-              value={poster}
-              onChange={(event) => setPoster(event.target.value)}
-            >
-              {posterOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option.split("/").pop()}
-                </option>
-              ))}
-            </select>
-            <button className="ghost-btn self-start rounded-lg px-3 py-1.5 text-[12px]" onClick={() => pickCustom("logos")}>
-              <i className="fa-solid fa-image mr-1" /> Personalizado
-            </button>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="field-label">Vista previa</label>
-            <div className="flex items-center gap-3 rounded-lg border border-(--border) bg-(--bg-elevated) p-3">
-              {icon ? (
-                <img
-                  src={toDisplaySrc(icon)}
-                  alt="icon"
-                  className="h-10 w-10 rounded object-contain"
-                />
-              ) : null}
-              {poster ? (
-                <img
-                  src={toDisplaySrc(poster)}
-                  alt="poster"
-                  className="h-12 w-20 rounded object-cover"
-                />
-              ) : null}
+            <div className="flex flex-col gap-2">
+              <label className="field-label">Video de fondo</label>
+              <div className="flex items-center gap-2">
+                <div className="min-w-0 flex-1">
+                  <Select value={bgVideo} options={videoOptions} onChange={setBgVideo} placeholder="Selecciona un video" />
+                </div>
+                <button className="icon-btn" title="Usar archivo personalizado" onClick={() => pickCustom("scenes")}>
+                  <i className="fa-solid fa-upload text-[12px]" />
+                </button>
+              </div>
             </div>
-            <label className="mt-1 flex items-center gap-2 text-[13px] text-(--text)">
+
+            <div className="flex flex-col gap-2">
+              <label className="field-label">Ícono</label>
+              <div className="flex items-center gap-2">
+                <div className="min-w-0 flex-1">
+                  <Select value={icon} options={iconOptions} onChange={setIcon} placeholder="Selecciona un ícono" />
+                </div>
+                <button className="icon-btn" title="Usar archivo personalizado" onClick={() => pickCustom("icos")}>
+                  <i className="fa-solid fa-upload text-[12px]" />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="field-label">Póster</label>
+              <div className="flex items-center gap-2">
+                <div className="min-w-0 flex-1">
+                  <Select value={poster} options={posterOptions} onChange={setPoster} placeholder="Selecciona un póster" />
+                </div>
+                <button className="icon-btn" title="Usar archivo personalizado" onClick={() => pickCustom("logos")}>
+                  <i className="fa-solid fa-upload text-[12px]" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <span className="section-label">
+              <i className="fa-solid fa-eye" />
+              Vista previa
+            </span>
+
+            <div className="flex items-center gap-3 rounded-xl border border-(--border-strong) bg-(--bg-input) p-3">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-(--border-strong) bg-(--bg-card)">
+                {icon ? (
+                  <img src={toDisplaySrc(icon)} alt="" className="h-full w-full object-contain p-1.5" />
+                ) : (
+                  <i className="fa-solid fa-gamepad text-(--muted-2)" />
+                )}
+              </div>
+              <div className="h-14 w-24 shrink-0 overflow-hidden rounded-lg border border-(--border-strong) bg-(--bg-card)">
+                {poster ? <img src={toDisplaySrc(poster)} alt="" className="h-full w-full object-cover" /> : null}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[13px] font-semibold text-(--text)">{name || "Nombre del juego"}</p>
+                <p className="text-[11px] uppercase tracking-wide text-(--muted)">{expansion}</p>
+              </div>
+            </div>
+
+            <label className="flex items-center gap-2 text-[13px] text-(--text-soft)">
               <input
                 type="checkbox"
                 checked={showOnMain}
                 onChange={(event) => setShowOnMain(event.target.checked)}
+                style={{ accentColor: "var(--primary)" }}
               />
               Mostrar en la pantalla de inicio
             </label>
           </div>
         </div>
 
-        <div className="mt-6 flex justify-end gap-2">
-          <button className="ghost-btn rounded-lg px-4 py-2" onClick={onClose}>
+        <div className="flex shrink-0 items-center justify-end gap-2 border-t border-(--border) px-6 py-4">
+          <button className="ghost-btn rounded-lg px-4 py-2 text-[13px]" onClick={onClose}>
             Cancelar
           </button>
           <button
-            className="play-btn rounded-lg px-4 py-2"
+            className="play-btn rounded-lg px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-40"
             onClick={handleSave}
             disabled={busy || !name.trim() || !exePath.trim()}
           >
