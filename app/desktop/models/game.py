@@ -22,19 +22,19 @@ EXPANSIONS: dict[str, dict[str, str]] = {
     "classic": {
         "name": "World of Warcraft Classic",
         "video": "/assets/games/scenes/classic/wow_classic_portal.mp4",
-        "poster": "/assets/games/logos/classic/WoClassic.png",
+        "poster": "/assets/games/logos/classic/wow_classic_blue.webp",
         "icon": "/assets/games/icos/classic/ico/wow_classic.ico",
     },
     "tbc": {
         "name": "The Burning Crusade",
         "video": "/assets/games/scenes/burning/wow_bc_dark_portal.mp4",
-        "poster": "/assets/games/logos/burning/WoBurningCrusade.png",
+        "poster": "/assets/games/logos/burning/wow_burning_crusade.webp",
         "icon": "/assets/games/icos/burning/ico/wow_bc.ico",
     },
     "wotlk": {
         "name": "Wrath of the Lich King",
         "video": "/assets/games/scenes/wotlk/wow_lich_king_sword.mp4",
-        "poster": "/assets/games/logos/wotlk/WoWtlk.png",
+        "poster": "/assets/games/logos/wotlk/wow_wotlk.webp",
         "icon": "/assets/games/icos/wotlk/png/wtlk_alter.png",
     },
 }
@@ -126,7 +126,7 @@ def scan_assets() -> dict[str, Any]:
     return {
         "expansions": EXPANSIONS,
         "available_videos": _collect("scenes", "mp4"),
-        "available_posters": _collect("logos", "png"),
+        "available_posters": _collect("logos", "png") + _collect("logos", "webp"),
         "available_icons": _collect("icos", "ico") + _collect("icos", "png"),
     }
 
