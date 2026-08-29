@@ -54,7 +54,7 @@ function Sidebar({ view, onSelect }: SidebarProps) {
       {NAV_ITEMS.map((item) => (
         <button
           key={item.key}
-          className={`flex h-10 w-10 items-center justify-center rounded-xl text-[15px] transition-colors ${
+          className={`flex h-10 w-10 items-center justify-center rounded-xl text-[15px] transition-colors cursor-pointer ${
             view === item.key
               ? "bg-(--accent)/15 text-(--accent)"
               : "text-(--muted) hover:text-(--text)"
@@ -80,7 +80,12 @@ function Sidebar({ view, onSelect }: SidebarProps) {
   );
 }
 
-/** Video-backed game stage shown when the home view is active. */
+/**
+ *  The home stage is the default view of the launcher, showing a background video and
+ *  a dock of games that are marked to be shown on the main screen.
+ * @param onGoGames Callback to switch to the games management view.
+ * @returns The home stage component.
+ */
 function HomeStage({ onGoGames }: HomeStageProps) {
   const games = useGamesStore((state) => state.games);
   const activeId = useGamesStore((state) => state.activeId);
@@ -122,17 +127,17 @@ function HomeStage({ onGoGames }: HomeStageProps) {
         <button
           disabled={launching}
           onClick={handlePlay}
-          className="flex items-center gap-2.5 rounded-xl bg-[linear-gradient(160deg,var(--primary-hover),var(--primary-active))] px-6 py-3 text-[13.5px] font-bold text-white shadow-[0_0_30px_var(--primary-glow),0_6px_20px_rgba(0,0,0,0.35)] transition-[transform,filter] duration-150 hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
+          className={`flex items-center gap-2.5 rounded-xl bg-[linear-gradient(160deg,var(--primary-hover),var(--primary-active))] px-6 py-3 text-[13.5px] font-bold text-white shadow-[0_0_30px_var(--primary-glow),0_6px_20px_rgba(0,0,0,0.35)] transition-[transform,filter] duration-150 hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 disabled:hover:brightness-100 ${launching ? "cursor-wait" : "cursor-pointer"}`}
         >
           {launching ? (
             <i className="fa-solid fa-spinner fa-spin text-[12px]" />
           ) : (
-            <i className="fa-solid fa-play text-[12px]" />
+            <i className="fa-solid fa-play text-[12px] cursor-pointer" />
           )}
           {launching ? "Lanzando..." : "Jugar"}
         </button>
-        <button className="flex h-11 w-11 items-center justify-center rounded-xl border border-(--border-strong) bg-(--bg-elevated) text-(--text-soft) transition-all duration-150 hover:rotate-20 hover:border-(--primary) hover:bg-(--bg-hover)">
-          <i className="fa-solid fa-gear text-[15px]" />
+        <button className="flex h-11 w-11 items-center justify-center rounded-xl border border-(--border-strong) bg-(--bg-elevated) text-(--text-soft) transition-all duration-150 hover:rotate-20 hover:border-(--primary) hover:bg-(--bg-hover) cursor-pointer">
+          <i className="fa-solid fa-gear text-[15px] cursor-pointer" />
         </button>
       </div>
 
