@@ -36,14 +36,14 @@ export function GamesView() {
     <div className="flex h-full flex-col gap-5 p-8">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-(--text)">Juegos</h1>
-        <button className="play-btn rounded-lg px-4 py-2" onClick={openCreate}>
+        <button className="play-btn rounded-lg px-4 py-2 cursor-pointer" onClick={openCreate}>
           <i className="fa-solid fa-plus mr-1" /> Añadir juego
         </button>
       </div>
 
       {games.length === 0 ? (
         <button
-          className="flex w-full max-w-sm flex-col items-center gap-3 rounded-2xl border border-dashed border-(--border-strong) bg-(--bg-card) py-12 text-(--muted) transition-colors hover:border-(--accent) hover:text-(--text)"
+          className="flex w-full max-w-sm flex-col items-center gap-3 rounded-2xl border border-dashed border-(--border-strong) bg-(--bg-card) py-12 text-(--muted) transition-colors hover:border-(--accent) hover:text-(--text) cursor-pointer"
           onClick={openCreate}
         >
           <i className="fa-solid fa-gamepad text-3xl" />
@@ -55,7 +55,7 @@ export function GamesView() {
             <GameCard key={game.id} game={game} onEdit={openEdit} onRemove={handleRemove} />
           ))}
           <button
-            className="flex h-42 w-50 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-(--border-strong) bg-(--bg-card) text-(--muted) transition-colors hover:border-(--accent) hover:text-(--text)"
+            className="flex h-42 w-50 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-(--border-strong) bg-(--bg-card) text-(--muted) transition-colors hover:border-(--accent) hover:text-(--text) cursor-pointer"
             onClick={openCreate}
           >
             <i className="fa-solid fa-plus text-2xl" />
