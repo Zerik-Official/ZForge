@@ -8,49 +8,52 @@ import threading
 import time
 from pathlib import Path
 
-# ---------------------------------------------------------------------------
-# Ensure project root is on sys.path when running directly:
-#   python desktop/main.py
-# ---------------------------------------------------------------------------
-ROOT = Path(__file__).resolve().parent.parent
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
-
-# ---------------------------------------------------------------------------
-# Load .env before anything else reads os.environ
-# ---------------------------------------------------------------------------
-try:
-    from dotenv import load_dotenv
-    load_dotenv(ROOT / ".env")
-except ImportError:
-    pass
-
+# Third-party
 import webview
+from dotenv import load_dotenv
+
+APP_ROOT = Path(__file__).resolve().parent.parent
+if str(APP_ROOT) not in sys.path:
+    sys.path.insert(0, str(APP_ROOT))
+
+
+load_dotenv(APP_ROOT / ".env")
 
 # project imports
 from desktop.config import config
 from desktop.core.api import Api
 from desktop.core.events import emitter
+from desktop.storage import db as db_store
 from desktop.utils.logger import log, Tags
 
+
+api = Api()
 
 def _resolve_url() -> str:
     """
     Return the URL/path the webview should load.
-    DEBUG=true  -> Vite dev server (localhost:5173)
-    DEBUG=false -> dist/index.html
+
+    Resolution order:
+      DEBUG=true  -> Vite dev server (the "demo" URL)
+      dist exists -> built index.html (production)
+      otherwise   -> fall back to the dev server instead of failing
     """
+    build_path = APP_ROOT / config.build_dir / config.build_entry
+
     if config.debug:
-        log("INFO", Tags.WINDOW, f"Debug mode — dev server: {config.dev_url}")
+        log("INFO", Tags.MAIN, f"Debug mode — dev server: {config.dev_url}")
         return config.dev_url
 
-    build_path = ROOT / config.build_dir / config.build_entry
-    if not build_path.exists():
-        log("ERROR", Tags.WINDOW, f"Build not found at {build_path}. Run `npm run build` first.")
-        sys.exit(1)
-
-    log("INFO", Tags.WINDOW, f"Production mode — {build_path}")
-    return str(build_path)
+    if build_path.exists():
+        log("INFO", Tags.MAIN, f"Production mode — {build_path}")
+        return str(build_path)
+    
+    log(
+        "WARNING",
+        Tags.MAIN,
+        f"Build not found at {build_path}; falling back to dev server {config.dev_url}",
+    )
+    return config.dev_url
 
 
 def _boot_sequence() -> None:
@@ -81,6 +84,7 @@ def _on_loaded(window: "webview.Window") -> None:
     """Called by pywebview once the page finishes loading."""
     log("SUCCESS", Tags.WINDOW, "Page loaded — starting boot sequence")
     emitter.attach(window)
+    api.attach_window(window)
     thread = threading.Thread(target=_boot_sequence, daemon=True)
     thread.start()
 
@@ -89,7 +93,7 @@ def main() -> None:
     """Bootstrap and start the pywebview application."""
     log("INFO", Tags.MAIN, f"Starting {config.app_name}")
 
-    api = Api()
+    db_store.init_db()
 
     webview.settings["DRAG_REGION_DIRECT_TARGET_ONLY"] = True
 
@@ -109,7 +113,7 @@ def main() -> None:
 
     window.events.loaded += lambda: _on_loaded(window)
 
-    log("SUCCESS", Tags.WINDOW, "Window created — starting webview loop")
+    log("SUCCESS", Tags.MAIN, "Window created — starting webview loop")
     webview.start(debug=config.debug)
     log("INFO", Tags.MAIN, "Webview loop exited — bye!")
 
