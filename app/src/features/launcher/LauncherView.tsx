@@ -6,13 +6,25 @@ import type { Game } from "@/types/pywebview";
 import { GamesView } from "./GamesView";
 import "@/styles/launcher.css";
 
+interface EmptyStateProps {
+  onAdd: () => void;
+}
+
+interface SidebarProps {
+  view: View;
+  onSelect: (view: View) => void;
+}
+
+interface HomeStageProps {
+  onGoGames: () => void;
+}
+
 type View = "home" | "games" | "addons" | "settings";
 
 const NAV_ITEMS: { key: View; icon: string; label: string }[] = [
   { key: "home", icon: "fa-solid fa-house", label: "Inicio" },
   { key: "games", icon: "fa-solid fa-gamepad", label: "Juegos" },
   { key: "addons", icon: "fa-solid fa-puzzle-piece", label: "Addons" },
-  { key: "settings", icon: "fa-solid fa-gear", label: "Ajustes" },
 ];
 
 /**
@@ -35,15 +47,10 @@ export function LauncherView() {
   );
 }
 
-interface SidebarProps {
-  view: View;
-  onSelect: (view: View) => void;
-}
-
 /** Left navigation rail. */
 function Sidebar({ view, onSelect }: SidebarProps) {
   return (
-    <aside className="flex w-16 flex-col items-center gap-2 border-r border-(--border) bg-(--bg-elevated) py-4">
+    <aside className="flex h-full w-16 flex-col items-center gap-2 border-r border-(--border) bg-(--bg-elevated) py-4">
       {NAV_ITEMS.map((item) => (
         <button
           key={item.key}
@@ -58,16 +65,19 @@ function Sidebar({ view, onSelect }: SidebarProps) {
           <i className={item.icon} />
         </button>
       ))}
-      <div className="mt-auto flex flex-col items-center gap-3 text-(--muted)">
-        <span className="text-[10px] [writing-mode:vertical-rl]">Conectado</span>
-        <i className="fa-brands fa-discord text-(--accent)" />
+      <div className="mt-auto flex w-full flex-col items-center gap-2 border-t border-(--border) px-2 pt-3 pb-8">
+        <button
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[15px] transition-colors cursor-pointer ${
+            view === "settings" ? "bg-(--accent)/15 text-(--accent)" : "text-(--muted) hover:text-(--text)"
+          }`}
+          onClick={() => onSelect("settings")}
+          title="Ajustes"
+        >
+          <i className="fa-solid fa-gear" />
+        </button>
       </div>
     </aside>
   );
-}
-
-interface HomeStageProps {
-  onGoGames: () => void;
 }
 
 /** Video-backed game stage shown when the home view is active. */
@@ -75,13 +85,20 @@ function HomeStage({ onGoGames }: HomeStageProps) {
   const games = useGamesStore((state) => state.games);
   const activeId = useGamesStore((state) => state.activeId);
   const setActive = useGamesStore((state) => state.setActive);
+  const [launching, setLaunching] = useState(false);
 
   if (games.length === 0) {
     return <EmptyState onAdd={onGoGames} />;
   }
 
-  const active: Game | undefined =
-    games.find((game) => game.id === activeId) ?? games[0];
+  const active: Game = games.find((game) => game.id === activeId) ?? games[0];
+
+  async function handlePlay() {
+    if (launching) return;
+    setLaunching(true);
+    await api.launchGame(active.id);
+    window.setTimeout(() => setLaunching(false), 4000);
+  }
   const dock = games.filter((game) => game.show_on_main);
 
   return (
@@ -97,17 +114,22 @@ function HomeStage({ onGoGames }: HomeStageProps) {
       />
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,7,11,0.35)_0%,rgba(7,7,11,0.15)_40%,rgba(7,7,11,0.55)_78%,rgba(7,7,11,0.92)_100%),linear-gradient(90deg,rgba(7,7,11,0.55)_0%,transparent_35%)]" />
 
-      <div className="absolute right-6 top-6 max-w-47.5 drop-shadow-[0_12px_26px_rgba(0,0,0,0.55)]">
-        <img src={toDisplaySrc(active.poster)} alt={active.name} className="w-full rounded-xl" />
+      <div className="absolute right-6 top-6 h-22.5 w-47.5 overflow-hidden rounded-xl drop-shadow-[0_12px_26px_rgba(0,0,0,0.55)]">
+        <img src={toDisplaySrc(active.poster)} alt={active.name} className="h-full w-full rounded-xl object-cover" />
       </div>
 
-      <div className="absolute bottom-30 right-6 flex items-center gap-2 rounded-2xl border border-(--border-strong) bg-(--bg-elevated)/70 p-2.5 shadow-2xl backdrop-blur-xl">
+      <div className="absolute bottom-15 right-6 flex items-center gap-2 rounded-2xl border border-(--border-strong) bg-(--bg-elevated)/70 p-2.5 shadow-2xl backdrop-blur-xl">
         <button
-          className="flex items-center gap-2.5 rounded-xl bg-[linear-gradient(160deg,var(--primary-hover),var(--primary-active))] px-6 py-3 text-[13.5px] font-bold text-white shadow-[0_0_30px_var(--primary-glow),0_6px_20px_rgba(0,0,0,0.35)] transition-[transform,filter] duration-150 hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0"
-          onClick={() => api.launchGame(active.id)}
+          disabled={launching}
+          onClick={handlePlay}
+          className="flex items-center gap-2.5 rounded-xl bg-[linear-gradient(160deg,var(--primary-hover),var(--primary-active))] px-6 py-3 text-[13.5px] font-bold text-white shadow-[0_0_30px_var(--primary-glow),0_6px_20px_rgba(0,0,0,0.35)] transition-[transform,filter] duration-150 hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
         >
-          <i className="fa-solid fa-play text-[12px]" />
-          Jugar
+          {launching ? (
+            <i className="fa-solid fa-spinner fa-spin text-[12px]" />
+          ) : (
+            <i className="fa-solid fa-play text-[12px]" />
+          )}
+          {launching ? "Lanzando..." : "Jugar"}
         </button>
         <button className="flex h-11 w-11 items-center justify-center rounded-xl border border-(--border-strong) bg-(--bg-elevated) text-(--text-soft) transition-all duration-150 hover:rotate-20 hover:border-(--primary) hover:bg-(--bg-hover)">
           <i className="fa-solid fa-gear text-[15px]" />
@@ -115,11 +137,11 @@ function HomeStage({ onGoGames }: HomeStageProps) {
       </div>
 
       {dock.length > 0 && (
-        <div className="absolute bottom-6 left-1/2 flex -translate-x-1/2 items-end gap-3 rounded-2xl border border-(--border-strong) bg-(--bg-elevated)/70 p-2.5 shadow-2xl backdrop-blur-xl">
+        <div className="absolute bottom-12 left-1/2 flex -translate-x-1/2 items-end gap-3 rounded-2xl border border-(--border-strong) bg-(--bg-elevated)/70 p-2.5 shadow-2xl backdrop-blur-xl">
           {dock.map((game) => (
             <button
               key={game.id}
-              className={`group relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border bg-[linear-gradient(160deg,var(--bg-elevated),var(--bg-card))] transition-transform duration-200 hover:-translate-y-2.5 hover:scale-110 hover:shadow-[0_10px_24px_rgba(0,0,0,0.4),0_0_0_1px_var(--accent-glow)] ${
+              className={`group relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border bg-[linear-gradient(160deg,var(--bg-elevated),var(--bg-card))] transition-transform duration-200 hover:-translate-y-2.5 hover:scale-110 hover:shadow-[0_10px_24px_rgba(0,0,0,0.4),0_0_0_1px_var(--accent-glow)] cursor-pointer ${
                 game.id === active.id ? "border-(--accent)" : "border-(--border-strong)"
               }`}
               onClick={() => setActive(game.id)}
@@ -139,9 +161,6 @@ function HomeStage({ onGoGames }: HomeStageProps) {
   );
 }
 
-interface EmptyStateProps {
-  onAdd: () => void;
-}
 
 /** Shown on the home stage when there are no games yet. */
 function EmptyState({ onAdd }: EmptyStateProps) {
