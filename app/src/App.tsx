@@ -1,15 +1,25 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TitleBar } from "@/components/layout/TitleBar";
 import { SplashScreen } from "@/components/layout/SplashScreen";
+import { LauncherView } from "@/features/launcher/LauncherView";
 import { useBridge } from "@/hooks/useBridge";
 import { useBootEvents } from "@/hooks/useBootEvents";
+import { useGamesStore } from "@/store/gamesStore";
 
 export default function App() {
   const { ready: bridgeReady } = useBridge();
   const { step, done: bootDone } = useBootEvents();
+  const hydrate = useGamesStore((state) => state.hydrate);
 
   /** True once the splash fade-out transition ends. */
   const [splashGone, setSplashGone] = useState(false);
+
+  /** Load persisted games/assets/config once the Python bridge is ready. */
+  useEffect(() => {
+    if (bridgeReady) {
+      void hydrate();
+    }
+  }, [bridgeReady, hydrate]);
 
   return (
     <div
@@ -40,13 +50,13 @@ export default function App() {
         style={{
           flex: 1,
           display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "var(--bg-soft)",
+          minHeight: 0,
           opacity: splashGone ? 1 : 0,
           transition: "opacity 0.3s ease",
         }}
-      />
+      >
+        <LauncherView />
+      </main>
     </div>
   );
 }
