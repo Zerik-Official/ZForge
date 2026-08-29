@@ -80,9 +80,9 @@ export const api = {
 
   // ── Game ─────────────────────────────────────────────────────────────────
 
-  /** Launch the WoW 3.3.5a client. */
-  launchGame(): Promise<ApiResult> {
-    return bridge().launch_game();
+  /** Launch the WoW client for the given game id. */
+  launchGame(gameId: string): Promise<ApiResult> {
+    return bridge().launch_game(gameId);
   },
 
   /** Start the full client installation flow. */
