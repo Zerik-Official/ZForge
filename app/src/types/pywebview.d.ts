@@ -54,7 +54,7 @@ declare global {
         close_window(): Promise<void>;
 
         // Game
-        launch_game(): Promise<ApiResult>;
+        launch_game(game_id: string): Promise<ApiResult>;
         install_client(): Promise<ApiResult>;
         repair_client(): Promise<ApiResult>;
 
