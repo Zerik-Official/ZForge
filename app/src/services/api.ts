@@ -1,4 +1,4 @@
-import type { ApiResult } from "@/types/pywebview";
+import type { ApiResult, Game, GameInput, AppConfig, AssetManifest } from "@/types/pywebview";
 
 let _bridgeReady = false;
 
@@ -49,10 +49,6 @@ export function waitForBridge(timeoutMs = 8_000): Promise<void> {
   });
 }
 
-// ---------------------------------------------------------------------------
-// Internal bridge accessor — throws if called before ready
-// ---------------------------------------------------------------------------
-
 function bridge() {
   if (!_bridgeReady || !window.pywebview?.api) {
     throw new Error(
@@ -61,10 +57,6 @@ function bridge() {
   }
   return window.pywebview.api;
 }
-
-// ---------------------------------------------------------------------------
-// Public API surface
-// ---------------------------------------------------------------------------
 
 export const api = {
   // ── Health ───────────────────────────────────────────────────────────────
@@ -113,5 +105,56 @@ export const api = {
   /** Persist updated settings. */
   saveSettings(payload: Record<string, unknown>): Promise<ApiResult> {
     return bridge().save_settings(payload);
+  },
+
+  // ── Games ─────────────────────────────────────────────────────────────
+
+  /** Fetch every saved game. */
+  listGames(): Promise<Game[]> {
+    return bridge().list_games();
+  },
+
+  /** Create a new game. */
+  addGame(payload: GameInput): Promise<Game> {
+    return bridge().add_game(payload);
+  },
+
+  /** Update an existing game. */
+  updateGame(payload: Game): Promise<Game> {
+    return bridge().update_game(payload);
+  },
+
+  /** Delete a game by id. */
+  removeGame(id: string): Promise<ApiResult> {
+    return bridge().remove_game(id);
+  },
+
+  // ── Application config ───────────────────────────────────────────────
+
+  /** Fetch global application settings. */
+  getAppConfig(): Promise<AppConfig> {
+    return bridge().get_app_config();
+  },
+
+  /** Persist global application settings. */
+  saveAppConfig(payload: AppConfig): Promise<ApiResult> {
+    return bridge().save_app_config(payload);
+  },
+
+  // ── Asset pickers ─────────────────────────────────────────────────────
+
+  /** Fetch the bundled-asset catalogue. */
+  listAssets(): Promise<AssetManifest> {
+    return bridge().list_assets();
+  },
+
+  /** Open a native dialog to pick the WoW executable. */
+  selectExe(): Promise<string | null> {
+    return bridge().select_exe();
+  },
+
+  /** Pick and import a custom media file of the given kind. */
+  selectCustomAsset(kind: "icos" | "logos" | "scenes"): Promise<string | null> {
+    return bridge().select_custom_asset(kind);
   },
 } as const;
