@@ -35,7 +35,7 @@ EXPANSIONS: dict[str, dict[str, str]] = {
         "name": "Wrath of the Lich King",
         "video": "/assets/games/scenes/wotlk/wow_lich_king_sword.mp4",
         "poster": "/assets/games/logos/wotlk/WoWtlk.png",
-        "icon": "/assets/games/icos/wotlk/png/wtlk_hd.png",
+        "icon": "/assets/games/icos/wotlk/png/wtlk_alter.png",
     },
 }
 
@@ -118,7 +118,10 @@ def scan_assets() -> dict[str, Any]:
         folder = root / kind
         if not folder.exists():
             return []
-        return sorted(f"/assets/games/{kind}/{p.name}" for p in folder.rglob(f"*.{ext}"))
+        return sorted(
+            f"/assets/games/{kind}/{p.relative_to(folder).as_posix()}"
+            for p in folder.rglob(f"*.{ext}")
+        )
 
     return {
         "expansions": EXPANSIONS,
