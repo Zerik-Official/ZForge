@@ -11,6 +11,36 @@ export interface ApiResult {
   error: string | null;
 }
 
+/** A user-added World of Warcraft installation. */
+export interface Game {
+  id: string;
+  name: string;
+  expansion: string;
+  exe_path: string;
+  bg_video: string;
+  icon: string;
+  poster: string;
+  show_on_main: boolean;
+  created_at: string;
+}
+
+/** Global launcher preferences persisted in config.json. */
+export interface AppConfig {
+  theme: string;
+  last_active_game: string | null;
+}
+
+/** Catalogue of bundled media the UI can offer when adding a game. */
+export interface AssetManifest {
+  expansions: Record<string, { name: string; video: string; poster: string; icon: string }>;
+  available_videos: string[];
+  available_posters: string[];
+  available_icons: string[];
+}
+
+/** A new or edited game before it receives a backend-generated id. */
+export type GameInput = Omit<Game, "id" | "created_at">;
+
 declare global {
   interface Window {
     // ── pywebview bridge ──────────────────────────────────────────────────
@@ -31,11 +61,24 @@ declare global {
         // Settings
         get_settings(): Promise<Record<string, unknown>>;
         save_settings(payload: Record<string, unknown>): Promise<ApiResult>;
+
+        // Games
+        list_games(): Promise<Game[]>;
+        add_game(payload: GameInput): Promise<Game>;
+        update_game(payload: Game): Promise<Game>;
+        remove_game(id: string): Promise<ApiResult>;
+
+        // Application config
+        get_app_config(): Promise<AppConfig>;
+        save_app_config(payload: AppConfig): Promise<ApiResult>;
+
+        // Asset pickers
+        list_assets(): Promise<AssetManifest>;
+        select_exe(): Promise<string | null>;
+        select_custom_asset(kind: "icos" | "logos" | "scenes"): Promise<string | null>;
       };
     };
-
-    // ── Backend → frontend boot event handlers ────────────────────────────
-    // Registered by useBootEvents; called by the backend via evaluate_js.
+    
     __zforge_boot_message?: (message: string, percent: number) => void;
     __zforge_boot_done?: () => void;
   }
