@@ -37,7 +37,7 @@ export function Select({ value, options, onChange, placeholder = "Seleccionar" }
 
   return (
     <div className="select-root" ref={rootRef}>
-      <button type="button" className="select-trigger" onClick={() => setOpen((prev) => !prev)}>
+      <button type="button" className="select-trigger cursor-pointer" onClick={() => setOpen((prev) => !prev)}>
         <span className="flex min-w-0 items-center gap-2">
           {selected?.thumb ? <img src={selected.thumb} alt="" className="select-thumb" /> : null}
           <span className="truncate">{selected?.label ?? placeholder}</span>
@@ -51,7 +51,7 @@ export function Select({ value, options, onChange, placeholder = "Seleccionar" }
             <button
               key={option.value}
               type="button"
-              className={`select-option${option.value === value ? " select-option--active" : ""}`}
+              className={`select-option${option.value === value ? " select-option--active" : ""} cursor-pointer`}
               onClick={() => {
                 onChange(option.value);
                 setOpen(false);
