@@ -58,14 +58,6 @@
   --radius-xl: 28px;
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
 html,
 body,
 #root {
@@ -79,6 +71,10 @@ body {
   color: var(--text);
   font-family: system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+button {
+  cursor: pointer;
 }
 
 ::-webkit-scrollbar       { width: 6px; height: 6px; }
