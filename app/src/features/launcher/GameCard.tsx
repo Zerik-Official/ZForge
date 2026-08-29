@@ -20,7 +20,7 @@ export function GameCard({ game, onEdit, onRemove }: GameCardProps) {
       style={{ width: 200 }}
     >
       <button
-        className="flex h-28 w-full items-center justify-center bg-(--bg-elevated)"
+        className="flex h-28 w-full items-center justify-center bg-(--bg-elevated) cursor-pointer"
         onClick={() => onEdit(game)}
         title="Editar"
       >
@@ -43,13 +43,13 @@ export function GameCard({ game, onEdit, onRemove }: GameCardProps) {
 
       <div className="flex items-center gap-2 border-t border-(--border) px-3 py-2">
         <button
-          className="ghost-btn flex-1 rounded-lg py-1.5 text-[12px]"
+          className="ghost-btn flex-1 rounded-lg py-1.5 text-[12px] cursor-pointer"
           onClick={() => onEdit(game)}
         >
           Editar
         </button>
         <button
-          className="ghost-btn rounded-lg px-3 py-1.5 text-[12px] text-(--danger)"
+          className="ghost-btn rounded-lg px-3 py-1.5 text-[12px] text-(--danger) cursor-pointer"
           onClick={() => onRemove(game.id)}
         >
           <i className="fa-solid fa-trash" />
