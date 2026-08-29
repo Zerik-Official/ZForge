@@ -104,7 +104,7 @@ function HomeStage({ onGoGames }: HomeStageProps) {
       <div className="absolute bottom-30 right-6 flex items-center gap-2 rounded-2xl border border-(--border-strong) bg-(--bg-elevated)/70 p-2.5 shadow-2xl backdrop-blur-xl">
         <button
           className="flex items-center gap-2.5 rounded-xl bg-[linear-gradient(160deg,var(--primary-hover),var(--primary-active))] px-6 py-3 text-[13.5px] font-bold text-white shadow-[0_0_30px_var(--primary-glow),0_6px_20px_rgba(0,0,0,0.35)] transition-[transform,filter] duration-150 hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0"
-          onClick={() => api.launchGame()}
+          onClick={() => api.launchGame(active.id)}
         >
           <i className="fa-solid fa-play text-[12px]" />
           Jugar
