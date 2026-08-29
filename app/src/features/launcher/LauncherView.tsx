@@ -4,6 +4,7 @@ import { useGamesStore } from "@/store/gamesStore";
 import { toDisplaySrc } from "@/utils/asset";
 import type { Game } from "@/types/pywebview";
 import { GamesView } from "./GamesView";
+import "@/styles/launcher.css";
 
 type View = "home" | "games" | "addons" | "settings";
 
@@ -69,7 +70,7 @@ interface HomeStageProps {
   onGoGames: () => void;
 }
 
-/** Centered game stage shown when the home view is active. */
+/** Video-backed game stage shown when the home view is active. */
 function HomeStage({ onGoGames }: HomeStageProps) {
   const games = useGamesStore((state) => state.games);
   const activeId = useGamesStore((state) => state.activeId);
@@ -84,50 +85,52 @@ function HomeStage({ onGoGames }: HomeStageProps) {
   const dock = games.filter((game) => game.show_on_main);
 
   return (
-    <div className="relative h-full w-full">
+    <div className="relative h-full w-full overflow-hidden bg-(--bg)">
       <video
         key={active.bg_video}
-        className="absolute inset-0 h-full w-full object-cover"
+        className="absolute inset-0 h-full w-full object-cover opacity-90"
         src={toDisplaySrc(active.bg_video)}
         autoPlay
         muted
         loop
         playsInline
       />
-      <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/45 to-black/55" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,7,11,0.35)_0%,rgba(7,7,11,0.15)_40%,rgba(7,7,11,0.55)_78%,rgba(7,7,11,0.92)_100%),linear-gradient(90deg,rgba(7,7,11,0.55)_0%,transparent_35%)]" />
 
-      <div className="relative flex h-full flex-col items-center justify-center gap-6">
-        <img
-          src={toDisplaySrc(active.poster)}
-          alt={active.name}
-          className="h-40 object-contain drop-shadow-2xl"
-        />
-        <h1 className="text-3xl font-bold tracking-wide text-white drop-shadow">
-          {active.name}
-        </h1>
-        <button className="play-btn text-lg" onClick={() => api.launchGame()}>
-          <i className="fa-solid fa-play mr-2" /> Jugar
+      <div className="absolute right-6 top-6 max-w-47.5 drop-shadow-[0_12px_26px_rgba(0,0,0,0.55)]">
+        <img src={toDisplaySrc(active.poster)} alt={active.name} className="w-full rounded-xl" />
+      </div>
+
+      <div className="absolute bottom-30 right-6 flex items-center gap-2 rounded-2xl border border-(--border-strong) bg-(--bg-elevated)/70 p-2.5 shadow-2xl backdrop-blur-xl">
+        <button
+          className="flex items-center gap-2.5 rounded-xl bg-[linear-gradient(160deg,var(--primary-hover),var(--primary-active))] px-6 py-3 text-[13.5px] font-bold text-white shadow-[0_0_30px_var(--primary-glow),0_6px_20px_rgba(0,0,0,0.35)] transition-[transform,filter] duration-150 hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0"
+          onClick={() => api.launchGame()}
+        >
+          <i className="fa-solid fa-play text-[12px]" />
+          Jugar
+        </button>
+        <button className="flex h-11 w-11 items-center justify-center rounded-xl border border-(--border-strong) bg-(--bg-elevated) text-(--text-soft) transition-all duration-150 hover:rotate-20 hover:border-(--primary) hover:bg-(--bg-hover)">
+          <i className="fa-solid fa-gear text-[15px]" />
         </button>
       </div>
 
       {dock.length > 0 && (
-        <div className="absolute bottom-6 left-1/2 flex -translate-x-1/2 gap-3">
+        <div className="absolute bottom-6 left-1/2 flex -translate-x-1/2 items-end gap-3 rounded-2xl border border-(--border-strong) bg-(--bg-elevated)/70 p-2.5 shadow-2xl backdrop-blur-xl">
           {dock.map((game) => (
             <button
               key={game.id}
-              className={`flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl border-2 transition-colors ${
-                game.id === active.id
-                  ? "border-(--accent)"
-                  : "border-white/20 hover:border-white/60"
+              className={`group relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border bg-[linear-gradient(160deg,var(--bg-elevated),var(--bg-card))] transition-transform duration-200 hover:-translate-y-2.5 hover:scale-110 hover:shadow-[0_10px_24px_rgba(0,0,0,0.4),0_0_0_1px_var(--accent-glow)] ${
+                game.id === active.id ? "border-(--accent)" : "border-(--border-strong)"
               }`}
               onClick={() => setActive(game.id)}
-              title={game.name}
             >
-              <img
-                src={toDisplaySrc(game.icon)}
-                alt={game.name}
-                className="h-full w-full object-contain"
-              />
+              <span className="pointer-events-none absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md border border-(--border-strong) bg-(--bg-elevated) px-2.5 py-1 text-[11px] font-medium text-(--text-soft) opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
+                {game.name}
+              </span>
+              <img src={toDisplaySrc(game.icon)} alt={game.name} className="h-8 w-8 object-contain" />
+              {game.id === active.id && (
+                <span className="absolute -bottom-2.25 h-1 w-1 rounded-full bg-(--accent) shadow-[0_0_6px_var(--accent-glow)]" />
+              )}
             </button>
           ))}
         </div>
@@ -144,13 +147,21 @@ interface EmptyStateProps {
 function EmptyState({ onAdd }: EmptyStateProps) {
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-5 bg-(--bg)">
-      <i className="fa-solid fa-gamepad text-5xl text-(--muted)" />
-      <h1 className="text-2xl font-semibold text-(--text)">No hay juegos todavía</h1>
-      <p className="max-w-sm text-center text-sm text-(--muted)">
-        Añade tu instalación de World of Warcraft para empezar a jugar.
-      </p>
-      <button className="play-btn rounded-lg px-4 py-2" onClick={onAdd}>
-        <i className="fa-solid fa-plus mr-1" /> Añadir juego
+      <div className="flex h-19 w-19 items-center justify-center rounded-2xl border border-(--border-strong) bg-(--bg-card)">
+        <i className="fa-solid fa-gamepad text-2xl text-(--muted-2)" />
+      </div>
+      <div className="flex max-w-sm flex-col items-center gap-1.5 text-center">
+        <h1 className="text-[16px] font-semibold text-(--text)">No tienes ningún juego añadido</h1>
+        <p className="text-[13px] leading-relaxed text-(--muted)">
+          Añade tu instalación de World of Warcraft para empezar a jugar, verificar archivos e instalar addons.
+        </p>
+      </div>
+      <button
+        className="flex items-center gap-2 rounded-lg bg-[linear-gradient(160deg,var(--primary-hover),var(--primary-active))] px-5 py-2.5 text-[13px] font-semibold text-white shadow-[0_0_30px_var(--primary-glow),0_6px_20px_rgba(0,0,0,0.35)] transition-[transform,filter] duration-150 hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0"
+        onClick={onAdd}
+      >
+        <i className="fa-solid fa-plus text-[12px]" />
+        Añadir juego
       </button>
     </div>
   );
