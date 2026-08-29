@@ -9,6 +9,7 @@ from datetime import datetime
 import webview
 
 # Project imports
+from desktop.api import launcher_api
 from desktop.models.game import Game, copy_custom_asset, scan_assets
 from desktop.storage import config as config_store
 from desktop.storage import db as db_store
@@ -42,16 +43,21 @@ class Api:
             return webview.windows[0]
         return None
 
-    def launch_game(self) -> dict:
+    def launch_game(self, game_id: str) -> dict:
         """
-        Start the WoW 3.3.5a client process.
+        Start the WoW client for the selected game.
+
+        Args:
+            game_id: Identifier of the saved game to launch.
 
         Returns:
             dict: {"ok": bool, "error": str | None}
         """
-        log("DEBUG", Tags.API, "launch_game() called")
-        # TODO: delegate to services/wow/launcher.py
-        return {"ok": True, "error": None}
+        log("DEBUG", Tags.API, f"launch_game() called — id={game_id}")
+        game = db_store.get_game(game_id)
+        if game is None:
+            return {"ok": False, "error": "Game not found"}
+        return launcher_api.launch_wow(game)
 
     def install_client(self) -> dict:
         """
