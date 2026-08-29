@@ -154,7 +154,7 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
               {initial ? "Editar juego" : "Añadir juego"}
             </h2>
           </div>
-          <button className="icon-btn" onClick={onClose}>
+          <button className="icon-btn cursor-pointer" onClick={onClose}>
             <i className="fa-solid fa-xmark text-[13px]" />
           </button>
         </div>
@@ -196,7 +196,7 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
                   placeholder="Selecciona wow.exe"
                   title={exePath}
                 />
-                <button className="ghost-btn shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-[12px]" onClick={pickExe}>
+                <button className="ghost-btn shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-[12px] cursor-pointer" onClick={pickExe}>
                   <i className="fa-solid fa-folder-open mr-1.5" />
                   Buscar
                 </button>
@@ -216,7 +216,7 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
                 <div className="min-w-0 flex-1">
                   <Select value={bgVideo} options={videoOptions} onChange={setBgVideo} placeholder="Selecciona un video" />
                 </div>
-                <button className="icon-btn" title="Usar archivo personalizado" onClick={() => pickCustom("scenes")}>
+                <button className="icon-btn cursor-pointer" title="Usar archivo personalizado" onClick={() => pickCustom("scenes")}>
                   <i className="fa-solid fa-upload text-[12px]" />
                 </button>
               </div>
@@ -228,7 +228,7 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
                 <div className="min-w-0 flex-1">
                   <Select value={icon} options={iconOptions} onChange={setIcon} placeholder="Selecciona un ícono" />
                 </div>
-                <button className="icon-btn" title="Usar archivo personalizado" onClick={() => pickCustom("icos")}>
+                <button className="icon-btn cursor-pointer" title="Usar archivo personalizado" onClick={() => pickCustom("icos")}>
                   <i className="fa-solid fa-upload text-[12px]" />
                 </button>
               </div>
@@ -240,7 +240,7 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
                 <div className="min-w-0 flex-1">
                   <Select value={poster} options={posterOptions} onChange={setPoster} placeholder="Selecciona un póster" />
                 </div>
-                <button className="icon-btn" title="Usar archivo personalizado" onClick={() => pickCustom("logos")}>
+                <button className="icon-btn cursor-pointer" title="Usar archivo personalizado" onClick={() => pickCustom("logos")}>
                   <i className="fa-solid fa-upload text-[12px]" />
                 </button>
               </div>
@@ -270,12 +270,13 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
               </div>
             </div>
 
-            <label className="flex items-center gap-2 text-[13px] text-(--text-soft)">
+            <label className="flex items-center gap-2 text-[13px] text-(--text-soft) cursor-pointer">
               <input
                 type="checkbox"
                 checked={showOnMain}
                 onChange={(event) => setShowOnMain(event.target.checked)}
                 style={{ accentColor: "var(--primary)" }}
+                className="cursor-pointer"
               />
               Mostrar en la pantalla de inicio
             </label>
@@ -283,11 +284,11 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
         </div>
 
         <div className="flex shrink-0 items-center justify-end gap-2 border-t border-(--border) px-6 py-4">
-          <button className="ghost-btn rounded-lg px-4 py-2 text-[13px]" onClick={onClose}>
+          <button className="ghost-btn rounded-lg px-4 py-2 text-[13px] cursor-pointer" onClick={onClose}>
             Cancelar
           </button>
           <button
-            className="play-btn rounded-lg px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-40"
+            className="play-btn rounded-lg px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-40 cursor-pointer"
             onClick={handleSave}
             disabled={busy || !name.trim() || !exePath.trim()}
           >
