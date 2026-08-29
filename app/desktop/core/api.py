@@ -6,7 +6,7 @@ Public API class exposed to the frontend via pywebview bridge.
 import webview
 
 # Project imports
-from backend.utils.logger import log, Tags
+from desktop.utils.logger import log, Tags
 
 
 class Api:

@@ -1,7 +1,7 @@
 /**
  * Type declarations for the pywebview JS bridge.
  *
- * Every method here must have a matching counterpart in backend/core/api.py.
+ * Every method here must have a matching counterpart in desktop/core/api.py.
  * The bridge is async by nature — all calls return Promises.
  */
 

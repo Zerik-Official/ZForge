@@ -13,7 +13,7 @@ Features:
 
 ## Stack
 
-Backend:
+Desktop host:
 - Python
 - pywebview
 - Pypresence

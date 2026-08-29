@@ -10,7 +10,7 @@ from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Ensure project root is on sys.path when running directly:
-#   python backend/main.py
+#   python desktop/main.py
 # ---------------------------------------------------------------------------
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
@@ -28,10 +28,10 @@ except ImportError:
 import webview
 
 # project imports
-from backend.config import config
-from backend.core.api import Api
-from backend.core.events import emitter
-from backend.utils.logger import log, Tags
+from desktop.config import config
+from desktop.core.api import Api
+from desktop.core.events import emitter
+from desktop.utils.logger import log, Tags
 
 
 def _resolve_url() -> str:

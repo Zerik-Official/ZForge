@@ -5,7 +5,7 @@ The backend never calls evaluate_js directly.
 All frontend notifications go through this module.
 
 Usage:
-    from backend.core.events import emitter
+    from desktop.core.events import emitter
 
     emitter.boot_message("Loading database…", 30)
     emitter.boot_done()
@@ -17,7 +17,7 @@ Call `emitter.attach(window)` in main.py once the window exists.
 
 import json
 from typing import Any
-from backend.utils.logger import log, Tags
+from desktop.utils.logger import log, Tags
 
 
 class EventEmitter:
