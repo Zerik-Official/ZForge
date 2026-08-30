@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "@/services/api";
-import type { Game, GameSettings } from "@/types/pywebview";
+import type { Game, GameSettings, ServerEntry } from "@/types/pywebview";
 import { Select, type SelectOption } from "@/components/ui/Select";
+import { Combobox, type ComboboxOption } from "@/components/ui/Combobox";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Modal, ModalHeader, ModalFooter } from "@/components/ui/Modal";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { toDisplaySrc } from "@/utils/asset";
 
 interface GameSettingsModalProps {
   open: boolean;
@@ -59,6 +62,8 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [display, setDisplay] = useState<{ width: number; height: number }>({ width: 1920, height: 1080 });
+  const [servers, setServers] = useState<ServerEntry[]>([]);
+  const [pendingSave, setPendingSave] = useState<{ apply: boolean } | null>(null);
 
   useEffect(() => {
     if (!open || !game) return;
@@ -77,6 +82,8 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
         }
         const disp = await api.getDisplayResolution();
         if (!cancelled) setDisplay(disp);
+        const list = await api.listServers();
+        if (!cancelled) setServers(list);
       } catch (err) {
         if (!cancelled) setError("No se pudo cargar la configuración del juego.");
       } finally {
@@ -87,6 +94,35 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
       cancelled = true;
     };
   }, [open, game]);
+
+  const realmlistOptions = useMemo<ComboboxOption<{ realms: string[] }>[]>(
+    () =>
+      servers.flatMap((server) =>
+        server.realmlists.map((realmlist) => ({
+          value: realmlist,
+          label: server.name,
+          sublabel: realmlist,
+          thumb: server.logo ? toDisplaySrc(server.logo) : undefined,
+          badge: server.custom ? "Personalizado" : undefined,
+          meta: { realms: server.realms },
+        })),
+      ),
+    [servers],
+  );
+
+  const matchedServers = useMemo(
+    () =>
+      servers.filter((server) =>
+        server.realmlists.some((rl) => rl.trim().toLowerCase() === settings.realm_list.trim().toLowerCase()),
+      ),
+    [servers, settings.realm_list],
+  );
+
+  const realmOptions = useMemo<ComboboxOption[]>(() => {
+    const seen = new Set<string>();
+    matchedServers.forEach((server) => server.realms.forEach((realm) => seen.add(realm)));
+    return Array.from(seen).map((realm) => ({ value: realm, label: realm }));
+  }, [matchedServers]);
 
   const visibleResolutions = useMemo<SelectOption[]>(() => {
     const opts = RESOLUTIONS
@@ -112,11 +148,25 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
     setSettings((prev) => ({ ...prev, [key]: value }));
   }
 
-  async function handleSave(apply: boolean) {
+  async function persistSettings(apply: boolean, saveGlobal = false) {
     if (!game) return;
     setBusy(true);
     setError(null);
     try {
+      const realmlist = settings.realm_list.trim();
+      const realmName = settings.realm_name.trim();
+
+      if (saveGlobal && realmlist) {
+        await api.saveCustomServer({ realmlist, name: realmlist, realm: realmName || undefined });
+        setServers(await api.listServers());
+      } else if (realmlist && realmName) {
+        const customMatch = matchedServers.find((server) => server.custom);
+        if (customMatch && !customMatch.realms.includes(realmName)) {
+          await api.addCustomRealm(realmlist, realmName);
+          setServers(await api.listServers());
+        }
+      }
+
       await api.saveGameSettings(game.id, settings);
       if (apply) {
         const result = await api.applyGameSettings(game.id);
@@ -131,6 +181,25 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
     } finally {
       setBusy(false);
     }
+  }
+
+  async function handleSave(apply: boolean) {
+    if (!game) return;
+    const realmlist = settings.realm_list.trim();
+    const isKnown = servers.some((server) =>
+      server.realmlists.some((rl) => rl.trim().toLowerCase() === realmlist.toLowerCase()),
+    );
+    if (realmlist && !isKnown) {
+      setPendingSave({ apply });
+      return;
+    }
+    await persistSettings(apply);
+  }
+
+  function resolvePendingSave(saveGlobal: boolean) {
+    const pending = pendingSave;
+    setPendingSave(null);
+    if (pending) persistSettings(pending.apply, saveGlobal);
   }
 
   return (
@@ -209,19 +278,20 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
                     </span>
                     <div className="flex flex-col gap-1.5">
                       <label className="field-label">Realm list</label>
-                      <input
-                        className="field-input"
+                      <Combobox
                         value={settings.realm_list}
-                        onChange={(e) => update("realm_list", e.target.value)}
+                        onChange={(value) => update("realm_list", value)}
+                        options={realmlistOptions}
+                        onSelect={(option) => update("realm_list", option.value)}
                         placeholder="comunidad.naerzone.com"
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
                       <label className="field-label">Reino</label>
-                      <input
-                        className="field-input"
+                      <Combobox
                         value={settings.realm_name}
-                        onChange={(e) => update("realm_name", e.target.value)}
+                        onChange={(value) => update("realm_name", value)}
+                        options={realmOptions}
                         placeholder="Thalassa"
                       />
                     </div>
@@ -310,6 +380,17 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
           {busy ? "Aplicando..." : "Guardar y aplicar"}
         </button>
       </ModalFooter>
+
+      <ConfirmDialog
+        open={pendingSave !== null}
+        icon="fa-solid fa-server"
+        title="Guardar realmlist como global"
+        description={`"${settings.realm_list.trim()}" no está en el catálogo de servidores. ¿Quieres guardarlo para que se autocomplete en futuros juegos?`}
+        confirmLabel="Sí, guardar"
+        cancelLabel="Solo este juego"
+        onConfirm={() => resolvePendingSave(true)}
+        onCancel={() => resolvePendingSave(false)}
+      />
     </Modal>
   );
 }
