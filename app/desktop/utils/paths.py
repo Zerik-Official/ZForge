@@ -73,3 +73,12 @@ def public_assets_dir() -> Path:
     referenced by URL from the frontend, not copied.
     """
     return Path(__file__).resolve().parents[2] / "public" / "assets" / "games"
+
+
+def servers_data_path() -> Path:
+    """
+    Return the bundled, read-only server/realmlist catalogue JSON path.
+
+    Ships with the build under ``app/desktop/data/servers/servers.json``.
+    """
+    return Path(__file__).resolve().parents[1] / "data" / "servers" / "servers.json"
