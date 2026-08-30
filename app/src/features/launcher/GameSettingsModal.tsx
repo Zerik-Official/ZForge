@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "@/services/api";
 import type { Game, GameSettings } from "@/types/pywebview";
 import { Select, type SelectOption } from "@/components/ui/Select";
+import { Checkbox } from "@/components/ui/Checkbox";
 
 interface GameSettingsModalProps {
   open: boolean;
@@ -205,16 +206,11 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
                         onChange={(value) => update("launch_priority", value as GameSettings["launch_priority"])}
                       />
                     </div>
-                    <label className="flex items-center gap-2 text-[13px] text-(--text-soft) cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={settings.clear_cache_on_launch}
-                        onChange={(e) => update("clear_cache_on_launch", e.target.checked)}
-                        style={{ accentColor: "var(--primary)" }}
-                        className="cursor-pointer"
-                      />
-                      Borrar caché al iniciar
-                    </label>
+                    <Checkbox
+                      checked={settings.clear_cache_on_launch}
+                      onChange={(value) => update("clear_cache_on_launch", value)}
+                      label="Borrar caché al iniciar"
+                    />
                   </div>
                 )}
 
@@ -274,50 +270,30 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
                         />
                       </div>
                     </div>
-                    <label className="flex items-center gap-2 text-[13px] text-(--text-soft) cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={settings.windowed}
-                        onChange={(e) => update("windowed", e.target.checked)}
-                        style={{ accentColor: "var(--primary)" }}
-                        className="cursor-pointer"
+                    <Checkbox
+                      checked={settings.windowed}
+                      onChange={(value) => update("windowed", value)}
+                      label="Modo ventana"
+                    />
+                    <div className="flex flex-col gap-3 rounded-xl border border-(--border-strong) bg-(--bg-input) p-3">
+                      <Checkbox
+                        checked={settings.window_resize_lock}
+                        disabled={!settings.windowed}
+                        onChange={(value) => update("window_resize_lock", value)}
+                        label="Bloquear tamaño de ventana (windowResizeLock)"
                       />
-                      Modo ventana
-                    </label>
-                    <div className="flex flex-col gap-2 rounded-xl border border-(--border-strong) bg-(--bg-input) p-3">
-                      <label className={`flex items-center gap-2 text-[13px] text-(--text-soft) ${settings.windowed ? "cursor-pointer" : "cursor-not-allowed opacity-40"}`}>
-                        <input
-                          type="checkbox"
-                          disabled={!settings.windowed}
-                          checked={settings.window_resize_lock}
-                          onChange={(e) => update("window_resize_lock", e.target.checked)}
-                          style={{ accentColor: "var(--primary)" }}
-                          className={`${settings.windowed ? "cursor-pointer": "cursor-not-allowed"}`}
-                        />
-                        Bloquear tamaño de ventana (windowResizeLock)
-                      </label>
-                      <label className={`flex items-center gap-2 text-[13px] text-(--text-soft) ${settings.windowed ? "cursor-pointer" : "cursor-not-allowed opacity-40"}`}>
-                        <input
-                          type="checkbox"
-                          disabled={!settings.windowed}
-                          checked={settings.window_maximized}
-                          onChange={(e) => update("window_maximized", e.target.checked)}
-                          style={{ accentColor: "var(--primary)" }}
-                          className={`${settings.windowed ? "cursor-pointer": "cursor-not-allowed"}`}
-                        />
-                        Maximizado sin bordes (gxMaximize)
-                      </label>
+                      <Checkbox
+                        checked={settings.window_maximized}
+                        disabled={!settings.windowed}
+                        onChange={(value) => update("window_maximized", value)}
+                        label="Maximizado sin bordes (gxMaximize)"
+                      />
                     </div>
-                    <label className="flex items-center gap-2 text-[13px] text-(--text-soft) cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={settings.vsync}
-                        onChange={(e) => update("vsync", e.target.checked)}
-                        style={{ accentColor: "var(--primary)" }}
-                        className="cursor-pointer"
-                      />
-                      Sincronización vertical (VSync)
-                    </label>
+                    <Checkbox
+                      checked={settings.vsync}
+                      onChange={(value) => update("vsync", value)}
+                      label="Sincronización vertical (VSync)"
+                    />
                     <div className="flex flex-col gap-1.5">
                       <label className="field-label">Multimuestreo (antialiasing)</label>
                       <Select
