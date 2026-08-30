@@ -4,7 +4,7 @@ import { useGamesStore } from "@/store/gamesStore";
 import { toDisplaySrc } from "@/utils/asset";
 import { Select, type SelectOption } from "@/components/ui/Select";
 import { Checkbox } from "@/components/ui/Checkbox";
-import { Modal, ModalHeader, ModalBody, ModalFooter } from "@/components/ui/Modal";
+import { Modal, ModalHeader, ModalFooter } from "@/components/ui/Modal";
 import type { Game, GameInput } from "@/types/pywebview";
 
 /**
@@ -161,127 +161,133 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
     .map((path) => ({ value: path, label: fileName(path), thumb: toDisplaySrc(path) }));
 
   return (
-    <Modal open={open} onClose={onClose} className="w-full max-w-lg max-h-[88vh]">
+    <Modal open={open} onClose={onClose} className="h-135 w-full max-w-3xl">
       <ModalHeader
         icon="fa-solid fa-gamepad"
         title={initial ? "Editar juego" : "Añadir juego"}
         onClose={onClose}
       />
 
-      <ModalBody>
+      <div className="flex min-h-0 flex-1">
+        <div className="flex w-72 shrink-0 flex-col gap-5 overflow-y-auto border-r border-(--border) p-6">
           <div className="flex flex-col gap-3">
             <span className="section-label">
               <i className="fa-solid fa-circle-info" />
               Información básica
             </span>
 
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              <div className="flex flex-col gap-1.5">
-                <label className="field-label">Nombre</label>
-                <input
-                  className="field-input"
-                  value={form.name}
-                  onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
-                  placeholder="Mi WoW 3.3.5a"
-                />
-              </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="field-label">Nombre</label>
+              <input
+                className="field-input"
+                value={form.name}
+                onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
+                placeholder="Mi WoW 3.3.5a"
+              />
+            </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="field-label">Expansión</label>
-                <Select value={form.expansion} options={expansionOptions} onChange={handleExpansionChange} />
-              </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="field-label">Expansión</label>
+              <Select value={form.expansion} options={expansionOptions} onChange={handleExpansionChange} />
             </div>
 
             <div className="flex flex-col gap-1.5">
               <label className="field-label">Ejecutable (.exe)</label>
-              <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-(--border-strong) bg-(--bg-input)">
-                  <i className="fa-solid fa-file-invoice text-[13px] text-(--muted)" />
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-(--border-strong) bg-(--bg-input)">
+                    <i className="fa-solid fa-file-invoice text-[13px] text-(--muted)" />
+                  </div>
+                  <input
+                    className="field-input flex-1 truncate"
+                    value={form.exePath}
+                    readOnly
+                    placeholder="Selecciona wow.exe"
+                    title={form.exePath}
+                  />
                 </div>
-                <input
-                  className="field-input flex-1 truncate"
-                  value={form.exePath}
-                  readOnly
-                  placeholder="Selecciona wow.exe"
-                  title={form.exePath}
-                />
-                <button className="ghost-btn shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-[12px] cursor-pointer" onClick={pickExe}>
+                <button className="ghost-btn w-full rounded-lg px-3 py-2 text-[12px] cursor-pointer" onClick={pickExe}>
                   <i className="fa-solid fa-folder-open mr-1.5" />
                   Buscar
                 </button>
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="flex flex-col gap-3">
-            <span className="section-label">
-              <i className="fa-solid fa-photo-film" />
-              Multimedia
-            </span>
+        <div className="min-w-0 flex-1 overflow-y-auto p-6">
+          <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-3">
+              <span className="section-label">
+                <i className="fa-solid fa-photo-film" />
+                Multimedia
+              </span>
 
-            <div className="flex flex-col gap-2">
-              <label className="field-label">Video de fondo</label>
-              <div className="flex items-center gap-2">
-                <div className="min-w-0 flex-1">
-                  <Select value={form.bgVideo} options={videoOptions} onChange={(val) => setForm((prev) => ({ ...prev, bgVideo: val }))} placeholder="Selecciona un video" />
+              <div className="flex flex-col gap-2">
+                <label className="field-label">Video de fondo</label>
+                <div className="flex items-center gap-2">
+                  <div className="min-w-0 flex-1">
+                    <Select value={form.bgVideo} options={videoOptions} onChange={(val) => setForm((prev) => ({ ...prev, bgVideo: val }))} placeholder="Selecciona un video" />
+                  </div>
+                  <button className="icon-btn cursor-pointer" title="Usar archivo personalizado" onClick={() => pickCustom("scenes")}>
+                    <i className="fa-solid fa-upload text-[12px]" />
+                  </button>
                 </div>
-                <button className="icon-btn cursor-pointer" title="Usar archivo personalizado" onClick={() => pickCustom("scenes")}>
-                  <i className="fa-solid fa-upload text-[12px]" />
-                </button>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="field-label">Ícono</label>
+                <div className="flex items-center gap-2">
+                  <div className="min-w-0 flex-1">
+                    <Select value={form.icon} options={iconOptions} onChange={(val) => setForm((prev) => ({ ...prev, icon: val }))} placeholder="Selecciona un ícono" />
+                  </div>
+                  <button className="icon-btn cursor-pointer" title="Usar archivo personalizado" onClick={() => pickCustom("icos")}>
+                    <i className="fa-solid fa-upload text-[12px]" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="field-label">Póster</label>
+                <div className="flex items-center gap-2">
+                  <div className="min-w-0 flex-1">
+                    <Select value={form.poster} options={posterOptions} onChange={(val) => setForm((prev) => ({ ...prev, poster: val }))} placeholder="Selecciona un póster" />
+                  </div>
+                  <button className="icon-btn cursor-pointer" title="Usar archivo personalizado" onClick={() => pickCustom("logos")}>
+                    <i className="fa-solid fa-upload text-[12px]" />
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <label className="field-label">Ícono</label>
-              <div className="flex items-center gap-2">
-                <div className="min-w-0 flex-1">
-                  <Select value={form.icon} options={iconOptions} onChange={(val) => setForm((prev) => ({ ...prev, icon: val }))} placeholder="Selecciona un ícono" />
-                </div>
-                <button className="icon-btn cursor-pointer" title="Usar archivo personalizado" onClick={() => pickCustom("icos")}>
-                  <i className="fa-solid fa-upload text-[12px]" />
-                </button>
-              </div>
-            </div>
+            <div className="flex flex-col gap-3">
+              <span className="section-label">
+                <i className="fa-solid fa-eye" />
+                Vista previa
+              </span>
 
-            <div className="flex flex-col gap-2">
-              <label className="field-label">Póster</label>
-              <div className="flex items-center gap-2">
-                <div className="min-w-0 flex-1">
-                  <Select value={form.poster} options={posterOptions} onChange={(val) => setForm((prev) => ({ ...prev, poster: val }))} placeholder="Selecciona un póster" />
+              <div className="flex items-center gap-3 rounded-xl border border-(--border-strong) bg-(--bg-input) p-3">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-(--border-strong) bg-(--bg-card)">
+                  {form.icon ? (
+                    <img src={toDisplaySrc(form.icon)} alt="" className="h-full w-full object-contain p-1.5" />
+                  ) : (
+                    <i className="fa-solid fa-gamepad text-(--muted-2)" />
+                  )}
                 </div>
-                <button className="icon-btn cursor-pointer" title="Usar archivo personalizado" onClick={() => pickCustom("logos")}>
-                  <i className="fa-solid fa-upload text-[12px]" />
-                </button>
+                <div className="h-14 w-24 shrink-0 overflow-hidden rounded-lg border border-(--border-strong) bg-(--bg-card)">
+                  {form.poster ? <img src={toDisplaySrc(form.poster)} alt="" className="h-full w-full object-cover" /> : null}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[13px] font-semibold text-(--text)">{form.name || "Nombre del juego"}</p>
+                  <p className="text-[11px] uppercase tracking-wide text-(--muted)">{form.expansion}</p>
+                </div>
               </div>
+
+              <Checkbox checked={form.showOnMain} onChange={(val) => setForm((prev) => ({ ...prev, showOnMain: val }))} label="Mostrar en la pantalla de inicio" />
             </div>
           </div>
-
-          <div className="flex flex-col gap-3">
-            <span className="section-label">
-              <i className="fa-solid fa-eye" />
-              Vista previa
-            </span>
-
-            <div className="flex items-center gap-3 rounded-xl border border-(--border-strong) bg-(--bg-input) p-3">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-(--border-strong) bg-(--bg-card)">
-                {form.icon ? (
-                  <img src={toDisplaySrc(form.icon)} alt="" className="h-full w-full object-contain p-1.5" />
-                ) : (
-                  <i className="fa-solid fa-gamepad text-(--muted-2)" />
-                )}
-              </div>
-              <div className="h-14 w-24 shrink-0 overflow-hidden rounded-lg border border-(--border-strong) bg-(--bg-card)">
-                {form.poster ? <img src={toDisplaySrc(form.poster)} alt="" className="h-full w-full object-cover" /> : null}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[13px] font-semibold text-(--text)">{form.name || "Nombre del juego"}</p>
-                <p className="text-[11px] uppercase tracking-wide text-(--muted)">{form.expansion}</p>
-              </div>
-            </div>
-
-            <Checkbox checked={form.showOnMain} onChange={(val) => setForm((prev) => ({ ...prev, showOnMain: val }))} label="Mostrar en la pantalla de inicio" />         
-          </div>
-      </ModalBody>
+        </div>
+      </div>
 
       <ModalFooter>
         <button className="ghost-btn rounded-lg px-4 py-2 text-[13px] cursor-pointer" onClick={onClose}>
