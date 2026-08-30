@@ -4,6 +4,7 @@ import { useGamesStore } from "@/store/gamesStore";
 import { toDisplaySrc } from "@/utils/asset";
 import type { Game } from "@/types/pywebview";
 import { GamesView } from "./GamesView";
+import { GameSettingsModal } from "./GameSettingsModal";
 import "@/styles/launcher.css";
 
 interface EmptyStateProps {
@@ -91,6 +92,7 @@ function HomeStage({ onGoGames }: HomeStageProps) {
   const activeId = useGamesStore((state) => state.activeId);
   const setActive = useGamesStore((state) => state.setActive);
   const [launching, setLaunching] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   if (games.length === 0) {
     return <EmptyState onAdd={onGoGames} />;
@@ -136,10 +138,15 @@ function HomeStage({ onGoGames }: HomeStageProps) {
           )}
           {launching ? "Lanzando..." : "Jugar"}
         </button>
-        <button className="flex h-11 w-11 items-center justify-center rounded-xl border border-(--border-strong) bg-(--bg-elevated) text-(--text-soft) transition-all duration-150 hover:rotate-20 hover:border-(--primary) hover:bg-(--bg-hover) cursor-pointer">
+        <button className="flex h-11 w-11 items-center justify-center rounded-xl border border-(--border-strong) bg-(--bg-elevated) text-(--text-soft) transition-all duration-150 hover:rotate-20 hover:border-(--primary) hover:bg-(--bg-hover) cursor-pointer"
+        onClick={() => setSettingsOpen(true)}
+        title="Configuración del juego"
+        >
           <i className="fa-solid fa-gear text-[15px] cursor-pointer" />
         </button>
       </div>
+
+      <GameSettingsModal open={settingsOpen} game={active} onClose={() => setSettingsOpen(false)} />
 
       {dock.length > 0 && (
         <div className="absolute bottom-12 left-1/2 flex -translate-x-1/2 items-end gap-3 rounded-2xl border border-(--border-strong) bg-(--bg-elevated)/70 p-2.5 shadow-2xl backdrop-blur-xl">
@@ -181,7 +188,7 @@ function EmptyState({ onAdd }: EmptyStateProps) {
         </p>
       </div>
       <button
-        className="flex items-center gap-2 rounded-lg bg-[linear-gradient(160deg,var(--primary-hover),var(--primary-active))] px-5 py-2.5 text-[13px] font-semibold text-white shadow-[0_0_30px_var(--primary-glow),0_6px_20px_rgba(0,0,0,0.35)] transition-[transform,filter] duration-150 hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0"
+        className="flex items-center gap-2 rounded-lg bg-[linear-gradient(160deg,var(--primary-hover),var(--primary-active))] px-5 py-2.5 text-[13px] font-semibold text-white shadow-[0_0_30px_var(--primary-glow),0_6px_20px_rgba(0,0,0,0.35)] transition-[transform,filter] duration-150 hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0 cursor-pointer"
         onClick={onAdd}
       >
         <i className="fa-solid fa-plus text-[12px]" />
