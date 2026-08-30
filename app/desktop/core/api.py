@@ -426,3 +426,19 @@ class Api:
         db_store.add_realm_to_custom_server((realmlist or "").strip(), realm)
         log("INFO", Tags.API, f"add_custom_realm() -> {realmlist} / {realm}")
         return {"ok": True, "error": None}
+
+    def reorder_games(self, ordered_ids: list[str]) -> dict:
+        """
+        Persist a new order for the dock.
+
+        Args:
+            ordered_ids: Game ids in the desired display order.
+
+        Returns:
+            Success envelope.
+        """
+        if not isinstance(ordered_ids, list):
+            return {"ok": False, "error": "ordered_ids must be a list"}
+        db_store.reorder_games([str(gid) for gid in ordered_ids])
+        log("INFO", Tags.API, f"reorder_games() -> {ordered_ids}")
+        return {"ok": True, "error": None}
