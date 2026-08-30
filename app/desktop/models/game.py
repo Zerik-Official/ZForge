@@ -24,23 +24,27 @@ EXPANSIONS: dict[str, dict[str, str]] = {
         "video": "/assets/games/scenes/classic/wow_classic_portal.mp4",
         "poster": "/assets/games/logos/classic/wow_classic_blue.webp",
         "icon": "/assets/games/icos/classic/ico/wow_classic.ico",
+        "box": "/assets/games/boxes/wow_box_classic.png",
     },
     "tbc": {
         "name": "The Burning Crusade",
         "video": "/assets/games/scenes/burning/wow_bc_dark_portal.mp4",
         "poster": "/assets/games/logos/burning/wow_burning_crusade.webp",
         "icon": "/assets/games/icos/burning/ico/wow_bc.ico",
+        "box": "/assets/games/boxes/wow_tbc_box.png",
     },
     "wotlk": {
         "name": "Wrath of the Lich King",
         "video": "/assets/games/scenes/wotlk/wow_lich_king_sword.mp4",
         "poster": "/assets/games/logos/wotlk/wow_wotlk.webp",
         "icon": "/assets/games/icos/wotlk/png/wtlk_alter.png",
+        "box": "/assets/games/boxes/wow_wotlk_box.png",
     },
 }
 
 DEFAULT_ICON_KIND: str = "icos"
 DEFAULT_LOGO_KIND: str = "logos"
+DEFAULT_BOX_KIND: str = "boxes"
 DEFAULT_SCENE_KIND: str = "scenes"
 
 
@@ -55,8 +59,10 @@ class Game:
     bg_video: str
     icon: str
     poster: str
+    box: str = ""
     show_on_main: bool = False
     created_at: str = ""
+    sort_order: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         """Serialise the game to a JSON-friendly dictionary."""
@@ -65,6 +71,9 @@ class Game:
     @classmethod
     def from_row(cls, row: dict[str, Any]) -> "Game":
         """Build a ``Game`` from a SQLite row mapping."""
+        box = row.get("box", "") or row.get("poster", "") or ""
+        if box and "/logos/" in box:
+            box = EXPANSIONS.get(row.get("expansion", ""), {}).get("box", box)
         return cls(
             id=row["id"],
             name=row["name"],
@@ -73,8 +82,10 @@ class Game:
             bg_video=row["bg_video"],
             icon=row["icon"],
             poster=row["poster"],
+            box=box,
             show_on_main=bool(row["show_on_main"]),
             created_at=row.get("created_at", ""),
+            sort_order=int(row.get("sort_order", 0) or 0),
         )
 
     @classmethod
@@ -91,6 +102,7 @@ class Game:
         Returns:
             Fully-populated ``Game`` instance.
         """
+        box = payload.get("box") or EXPANSIONS.get(payload.get("expansion", "wotlk"), {}).get("box", "")
         return cls(
             id=payload.get("id") or str(uuid.uuid4()),
             name=payload.get("name", ""),
@@ -99,8 +111,10 @@ class Game:
             bg_video=payload.get("bg_video", ""),
             icon=payload.get("icon", ""),
             poster=payload.get("poster", ""),
+            box=box,
             show_on_main=bool(payload.get("show_on_main", False)),
             created_at=payload.get("created_at", ""),
+            sort_order=int(payload.get("sort_order", 0) or 0),
         )
 
 
@@ -128,6 +142,7 @@ def scan_assets() -> dict[str, Any]:
         "available_videos": _collect("scenes", "mp4"),
         "available_posters": _collect("logos", "png") + _collect("logos", "webp"),
         "available_icons": _collect("icos", "ico") + _collect("icos", "png"),
+        "available_boxes": _collect("boxes", "png"),
     }
 
 
