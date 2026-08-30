@@ -91,8 +91,10 @@ function HomeStage({ onGoGames }: HomeStageProps) {
   const games = useGamesStore((state) => state.games);
   const activeId = useGamesStore((state) => state.activeId);
   const setActive = useGamesStore((state) => state.setActive);
+  const reorderDock = useGamesStore((state) => state.reorderDock);
   const [launching, setLaunching] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [draggedId, setDraggedId] = useState<string | null>(null);
 
   if (games.length === 0) {
     return <EmptyState onAdd={onGoGames} />;
@@ -107,6 +109,31 @@ function HomeStage({ onGoGames }: HomeStageProps) {
     window.setTimeout(() => setLaunching(false), 4000);
   }
   const dock = games.filter((game) => game.show_on_main);
+  const canReorder = dock.length > 1;
+
+  function handleDragStart(event: React.DragEvent, id: string) {
+    if (!canReorder) return;
+    setDraggedId(id);
+    event.dataTransfer.effectAllowed = "move";
+  }
+
+  function handleDragOver(event: React.DragEvent) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+  }
+
+  function handleDrop(event: React.DragEvent, targetId: string) {
+    event.preventDefault();
+    if (!draggedId || draggedId === targetId || !canReorder) return;
+    const fromIdx = dock.findIndex((g) => g.id === draggedId);
+    const toIdx = dock.findIndex((g) => g.id === targetId);
+    if (fromIdx === -1 || toIdx === -1) return;
+    const next = [...dock];
+    const [moved] = next.splice(fromIdx, 1);
+    next.splice(toIdx, 0, moved);
+    void reorderDock(next.map((g) => g.id));
+    setDraggedId(null);
+  }
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-(--bg)">
@@ -153,7 +180,14 @@ function HomeStage({ onGoGames }: HomeStageProps) {
           {dock.map((game) => (
             <button
               key={game.id}
-              className={`group relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border bg-[linear-gradient(160deg,var(--bg-elevated),var(--bg-card))] transition-transform duration-200 hover:-translate-y-2.5 hover:scale-110 hover:shadow-[0_10px_24px_rgba(0,0,0,0.4),0_0_0_1px_var(--accent-glow)] cursor-pointer ${
+              draggable={canReorder}
+              onDragStart={(event) => handleDragStart(event, game.id)}
+              onDragOver={handleDragOver}
+              onDrop={(event) => handleDrop(event, game.id)}
+              onDragEnd={() => setDraggedId(null)}
+              className={`group relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border bg-[linear-gradient(160deg,var(--bg-elevated),var(--bg-card))] transition-transform duration-200 hover:-translate-y-2.5 hover:scale-110 hover:shadow-[0_10px_24px_rgba(0,0,0,0.4),0_0_0_1px_var(--accent-glow)] ${
+                canReorder ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
+              } ${draggedId === game.id ? "opacity-40 scale-95" : ""} ${
                 game.id === active.id ? "border-(--accent)" : "border-(--border-strong)"
               }`}
               onClick={() => setActive(game.id)}
