@@ -3,6 +3,7 @@ import { api } from "@/services/api";
 import { useGamesStore } from "@/store/gamesStore";
 import { toDisplaySrc } from "@/utils/asset";
 import { Select, type SelectOption } from "@/components/ui/Select";
+import { Checkbox } from "@/components/ui/Checkbox";
 import type { Game, GameInput } from "@/types/pywebview";
 
 interface AddGameModalProps {
@@ -270,16 +271,7 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
               </div>
             </div>
 
-            <label className="flex items-center gap-2 text-[13px] text-(--text-soft) cursor-pointer">
-              <input
-                type="checkbox"
-                checked={showOnMain}
-                onChange={(event) => setShowOnMain(event.target.checked)}
-                style={{ accentColor: "var(--primary)" }}
-                className="cursor-pointer"
-              />
-              Mostrar en la pantalla de inicio
-            </label>
+            <Checkbox checked={showOnMain} onChange={setShowOnMain} label="Mostrar en la pantalla de inicio" />
           </div>
         </div>
 
