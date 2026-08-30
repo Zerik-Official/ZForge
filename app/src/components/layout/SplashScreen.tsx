@@ -1,94 +1,79 @@
-/**
- * SplashScreen
- *
- * Shown on startup before the main layout appears.
- * Lifecycle:
- *   1. Renders immediately — logo animates in, spinner visible.
- *   2. Once the pywebview bridge connects, useBootEvents starts
- *      receiving backend messages and progress updates.
- *   3. When the backend emits boot_done, the bar hits 100 %,
- *      and the splash fades out via CSS transition.
- *
- * The component stays mounted during the fade-out (opacity → 0)
- * and is unmounted by the parent once `onDone` fires.
- *
- * Props:
- *   bridgeReady  — whether the pywebview bridge is callable.
- *   step         — latest boot step { message, percent } from the backend.
- *   bootDone     — true once the backend signals completion.
- *   onDone       — called after the fade-out animation ends.
- */
-
 import { useEffect, useState, useRef } from "react";
 import type { BootStep } from "@/hooks/useBootEvents";
-import "@/styles/splash.css";
 
+/**
+ * Properties for the {@link SplashScreen} component.
+ */
 interface SplashScreenProps {
+  /** Whether the pywebview bridge connection is established and ready. */
   bridgeReady: boolean;
+  /** Latest boot lifecycle step containing the status message and completion percentage. */
   step: BootStep;
+  /** Flag indicating whether the backend has signaled completion of the boot sequence. */
   bootDone: boolean;
+  /** Callback fired once the component's fade-out transition finishes. */
   onDone: () => void;
 }
 
+/**
+ * Startup splash screen displayed before the main application layout mounts.
+ * 
+ * Lifecycle:
+ * 1. Renders immediately with the logo animating in and a loading spinner.
+ * 2. Once the bridge is ready, progress updates and text steps update dynamically.
+ * 3. When `bootDone` is true, the bar hits 100% and triggers a smooth fade-out.
+ *
+ * @example
+ * ```tsx
+ * <SplashScreen * bootDone="{isBootDone}" bridgeReady="{bridgeReady}" onDone="{()" step="{bootStep}"> setShowSplash(false)} 
+ * />
+ * ```
+ */
 export function SplashScreen({
   bridgeReady,
   step,
   bootDone,
   onDone,
 }: SplashScreenProps) {
-  /** Controls the CSS fade-out class. */
+  /** Controls the CSS opacity fade-out state. */
   const [hiding, setHiding] = useState(false);
 
-  /**
-   * Tracks the message key so React re-mounts the element on every new
-   * message, re-triggering the CSS entry animation.
-   */
+  /** Tracks the message key so React remounts the element on every new message, re-triggering entry animations. */
   const msgKeyRef = useRef(0);
   const [msgKey, setMsgKey] = useState(0);
 
-  // Bump the key whenever the message changes so the animation replays.
   const prevMsg = useRef(step.message);
   if (step.message !== prevMsg.current) {
     prevMsg.current = step.message;
     msgKeyRef.current += 1;
   }
 
-  // Sync the key to state on every render (safe — same value if no change).
   useEffect(() => {
     setMsgKey(msgKeyRef.current);
   }, [step.message]);
 
-  // Kick off fade-out when boot is done.
   useEffect(() => {
     if (!bootDone) return;
-
-    // Small pause at 100 % so the user sees it complete before hiding.
     const delay = setTimeout(() => setHiding(true), 600);
     return () => clearTimeout(delay);
   }, [bootDone]);
 
-  // Fire onDone after the CSS transition finishes.
   const handleTransitionEnd = () => {
     if (hiding) onDone();
   };
 
   return (
     <div
-      className={`splash${hiding ? " splash--hidden" : ""}`}
+      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-(--bg) transition-opacity duration-500 ${
+        hiding ? "opacity-0 pointer-events-none" : "opacity-100"
+      }`}
       onTransitionEnd={handleTransitionEnd}
     >
       {/* ── Center content ──────────────────────────────────────── */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "24px",
-        }}
-      >
+      <div className="flex flex-col items-center gap-6">
         {/* Logo */}
         <img
-          className="splash__logo"
+          className="w-20 h-20 animate-fade-in select-none"
           src="/assets/app/logo.svg"
           alt="ZForge"
           draggable={false}
@@ -96,34 +81,27 @@ export function SplashScreen({
 
         {/* Spinner — hidden once the bridge is ready and messages start */}
         <div
-          className={`splash__spinner${bridgeReady ? " splash__spinner--hidden" : ""}`}
+          className={`w-6 h-6 border-2 border-(--border-strong) border-t-(--primary) rounded-full animate-spin transition-opacity duration-300 ${
+            bridgeReady ? "opacity-0 pointer-events-none" : "opacity-100"
+          }`}
         />
 
         {/* Messages */}
-        <div className="splash__messages">
-          <p key={msgKey} className="splash__message">
+        <div className="h-6 flex items-center justify-center">
+          <p
+            key={msgKey}
+            className="text-[13px] text-(--text-soft) animate-[fadeIn_0.2s_ease_both]"
+          >
             {step.message}
           </p>
         </div>
       </div>
 
       {/* ── Bottom: progress bar ────────────────────────────────── */}
-      <div
-        style={{
-          position: "absolute",
-          bottom: "40px",
-          left: "50%",
-          transform: "translateX(-50%)",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "10px",
-          width: "260px",
-        }}
-      >
-        <div className="splash__bar-track">
+      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2.5 w-65">
+        <div className="w-full h-1.5 bg-(--bg-input) rounded-full overflow-hidden border border-(--border-strong)">
           <div
-            className="splash__bar-fill"
+            className="h-full bg-(--primary) transition-all duration-300 ease-out rounded-full"
             style={{ width: `${step.percent}%` }}
           />
         </div>
