@@ -39,8 +39,10 @@ def init_db() -> None:
                 bg_video     TEXT NOT NULL,
                 icon         TEXT NOT NULL,
                 poster       TEXT NOT NULL,
+                box          TEXT NOT NULL DEFAULT '',
                 show_on_main INTEGER NOT NULL DEFAULT 0,
-                created_at   TEXT NOT NULL DEFAULT ''
+                created_at   TEXT NOT NULL DEFAULT '',
+                sort_order   INTEGER NOT NULL DEFAULT 0
             )
             """
         )
@@ -66,9 +68,9 @@ def init_db() -> None:
 
 
 def list_games() -> list[Game]:
-    """Return every saved game, ordered by creation time."""
+    """Return every saved game, ordered by dock position then creation time."""
     with _connect() as conn:
-        rows = conn.execute("SELECT * FROM games ORDER BY created_at ASC").fetchall()
+        rows = conn.execute("SELECT * FROM games ORDER BY sort_order ASC, created_at ASC").fetchall()
     return [Game.from_row(dict(row)) for row in rows]
 
 
@@ -90,12 +92,16 @@ def add_game(game: Game) -> Game:
         The same ``Game`` instance (with its generated id).
     """
     with _connect() as conn:
+        row = conn.execute("SELECT COALESCE(MAX(sort_order), -1) as m FROM games").fetchone()
+        next_order = int(row["m"]) + 1 if row else 0
+        if game.sort_order == 0 and next_order != 0:
+            game.sort_order = next_order
         conn.execute(
             """
             INSERT INTO games
-                (id, name, expansion, exe_path, bg_video, icon, poster,
-                 show_on_main, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (id, name, expansion, exe_path, bg_video, icon, poster, box,
+                 show_on_main, created_at, sort_order)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 game.id,
@@ -105,8 +111,10 @@ def add_game(game: Game) -> Game:
                 game.bg_video,
                 game.icon,
                 game.poster,
+                game.box,
                 1 if game.show_on_main else 0,
                 game.created_at,
+                game.sort_order,
             ),
         )
     return game
@@ -127,7 +135,7 @@ def update_game(game: Game) -> Game:
             """
             UPDATE games SET
                 name = ?, expansion = ?, exe_path = ?, bg_video = ?,
-                icon = ?, poster = ?, show_on_main = ?
+                icon = ?, poster = ?, box = ?, show_on_main = ?, sort_order = ?
             WHERE id = ?
             """,
             (
@@ -137,11 +145,27 @@ def update_game(game: Game) -> Game:
                 game.bg_video,
                 game.icon,
                 game.poster,
+                game.box,
                 1 if game.show_on_main else 0,
+                game.sort_order,
                 game.id,
             ),
         )
     return game
+
+
+def reorder_games(ordered_ids: list[str]) -> None:
+    """
+    Persist a new dock order for games that are shown on the main screen.
+
+    Args:
+        ordered_ids: Game ids in the desired left-to-right order.
+    """
+    if not ordered_ids:
+        return
+    with _connect() as conn:
+        for index, game_id in enumerate(ordered_ids):
+            conn.execute("UPDATE games SET sort_order = ? WHERE id = ?", (index, game_id))
 
 
 def remove_game(game_id: str) -> None:
