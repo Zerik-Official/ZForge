@@ -44,6 +44,8 @@ interface GamesState {
   removeGame: (id: string) => Promise<void>;
   /** Mark a game as active on the main screen and persist the choice. */
   setActive: (id: string) => Promise<void>;
+  /** Persist a new dock order and update local state optimistically. */
+  reorderDock: (orderedIds: string[]) => Promise<void>;
 }
 
 export const useGamesStore = create<GamesState>((set, get) => ({
@@ -93,5 +95,29 @@ export const useGamesStore = create<GamesState>((set, get) => ({
     const next: AppConfig = { ...config, last_active_game: id };
     await api.saveAppConfig(next);
     set({ activeId: id, config: next });
+  },
+
+  async reorderDock(orderedIds) {
+    const { games } = get();
+    const dock = games.filter((g) => g.show_on_main);
+    if (orderedIds.length !== dock.length) return;
+    const orderedDock = orderedIds
+      .map((id) => games.find((g) => g.id === id)!)
+      .filter(Boolean) as typeof games;
+    if (orderedDock.length !== dock.length) return;
+    const dockPositions: number[] = [];
+    games.forEach((g, idx) => {
+      if (g.show_on_main) dockPositions.push(idx);
+    });
+    const newGames = [...games];
+    dockPositions.forEach((pos, idx) => {
+      newGames[pos] = orderedDock[idx];
+    });
+    set({ games: newGames });
+    try {
+      await api.reorderGames(orderedIds);
+    } catch {
+      set({ games });
+    }
   },
 }));
