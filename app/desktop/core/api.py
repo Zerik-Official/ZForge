@@ -10,9 +10,11 @@ import webview
 
 # Project imports
 from desktop.api import launcher_api
+from desktop.core import game_config
 from desktop.models.game import Game, copy_custom_asset, scan_assets
 from desktop.storage import config as config_store
 from desktop.storage import db as db_store
+from desktop.utils import display
 from desktop.utils.logger import log, Tags
 
 
@@ -153,6 +155,11 @@ class Api:
         game = Game.from_payload(payload)
         game.created_at = datetime.now().isoformat()
         db_store.add_game(game)
+        try:
+            db_store.save_game_settings(game.id, game_config.scan_game_config(game.exe_path))
+            log("INFO", Tags.API, f"add_game() seeded settings -> {game.id}")
+        except OSError as exc:
+            log("WARNING", Tags.API, f"add_game() could not scan settings for {game.id}: {exc}")
         log("INFO", Tags.API, f"add_game() -> {game.id} ({game.expansion})")
         return game.to_dict()
 
@@ -210,6 +217,107 @@ class Api:
         current.theme = payload.get("theme", current.theme)
         current.last_active_game = payload.get("last_active_game", current.last_active_game)
         config_store.save_app_config(current)
+        return {"ok": True, "error": None}
+
+    # ── Per-game settings ─────────────────────────────────────────────────
+
+    def get_display_resolution(self) -> dict:
+        """
+        Return the primary monitor's native resolution.
+
+        Returns:
+            Dictionary with ``width`` and ``height`` in pixels.
+        """
+        width, height = display.get_primary_resolution()
+        log("DEBUG", Tags.API, f"get_display_resolution() -> {width}x{height}")
+        return {"width": width, "height": height}
+
+    def get_game_settings(self, game_id: str) -> dict:
+        """
+        Return the saved launcher settings for a game.
+
+        Args:
+            game_id: Identifier of the game.
+
+        Returns:
+            Settings dictionary (empty when nothing is stored yet).
+        """
+        log("DEBUG", Tags.API, f"get_game_settings() -> {game_id}")
+        settings = db_store.get_game_settings(game_id)
+        return settings if settings is not None else {}
+
+    def save_game_settings(self, game_id: str, payload: dict) -> dict:
+        """
+        Persist edited launcher settings for a game.
+
+        Args:
+            game_id: Identifier of the game.
+            payload: Serialised settings dictionary from the frontend.
+
+        Returns:
+            Success envelope.
+        """
+        log("DEBUG", Tags.API, f"save_game_settings() -> {game_id}")
+        db_store.save_game_settings(game_id, payload)
+        return {"ok": True, "error": None}
+
+    def scan_game_config(self, game_id: str) -> dict:
+        """
+        Scan a game's client files and return the detected settings.
+
+        Args:
+            game_id: Identifier of the game.
+
+        Returns:
+            Settings dictionary, or an error envelope when not found.
+        """
+        log("DEBUG", Tags.API, f"scan_game_config() -> {game_id}")
+        game = db_store.get_game(game_id)
+        if game is None:
+            return {"ok": False, "error": "Game not found"}
+        return game_config.scan_game_config(game.exe_path)
+
+    def apply_game_settings(self, game_id: str) -> dict:
+        """
+        Write the saved settings into the game's configuration files.
+
+        Args:
+            game_id: Identifier of the game.
+
+        Returns:
+            Success envelope; ``error`` carries a reason on failure.
+        """
+        log("DEBUG", Tags.API, f"apply_game_settings() -> {game_id}")
+        game = db_store.get_game(game_id)
+        if game is None:
+            return {"ok": False, "error": "Game not found"}
+        settings = db_store.get_game_settings(game_id)
+        if settings is None:
+            return {"ok": False, "error": "No saved settings for this game"}
+        try:
+            game_config.apply_game_settings(settings, game.exe_path)
+        except OSError as exc:
+            return {"ok": False, "error": str(exc)}
+        return {"ok": True, "error": None}
+
+    def pull_game_settings(self, game_id: str) -> dict:
+        """
+        Overwrite the saved settings with what the game files currently hold.
+
+        Args:
+            game_id: Identifier of the game.
+
+        Returns:
+            Success envelope; ``error`` carries a reason on failure.
+        """
+        log("DEBUG", Tags.API, f"pull_game_settings() -> {game_id}")
+        game = db_store.get_game(game_id)
+        if game is None:
+            return {"ok": False, "error": "Game not found"}
+        try:
+            db_store.save_game_settings(game_id, game_config.scan_game_config(game.exe_path))
+        except OSError as exc:
+            return {"ok": False, "error": str(exc)}
         return {"ok": True, "error": None}
 
     # ── Asset pickers ─────────────────────────────────────────────────────
