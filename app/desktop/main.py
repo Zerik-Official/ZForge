@@ -6,6 +6,7 @@ Application entry point.
 import sys
 import threading
 import time
+from datetime import datetime
 from pathlib import Path
 
 # Third-party
@@ -22,6 +23,7 @@ load_dotenv(APP_ROOT / ".env")
 # project imports
 from desktop.config import config
 from desktop.core.api import Api
+from desktop.core import game_config
 from desktop.core.events import emitter
 from desktop.storage import db as db_store
 from desktop.utils.logger import log, Tags
@@ -56,26 +58,82 @@ def _resolve_url() -> str:
     return config.dev_url
 
 
+def _scan_and_compare(game: "db_store.Game") -> dict | None:
+    """
+    Scan a game's client config and reconcile it with the saved settings.
+
+    When the database has no settings yet, the scan result is stored as the
+    initial copy.  When both exist and differ, the newer side is trusted
+    automatically; only when the saved copy is newer do we surface a conflict
+    to the user (who then decides which source of truth wins).
+
+    Args:
+        game: The game to reconcile.
+
+    Returns:
+        A conflict payload for the frontend, or ``None`` when there is nothing
+        to ask about.
+    """
+    saved = db_store.get_game_settings(game.id)
+    scanned = game_config.scan_game_config(game.exe_path)
+
+    if saved is None:
+        db_store.save_game_settings(game.id, scanned)
+        return None
+
+    if game_config.config_file_fingerprint(saved) == game_config.config_file_fingerprint(scanned):
+        return None
+
+    config_wtf = Path(game.exe_path).parent / "WTF" / "Config.wtf"
+    game_mtime = config_wtf.stat().st_mtime if config_wtf.exists() else 0.0
+    db_time = 0.0
+    if saved.get("updated_at"):
+        try:
+            db_time = datetime.fromisoformat(saved["updated_at"]).timestamp()
+        except ValueError:
+            db_time = 0.0
+
+    if db_time >= game_mtime:
+        return {
+            "game_id": game.id,
+            "name": game.name,
+            "expansion": game.expansion,
+            "recommended": "db",
+            "db_settings": saved,
+            "game_settings": scanned,
+        }
+
+    db_store.save_game_settings(game.id, scanned)
+    return None
+
+
 def _boot_sequence() -> None:
     """
-    Example boot sequence — replace with real initialisation logic.
+    Real boot sequence: scan every game and reconcile its saved configuration.
+
     Runs in a background thread so it doesn't block the webview loop.
     """
     # Give the frontend a moment to register the event handlers.
     time.sleep(0.5)
 
-    steps = [
-        ("Initializing core…",        10),
-        ("Loading configuration…",    25),
-        ("Checking client files…",    45),
-        ("Connecting to database…",   65),
-        ("Starting Discord RPC…",     80),
-        ("Almost ready…",             95),
-    ]
+    emitter.boot_message("Inicializando núcleo…", 8)
+    games = db_store.list_games()
+    emitter.boot_message(f"Cargando {len(games)} juego(s)…", 22)
 
-    for message, percent in steps:
-        emitter.boot_message(message, percent)
-        time.sleep(3)
+    conflicts: list[dict] = []
+    total = max(1, len(games))
+    for index, game in enumerate(games):
+        emitter.boot_message(f"Escaneando configuración de {game.name}…", 30 + int(55 * (index + 1) / total))
+        try:
+            conflict = _scan_and_compare(game)
+            if conflict is not None:
+                conflicts.append(conflict)
+        except OSError as exc:
+            log("ERROR", Tags.SETTINGS, f"scan fallido para {game.name}: {exc}")
+
+    emitter.boot_message("Finalizando…", 92)
+    for conflict in conflicts:
+        emitter.emit("config_conflict", conflict)
 
     emitter.boot_done()
 
