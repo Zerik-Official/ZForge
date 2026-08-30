@@ -64,6 +64,16 @@ export interface AssetManifest {
   available_icons: string[];
 }
 
+/** A selectable server (or user-saved custom realmlist) in the realm picker. */
+export interface ServerEntry {
+  name: string;
+  logo: string | null;
+  realmlists: string[];
+  realms: string[];
+  website: string;
+  custom: boolean;
+}
+
 /** A new or edited game before it receives a backend-generated id. */
 export type GameInput = Omit<Game, "id" | "created_at">;
 
@@ -110,6 +120,11 @@ declare global {
         list_assets(): Promise<AssetManifest>;
         select_exe(): Promise<string | null>;
         select_custom_asset(kind: "icos" | "logos" | "scenes"): Promise<string | null>;
+
+        // Server / realmlist catalogue
+        list_servers(): Promise<ServerEntry[]>;
+        save_custom_server(payload: { realmlist: string; name?: string; realm?: string }): Promise<ApiResult>;
+        add_custom_realm(realmlist: string, realm: string): Promise<ApiResult>;
       };
     };
     
