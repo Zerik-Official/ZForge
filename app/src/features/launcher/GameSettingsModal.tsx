@@ -3,6 +3,7 @@ import { api } from "@/services/api";
 import type { Game, GameSettings } from "@/types/pywebview";
 import { Select, type SelectOption } from "@/components/ui/Select";
 import { Checkbox } from "@/components/ui/Checkbox";
+import { Modal, ModalHeader, ModalFooter } from "@/components/ui/Modal";
 
 interface GameSettingsModalProps {
   open: boolean;
@@ -133,30 +134,10 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
   }
 
   return (
-    <div
-      className="modal-backdrop fade-in fixed inset-0 z-50 flex items-center justify-center p-6"
-      onClick={onClose}
-    >
-      <div
-        className="modal-card pop-in flex h-135 w-full max-w-3xl flex-col overflow-hidden rounded-2xl"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="flex shrink-0 items-center justify-between border-b border-(--border) px-5 py-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-(--border-strong) bg-(--primary-soft)">
-              <i className="fa-solid fa-gear text-[13px] text-(--primary-hover)" />
-            </div>
-            <div className="flex flex-col">
-              <h2 className="text-[14.5px] font-semibold text-(--text)">Configuración</h2>
-              <span className="text-[11px] text-(--muted)">{game.name}</span>
-            </div>
-          </div>
-          <button className="icon-btn cursor-pointer" onClick={onClose}>
-            <i className="fa-solid fa-xmark text-[13px]" />
-          </button>
-        </div>
+    <Modal open={open} onClose={onClose} className="h-135 w-full max-w-3xl">
+      <ModalHeader icon="fa-solid fa-gear" title="Configuración" subtitle={game.name} onClose={onClose} />
 
-        <div className="flex min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1">
           <aside className="flex w-44 shrink-0 flex-col gap-1 border-r border-(--border) bg-(--bg-soft) p-3">
             {CATEGORIES.map((cat) => (
               <button
@@ -309,27 +290,26 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
           </section>
         </div>
 
-        <div className="flex shrink-0 items-center justify-end gap-2 border-t border-(--border) px-6 py-4">
-          {error && <span className="mr-auto text-[12px] text-(--danger)">{error}</span>}
-          <button className="ghost-btn rounded-lg px-4 py-2 text-[13px] cursor-pointer" onClick={onClose}>
-            Cancelar
-          </button>
-          <button
-            className="ghost-btn rounded-lg px-4 py-2 text-[13px] cursor-pointer"
-            onClick={() => handleSave(false)}
-            disabled={busy || loading}
-          >
-            Guardar
-          </button>
-          <button
-            className="play-btn rounded-lg px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-40 cursor-pointer"
-            onClick={() => handleSave(true)}
-            disabled={busy || loading}
-          >
-            {busy ? "Aplicando..." : "Guardar y aplicar"}
-          </button>
-        </div>
-      </div>
-    </div>
+      <ModalFooter>
+        {error && <span className="mr-auto text-[12px] text-(--danger)">{error}</span>}
+        <button className="ghost-btn rounded-lg px-4 py-2 text-[13px] cursor-pointer" onClick={onClose}>
+          Cancelar
+        </button>
+        <button
+          className="ghost-btn rounded-lg px-4 py-2 text-[13px] cursor-pointer"
+          onClick={() => handleSave(false)}
+          disabled={busy || loading}
+        >
+          Guardar
+        </button>
+        <button
+          className="play-btn rounded-lg px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-40 cursor-pointer"
+          onClick={() => handleSave(true)}
+          disabled={busy || loading}
+        >
+          {busy ? "Aplicando..." : "Guardar y aplicar"}
+        </button>
+      </ModalFooter>
+    </Modal>
   );
 }
