@@ -129,6 +129,11 @@ export const api = {
     return bridge().remove_game(id);
   },
 
+  /** Persist a new dock order. */
+  reorderGames(orderedIds: string[]): Promise<ApiResult> {
+    return bridge().reorder_games(orderedIds);
+  },
+
   // ── Per-game settings ─────────────────────────────────────────────────
 
   /** Fetch the saved settings for a game. */
