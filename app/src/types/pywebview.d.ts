@@ -30,6 +30,32 @@ export interface AppConfig {
   last_active_game: string | null;
 }
 
+/** Per-game launcher configuration managed from the settings modal. */
+export interface GameSettings {
+  launch_args: string;
+  launch_priority: "normal" | "high" | "realtime";
+  clear_cache_on_launch: boolean;
+  realm_list: string;
+  realm_name: string;
+  refresh_rate: number;
+  resolution: string;
+  windowed: boolean;
+  window_resize_lock: boolean;
+  window_maximized: boolean;
+  vsync: boolean;
+  multisample: number;
+}
+
+/** Payload emitted on boot when a game's saved and actual config diverge. */
+export interface ConfigConflict {
+  game_id: string;
+  name: string;
+  expansion: string;
+  recommended: "db" | "game";
+  db_settings: GameSettings;
+  game_settings: GameSettings;
+}
+
 /** Catalogue of bundled media the UI can offer when adding a game. */
 export interface AssetManifest {
   expansions: Record<string, { name: string; video: string; poster: string; icon: string }>;
@@ -68,6 +94,14 @@ declare global {
         update_game(payload: Game): Promise<Game>;
         remove_game(id: string): Promise<ApiResult>;
 
+        // Per-game settings
+        get_game_settings(game_id: string): Promise<GameSettings>;
+        save_game_settings(game_id: string, payload: GameSettings): Promise<ApiResult>;
+        scan_game_config(game_id: string): Promise<GameSettings>;
+        apply_game_settings(game_id: string): Promise<ApiResult>;
+        pull_game_settings(game_id: string): Promise<ApiResult>;
+        get_display_resolution(): Promise<{ width: number; height: number }>;
+
         // Application config
         get_app_config(): Promise<AppConfig>;
         save_app_config(payload: AppConfig): Promise<ApiResult>;
@@ -81,6 +115,7 @@ declare global {
     
     __zforge_boot_message?: (message: string, percent: number) => void;
     __zforge_boot_done?: () => void;
+    __zforge_config_conflict?: (conflict: ConfigConflict) => void;
   }
 }
 
