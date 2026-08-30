@@ -1,4 +1,4 @@
-import type { ApiResult, Game, GameInput, AppConfig, AssetManifest } from "@/types/pywebview";
+import type { ApiResult, Game, GameInput, AppConfig, AssetManifest, GameSettings } from "@/types/pywebview";
 
 let _bridgeReady = false;
 
@@ -127,6 +127,38 @@ export const api = {
   /** Delete a game by id. */
   removeGame(id: string): Promise<ApiResult> {
     return bridge().remove_game(id);
+  },
+
+  // ── Per-game settings ─────────────────────────────────────────────────
+
+  /** Fetch the saved settings for a game. */
+  getGameSettings(gameId: string): Promise<GameSettings> {
+    return bridge().get_game_settings(gameId);
+  },
+
+  /** Persist edited settings for a game. */
+  saveGameSettings(gameId: string, payload: GameSettings): Promise<ApiResult> {
+    return bridge().save_game_settings(gameId, payload);
+  },
+
+  /** Scan a game's client files and return the detected settings. */
+  scanGameConfig(gameId: string): Promise<GameSettings> {
+    return bridge().scan_game_config(gameId);
+  },
+
+  /** Write the saved settings into the game's configuration files. */
+  applyGameSettings(gameId: string): Promise<ApiResult> {
+    return bridge().apply_game_settings(gameId);
+  },
+
+  /** Overwrite the saved settings with the game's current files. */
+  pullGameSettings(gameId: string): Promise<ApiResult> {
+    return bridge().pull_game_settings(gameId);
+  },
+
+  /** Fetch the primary monitor's native resolution. */
+  getDisplayResolution(): Promise<{ width: number; height: number }> {
+    return bridge().get_display_resolution();
   },
 
   // ── Application config ───────────────────────────────────────────────
