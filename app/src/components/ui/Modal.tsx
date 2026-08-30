@@ -9,7 +9,18 @@ interface ModalProps {
   open: boolean;
   /** Callback fired when the modal requests to close (via backdrop, escape key, or close button). */
   onClose: () => void;
-  /** Width/height utility classes for the modal card container. @default "w-full max-w-lg max-h-[88vh]" */
+  /**
+   * Width/height utility classes for the modal card container. @default "w-full max-w-lg max-h-[88vh]"
+   *
+   * Prefer a fixed height (e.g. "h-135") over relying only on `max-h-[...]`.
+   * The embedded WebView2/Edge Chromium runtime used by the desktop app has
+   * shown stale-paint glitches specifically when a scrollable flex region's
+   * height is resolved dynamically from content (via `flex-1 min-h-0` under
+   * a `max-height` cap) rather than starting from a fixed box. A fixed
+   * height sidesteps that recalculation entirely. Keep a `max-h-[...]` too
+   * as a safety net for small screens; it only kicks in when the fixed
+   * height would overflow the viewport.
+   */
   className?: string;
   /** The content elements rendered inside the modal body/structure. */
   children: ReactNode;
@@ -49,7 +60,7 @@ export function Modal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6 backdrop-blur-sm animate-[fadeIn_0.18s_ease_both]"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6 animate-[fadeIn_0.18s_ease_both]"
       onClick={closeOnBackdropClick ? onClose : undefined}
     >
       <div
