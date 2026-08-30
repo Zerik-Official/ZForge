@@ -1,23 +1,46 @@
 import { useEffect, useRef, useState } from "react";
 
+/**
+ * A single option in the {@link Select} dropdown.
+ */
 export interface SelectOption {
+  /** Internal value sent to the parent state when selected. */
   value: string;
+  /** Label shown to the user in the dropdown list. */
   label: string;
+  /** Optional image shown alongside the label, such as a game or server logo. */
   thumb?: string;
 }
 
+/**
+ * Properties for the {@link Select} component.
+ */
 interface SelectProps {
+  /** Currently selected value. */
   value: string;
+  /** List of options displayed in the dropdown menu. */
   options: SelectOption[];
+  /** Callback fired when a different option is selected. */
   onChange: (value: string) => void;
+  /** Text shown when no option is currently selected. @default "Seleccionar" */
   placeholder?: string;
 }
 
 /**
- * Themed dropdown used instead of a native <select>.
+ * Themed dropdown used instead of a native `<select>`.
  *
  * Native option popups can't be reliably restyled across platforms, so this
  * renders its own listbox and supports an optional thumbnail per option.
+ *
+ * @example
+ * ```tsx
+ * <Select
+ *   value={selectedRegion}
+ *   options={regions}
+ *   onChange={setSelectedRegion}
+ *   placeholder="Seleccionar región"
+ * />
+ * ```
  */
 export function Select({ value, options, onChange, placeholder = "Seleccionar" }: SelectProps) {
   const [open, setOpen] = useState(false);
