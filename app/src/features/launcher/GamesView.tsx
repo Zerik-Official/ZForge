@@ -36,9 +36,6 @@ export function GamesView() {
     <div className="flex h-full flex-col gap-5 p-8">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-(--text)">Juegos</h1>
-        <button className="play-btn rounded-lg px-4 py-2 cursor-pointer" onClick={openCreate}>
-          <i className="fa-solid fa-plus mr-1" /> Añadir juego
-        </button>
       </div>
 
       {games.length === 0 ? (
@@ -50,12 +47,12 @@ export function GamesView() {
           <span className="text-sm">Aún no tienes juegos. Haz clic para añadir uno.</span>
         </button>
       ) : (
-        <div className="flex flex-wrap gap-4">
+        <div className="flex flex-wrap gap-6">
           {games.map((game) => (
             <GameCard key={game.id} game={game} onEdit={openEdit} onRemove={handleRemove} />
           ))}
           <button
-            className="flex h-42 w-50 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-(--border-strong) bg-(--bg-card) text-(--muted) transition-colors hover:border-(--accent) hover:text-(--text) cursor-pointer"
+            className="flex h-53.75 w-37 flex-col items-center justify-center gap-2 rounded-[10px] border border-dashed border-(--border-strong) bg-(--bg-card) text-(--muted) transition-colors hover:border-(--accent) hover:text-(--text) cursor-pointer"
             onClick={openCreate}
           >
             <i className="fa-solid fa-plus text-2xl" />
