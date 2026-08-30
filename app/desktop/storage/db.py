@@ -53,6 +53,16 @@ def init_db() -> None:
             )
             """
         )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS custom_servers (
+                realmlist  TEXT PRIMARY KEY,
+                name       TEXT NOT NULL,
+                realms     TEXT NOT NULL DEFAULT '[]',
+                created_at TEXT NOT NULL DEFAULT ''
+            )
+            """
+        )
 
 
 def list_games() -> list[Game]:
@@ -186,4 +196,90 @@ def save_game_settings(game_id: str, settings: dict[str, Any]) -> None:
                 updated_at = excluded.updated_at
             """,
             (game_id, json.dumps(settings), datetime.now().isoformat()),
+        )
+
+
+def list_custom_servers() -> list[dict[str, Any]]:
+    """
+    Return every user-saved custom realmlist, with its realms parsed.
+
+    Returns:
+        List of dictionaries with ``realmlist``, ``name`` and ``realms`` keys.
+    """
+    with _connect() as conn:
+        rows = conn.execute("SELECT * FROM custom_servers ORDER BY created_at ASC").fetchall()
+    result: list[dict[str, Any]] = []
+    for row in rows:
+        try:
+            realms = json.loads(row["realms"])
+        except (json.JSONDecodeError, TypeError):
+            realms = []
+        result.append({"realmlist": row["realmlist"], "name": row["name"], "realms": realms})
+    return result
+
+
+def get_custom_server(realmlist: str) -> dict[str, Any] | None:
+    """
+    Return a single custom realmlist row, or ``None`` when not saved.
+
+    Args:
+        realmlist: Realmlist string to look up.
+
+    Returns:
+        Dictionary with ``realmlist``, ``name`` and ``realms``, or ``None``.
+    """
+    with _connect() as conn:
+        row = conn.execute(
+            "SELECT * FROM custom_servers WHERE realmlist = ?", (realmlist,)
+        ).fetchone()
+    if row is None:
+        return None
+    try:
+        realms = json.loads(row["realms"])
+    except (json.JSONDecodeError, TypeError):
+        realms = []
+    return {"realmlist": row["realmlist"], "name": row["name"], "realms": realms}
+
+
+def add_custom_server(realmlist: str, name: str, realms: list[str]) -> None:
+    """
+    Persist a brand-new custom realmlist globally.
+
+    A no-op when the realmlist is already saved, so this is safe to call
+    without checking existence first.
+
+    Args:
+        realmlist: The realmlist string the user typed.
+        name: Display name for the entry (defaults to the realmlist itself).
+        realms: Initial list of known realms for this realmlist.
+    """
+    with _connect() as conn:
+        conn.execute(
+            """
+            INSERT OR IGNORE INTO custom_servers (realmlist, name, realms, created_at)
+            VALUES (?, ?, ?, ?)
+            """,
+            (realmlist, name, json.dumps(realms), datetime.now().isoformat()),
+        )
+
+
+def add_realm_to_custom_server(realmlist: str, realm: str) -> None:
+    """
+    Append a new realm to an already-saved custom realmlist.
+
+    A no-op when the realmlist isn't a saved custom entry, or when the realm
+    is already known for it.
+
+    Args:
+        realmlist: The custom realmlist to update.
+        realm: New realm name to add.
+    """
+    existing = get_custom_server(realmlist)
+    if existing is None or realm in existing["realms"]:
+        return
+    realms = [*existing["realms"], realm]
+    with _connect() as conn:
+        conn.execute(
+            "UPDATE custom_servers SET realms = ? WHERE realmlist = ?",
+            (json.dumps(realms), realmlist),
         )
