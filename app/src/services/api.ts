@@ -1,4 +1,4 @@
-import type { ApiResult, Game, GameInput, AppConfig, AssetManifest, GameSettings } from "@/types/pywebview";
+import type { ApiResult, Game, GameInput, AppConfig, AssetManifest, GameSettings, ServerEntry } from "@/types/pywebview";
 
 let _bridgeReady = false;
 
@@ -188,5 +188,22 @@ export const api = {
   /** Pick and import a custom media file of the given kind. */
   selectCustomAsset(kind: "icos" | "logos" | "scenes"): Promise<string | null> {
     return bridge().select_custom_asset(kind);
+  },
+
+  // ── Server / realmlist catalogue ─────────────────────────
+
+  /** Fetch the combined bundled + custom server/realmlist catalogue. */
+  listServers(): Promise<ServerEntry[]> {
+    return bridge().list_servers();
+  },
+
+  /** Persist a brand-new custom realmlist globally, for future autocomplete. */
+  saveCustomServer(payload: { realmlist: string; name?: string; realm?: string }): Promise<ApiResult> {
+    return bridge().save_custom_server(payload);
+  },
+
+  /** Append a new realm to an already-saved custom realmlist. */
+  addCustomRealm(realmlist: string, realm: string): Promise<ApiResult> {
+    return bridge().add_custom_realm(realmlist, realm);
   },
 } as const;
