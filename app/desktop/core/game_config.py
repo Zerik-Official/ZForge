@@ -7,14 +7,16 @@ they diverge we let the user decide which side wins.  These helpers bridge the
 :class:`GameSettings` model and the game's ``Config.wtf`` / ``realmlist.wtf``.
 """
 
+# Standard library
 from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
 
+# Project imports
 from desktop.models.game_settings import GameSettings
+from desktop.services.config import wtf
 from desktop.utils import display
-from desktop.utils import wtf
 from desktop.utils.logger import log, Tags
 
 
