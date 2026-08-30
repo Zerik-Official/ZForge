@@ -44,7 +44,6 @@ artifacts/
 # =========================
 # APP DATA
 # =========================
-cache/
 downloads/
 temp/
 logs/
@@ -57,7 +56,6 @@ logs/
 # WOW DATA
 # =========================
 Client/
-AddOns/
 Interface/
 WTF/
 Data/
