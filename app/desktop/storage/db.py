@@ -6,11 +6,14 @@ owns the schema and the CRUD operations; higher layers (API bridge, future
 services) call into it.
 """
 
+# Standard library
 from __future__ import annotations
-
+import json
 import sqlite3
+from datetime import datetime
 from typing import Any
 
+# Project imports
 from desktop.models.game import Game
 from desktop.utils.paths import db_path
 
@@ -24,7 +27,7 @@ def _connect() -> sqlite3.Connection:
 
 
 def init_db() -> None:
-    """Create the ``games`` table if it does not exist yet."""
+    """Create the ``games`` and ``game_settings`` tables if they do not exist yet."""
     with _connect() as conn:
         conn.execute(
             """
@@ -38,6 +41,15 @@ def init_db() -> None:
                 poster       TEXT NOT NULL,
                 show_on_main INTEGER NOT NULL DEFAULT 0,
                 created_at   TEXT NOT NULL DEFAULT ''
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS game_settings (
+                game_id    TEXT PRIMARY KEY,
+                settings   TEXT NOT NULL,
+                updated_at TEXT NOT NULL DEFAULT ''
             )
             """
         )
@@ -131,3 +143,47 @@ def remove_game(game_id: str) -> None:
     """
     with _connect() as conn:
         conn.execute("DELETE FROM games WHERE id = ?", (game_id,))
+        conn.execute("DELETE FROM game_settings WHERE game_id = ?", (game_id,))
+
+
+def get_game_settings(game_id: str) -> dict[str, Any] | None:
+    """
+    Return the saved settings for a game, or ``None`` when absent.
+
+    Args:
+        game_id: Identifier of the game.
+
+    Returns:
+        Parsed settings dictionary, or ``None`` if nothing is stored yet.
+    """
+    with _connect() as conn:
+        row = conn.execute(
+            "SELECT settings FROM game_settings WHERE game_id = ?", (game_id,)
+        ).fetchone()
+    if row is None:
+        return None
+    try:
+        return json.loads(row["settings"])
+    except (json.JSONDecodeError, TypeError):
+        return None
+
+
+def save_game_settings(game_id: str, settings: dict[str, Any]) -> None:
+    """
+    Insert or replace the saved settings for a game.
+
+    Args:
+        game_id: Identifier of the game.
+        settings: Serialised settings dictionary to persist.
+    """
+    with _connect() as conn:
+        conn.execute(
+            """
+            INSERT INTO game_settings (game_id, settings, updated_at)
+            VALUES (?, ?, ?)
+            ON CONFLICT(game_id) DO UPDATE SET
+                settings = excluded.settings,
+                updated_at = excluded.updated_at
+            """,
+            (game_id, json.dumps(settings), datetime.now().isoformat()),
+        )
