@@ -20,8 +20,10 @@ export interface Game {
   bg_video: string;
   icon: string;
   poster: string;
+  box: string;
   show_on_main: boolean;
   created_at: string;
+  sort_order: number;
 }
 
 /** Global launcher preferences persisted in config.json. */
@@ -58,10 +60,11 @@ export interface ConfigConflict {
 
 /** Catalogue of bundled media the UI can offer when adding a game. */
 export interface AssetManifest {
-  expansions: Record<string, { name: string; video: string; poster: string; icon: string }>;
+  expansions: Record<string, { name: string; video: string; poster: string; icon: string; box: string }>;
   available_videos: string[];
   available_posters: string[];
   available_icons: string[];
+  available_boxes: string[];
 }
 
 /** A selectable server (or user-saved custom realmlist) in the realm picker. */
@@ -75,7 +78,7 @@ export interface ServerEntry {
 }
 
 /** A new or edited game before it receives a backend-generated id. */
-export type GameInput = Omit<Game, "id" | "created_at">;
+export type GameInput = Omit<Game, "id" | "created_at" | "sort_order" | "box"> & Partial<Pick<Game, "sort_order" | "box">>;
 
 declare global {
   interface Window {
@@ -103,6 +106,7 @@ declare global {
         add_game(payload: GameInput): Promise<Game>;
         update_game(payload: Game): Promise<Game>;
         remove_game(id: string): Promise<ApiResult>;
+        reorder_games(ordered_ids: string[]): Promise<ApiResult>;
 
         // Per-game settings
         get_game_settings(game_id: string): Promise<GameSettings>;
