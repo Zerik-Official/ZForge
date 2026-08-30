@@ -29,6 +29,7 @@ interface GameFormState {
   bgVideo: string;
   icon: string;
   poster: string;
+  box: string;
   showOnMain: boolean;
 }
 
@@ -39,6 +40,7 @@ const initialFormState: GameFormState = {
   bgVideo: "",
   icon: "",
   poster: "",
+  box: "",
   showOnMain: true,
 };
 
@@ -65,6 +67,7 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
         bgVideo: initial.bg_video,
         icon: initial.icon,
         poster: initial.poster,
+        box: initial.box || defaults?.box || "",
         showOnMain: initial.show_on_main,
       });
     } else {
@@ -75,6 +78,7 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
         bgVideo: defaults?.video ?? "",
         icon: defaults?.icon ?? "",
         poster: defaults?.poster ?? "",
+        box: defaults?.box ?? "",
         showOnMain: true,
       });
     }
@@ -90,6 +94,7 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
       bgVideo: def ? def.video : prev.bgVideo,
       icon: def ? def.icon : prev.icon,
       poster: def ? def.poster : prev.poster,
+      box: def ? (def.box as string) : prev.box,
     }));
   }
 
@@ -122,6 +127,7 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
       bg_video: form.bgVideo,
       icon: form.icon,
       poster: form.poster,
+      box: form.box,
       show_on_main: form.showOnMain,
     };
     try {
@@ -144,7 +150,7 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
     ? Object.entries(assets.expansions).map(([key, value]) => ({
         value: key,
         label: value.name,
-        thumb: toDisplaySrc(value.icon),
+        thumb: toDisplaySrc((value as { box: string }).box || value.poster),
       }))
     : [];
 
@@ -266,22 +272,25 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
                 Vista previa
               </span>
 
-              <div className="flex items-center gap-3 rounded-xl border border-(--border-strong) bg-(--bg-input) p-3">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-(--border-strong) bg-(--bg-card)">
-                  {form.icon ? (
-                    <img src={toDisplaySrc(form.icon)} alt="" className="h-full w-full object-contain p-1.5" />
-                  ) : (
-                    <i className="fa-solid fa-gamepad text-(--muted-2)" />
-                  )}
-                </div>
-                <div className="h-14 w-24 shrink-0 overflow-hidden rounded-lg border border-(--border-strong) bg-(--bg-card)">
-                  {form.poster ? <img src={toDisplaySrc(form.poster)} alt="" className="h-full w-full object-cover" /> : null}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[13px] font-semibold text-(--text)">{form.name || "Nombre del juego"}</p>
-                  <p className="text-[11px] uppercase tracking-wide text-(--muted)">{form.expansion}</p>
-                </div>
+            <div className="flex items-center gap-3 rounded-xl border border-(--border-strong) bg-(--bg-input) p-3">
+              <div className="flex h-19 w-13 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-(--border-strong) bg-black">
+                {form.box ? (
+                  <img src={toDisplaySrc(form.box)} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <i className="fa-solid fa-gamepad text-(--muted-2)" />
+                )}
               </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[13px] font-semibold text-(--text)">{form.name || "Nombre del juego"}</p>
+                <p className="text-[11px] uppercase tracking-wide text-(--muted)">{form.expansion}</p>
+                <p className="mt-1 flex items-center gap-1.5 text-[10px] text-(--muted-2)">
+                  <span className="h-4 w-4 overflow-hidden rounded bg-(--bg-card) p-0.5">
+                    {form.icon ? <img src={toDisplaySrc(form.icon)} alt="" className="h-full w-full object-contain" /> : null}
+                  </span>
+                  icono
+                </p>
+              </div>
+            </div>
 
               <Checkbox checked={form.showOnMain} onChange={(val) => setForm((prev) => ({ ...prev, showOnMain: val }))} label="Mostrar en la pantalla de inicio" />
             </div>
