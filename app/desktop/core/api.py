@@ -11,6 +11,7 @@ import webview
 # Project imports
 from desktop.api import launcher_api
 from desktop.core import game_config
+from desktop.models import server as server_catalog
 from desktop.models.game import Game, copy_custom_asset, scan_assets
 from desktop.storage import config as config_store
 from desktop.storage import db as db_store
@@ -377,3 +378,51 @@ class Api:
         if not src:
             return None
         return copy_custom_asset(kind, str(src))
+
+    # ── Server / realmlist catalogue ──────────────────────────────
+
+    def list_servers(self) -> list[dict]:
+        """
+        Return the combined bundled + user-saved custom server catalogue.
+
+        Returns:
+            List of serialised server entries for the realm-list picker.
+        """
+        return server_catalog.list_servers()
+
+    def save_custom_server(self, payload: dict) -> dict:
+        """
+        Persist a brand-new custom realmlist globally.
+
+        Args:
+            payload: ``{"realmlist": str, "name": str | None, "realm": str | None}``.
+
+        Returns:
+            Success envelope.
+        """
+        realmlist = (payload.get("realmlist") or "").strip()
+        if not realmlist:
+            return {"ok": False, "error": "Realmlist vacío"}
+        name = (payload.get("name") or realmlist).strip()
+        realm = (payload.get("realm") or "").strip()
+        db_store.add_custom_server(realmlist, name, [realm] if realm else [])
+        log("INFO", Tags.API, f"save_custom_server() -> {realmlist}")
+        return {"ok": True, "error": None}
+
+    def add_custom_realm(self, realmlist: str, realm: str) -> dict:
+        """
+        Append a new realm to an already-saved custom realmlist.
+
+        Args:
+            realmlist: The custom realmlist to update.
+            realm: New realm name to add.
+
+        Returns:
+            Success envelope.
+        """
+        realm = (realm or "").strip()
+        if not realm:
+            return {"ok": True, "error": None}
+        db_store.add_realm_to_custom_server((realmlist or "").strip(), realm)
+        log("INFO", Tags.API, f"add_custom_realm() -> {realmlist} / {realm}")
+        return {"ok": True, "error": None}
