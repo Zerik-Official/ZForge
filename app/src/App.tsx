@@ -2,13 +2,16 @@ import { useEffect, useState } from "react";
 import { TitleBar } from "@/components/layout/TitleBar";
 import { SplashScreen } from "@/components/layout/SplashScreen";
 import { LauncherView } from "@/features/launcher/LauncherView";
+import { ConfigConflictModal } from "@/features/launcher/ConfigConflictModal";
 import { useBridge } from "@/hooks/useBridge";
 import { useBootEvents } from "@/hooks/useBootEvents";
+import { useConfigConflict } from "@/hooks/useConfigConflict";
 import { useGamesStore } from "@/store/gamesStore";
 
 export default function App() {
   const { ready: bridgeReady } = useBridge();
   const { step, done: bootDone } = useBootEvents();
+  const { conflicts, resolve } = useConfigConflict();
   const hydrate = useGamesStore((state) => state.hydrate);
 
   /** True once the splash fade-out transition ends. */
@@ -57,6 +60,10 @@ export default function App() {
       >
         <LauncherView />
       </main>
+
+      {conflicts[0] && (
+        <ConfigConflictModal conflict={conflicts[0]} onResolve={resolve} />
+      )}
     </div>
   );
 }
