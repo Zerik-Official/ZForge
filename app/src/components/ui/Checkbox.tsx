@@ -1,20 +1,33 @@
+/**
+ * Properties for the {@link Checkbox} component.
+ */
 interface CheckboxProps {
+  /** Whether the checkbox is currently selected. */
   checked: boolean;
+  /** Callback fired whenever the checked state changes. */
   onChange: (checked: boolean) => void;
+  /** Primary label shown beside the checkbox. */
   label: string;
+  /** Optional supporting text displayed beneath the label. */
   description?: string;
+  /** Disables interaction and visually dims the component when true. */
   disabled?: boolean;
 }
 
 /**
  * Themed checkbox component used instead of a native `<input type="checkbox">`.
  *
- * Renders a custom-styled box driven by the `checked` prop while keeping 
+ * Renders a custom-styled box driven by the `checked` prop while keeping
  * a hidden native input (`sr-only`) intact for screen readers and accessibility.
  *
  * @example
  * ```tsx
- * <Checkbox * checked="{isEnabled}" description="Receive updates about your downloads." label="Enable notifications" onChange="{setIsEnabled}"/>
+ * <Checkbox
+ *   checked={isEnabled}
+ *   label="Enable notifications"
+ *   description="Receive updates about your downloads."
+ *   onChange={setIsEnabled}
+ * />
  * ```
  */
 export function Checkbox({ checked, onChange, label, description, disabled }: CheckboxProps) {
