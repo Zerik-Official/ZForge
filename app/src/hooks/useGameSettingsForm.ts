@@ -19,6 +19,21 @@ export function useGameSettingsForm(game: Game | null, open: boolean) {
     window_maximized: false,
     vsync: true,
     multisample: 1,
+    farclip: 1277,
+    environment_detail: 1.5,
+    base_mip: 0,
+    shadow_level: 1,
+    ground_effect_density: 0,
+    texture_filtering_mode: 1,
+    ground_effect_dist: 140,
+    weather_density: 2,
+    ext_shadow_quality: 0,
+    component_texture_level: 0,
+    particle_density: 1.0,
+    specular: false,
+    ffx_death: true,
+    ffx_glow: true,
+    projected_textures: false,
   });
   const [display, setDisplay] = useState<{ width: number; height: number }>({ width: 1920, height: 1080 });
   const [servers, setServers] = useState<ServerEntry[]>([]);
