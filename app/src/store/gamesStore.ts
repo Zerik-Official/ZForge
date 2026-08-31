@@ -1,17 +1,11 @@
 import { create } from "zustand";
-import { api } from "@/services/api";
-import type { Game, GameInput, AppConfig, AssetManifest } from "@/types/pywebview";
+import { gamesApi } from "@/services/api/domains/games.api";
+import { assetsApi } from "@/services/api/domains/assets.api";
+import { settingsApi } from "@/services/api/domains/settings.api";
+import type { Game, GameInput } from "@/types/domains/game";
+import type { AppConfig } from "@/types/domains/settings";
+import type { AssetManifest } from "@/types/domains/assets";
 
-/**
- * Resolve which game should be shown on the main screen.
- *
- * Preference order: the remembered last-active game, then the first game
- * flagged `show_on_main`, then the first game overall.
- *
- * @param games   Saved games.
- * @param config  Application settings (may carry `last_active_game`).
- * @returns The id to mark active, or `null` when there are no games.
- */
 function resolveActiveId(games: Game[], config: AppConfig | null): string | null {
   if (games.length === 0) return null;
   if (config?.last_active_game) {
@@ -23,28 +17,16 @@ function resolveActiveId(games: Game[], config: AppConfig | null): string | null
 }
 
 interface GamesState {
-  /** All saved games. */
   games: Game[];
-  /** Id of the game currently shown on the main screen. */
   activeId: string | null;
-  /** Bundled-asset catalogue for the add/edit modal. */
   assets: AssetManifest | null;
-  /** Global application settings. */
   config: AppConfig | null;
-  /** True once the initial backend load finished. */
   hydrated: boolean;
-
-  /** Load games, assets and config from the backend. */
   hydrate: () => Promise<void>;
-  /** Create a game and add it to the store. */
   addGame: (payload: GameInput) => Promise<Game>;
-  /** Update a game in the store. */
   updateGame: (game: Game) => Promise<Game>;
-  /** Remove a game from the store. */
   removeGame: (id: string) => Promise<void>;
-  /** Mark a game as active on the main screen and persist the choice. */
   setActive: (id: string) => Promise<void>;
-  /** Persist a new dock order and update local state optimistically. */
   reorderDock: (orderedIds: string[]) => Promise<void>;
 }
 
@@ -57,15 +39,15 @@ export const useGamesStore = create<GamesState>((set, get) => ({
 
   async hydrate() {
     const [games, assets, config] = await Promise.all([
-      api.listGames(),
-      api.listAssets(),
-      api.getAppConfig(),
+      gamesApi.listGames(),
+      assetsApi.listAssets(),
+      settingsApi.getAppConfig(),
     ]);
     set({ games, assets, config, hydrated: true, activeId: resolveActiveId(games, config) });
   },
 
   async addGame(payload) {
-    const game = await api.addGame(payload);
+    const game = await gamesApi.addGame(payload);
     set((state) => ({
       games: [...state.games, game],
       activeId: state.activeId ?? game.id,
@@ -74,7 +56,7 @@ export const useGamesStore = create<GamesState>((set, get) => ({
   },
 
   async updateGame(game) {
-    const updated = await api.updateGame(game);
+    const updated = await gamesApi.updateGame(game);
     set((state) => ({
       games: state.games.map((item) => (item.id === updated.id ? updated : item)),
     }));
@@ -82,7 +64,7 @@ export const useGamesStore = create<GamesState>((set, get) => ({
   },
 
   async removeGame(id) {
-    await api.removeGame(id);
+    await gamesApi.removeGame(id);
     set((state) => {
       const games = state.games.filter((item) => item.id !== id);
       const activeId = state.activeId === id ? resolveActiveId(games, state.config) : state.activeId;
@@ -93,7 +75,7 @@ export const useGamesStore = create<GamesState>((set, get) => ({
   async setActive(id) {
     const config = get().config ?? { theme: "dark", last_active_game: null };
     const next: AppConfig = { ...config, last_active_game: id };
-    await api.saveAppConfig(next);
+    await settingsApi.saveAppConfig(next);
     set({ activeId: id, config: next });
   },
 
@@ -101,9 +83,7 @@ export const useGamesStore = create<GamesState>((set, get) => ({
     const { games } = get();
     const dock = games.filter((g) => g.show_on_main);
     if (orderedIds.length !== dock.length) return;
-    const orderedDock = orderedIds
-      .map((id) => games.find((g) => g.id === id)!)
-      .filter(Boolean) as typeof games;
+    const orderedDock = orderedIds.map((id) => games.find((g) => g.id === id)!).filter(Boolean) as typeof games;
     if (orderedDock.length !== dock.length) return;
     const dockPositions: number[] = [];
     games.forEach((g, idx) => {
@@ -115,7 +95,7 @@ export const useGamesStore = create<GamesState>((set, get) => ({
     });
     set({ games: newGames });
     try {
-      await api.reorderGames(orderedIds);
+      await gamesApi.reorderGames(orderedIds);
     } catch {
       set({ games });
     }
