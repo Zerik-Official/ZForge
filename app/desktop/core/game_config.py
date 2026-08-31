@@ -47,6 +47,13 @@ def scan_game_config(exe_path: str) -> dict[str, Any]:
         except ValueError:
             return default
 
+    def to_float(key: str, default: float) -> float:
+        raw = read(key, str(default))
+        try:
+            return float(raw)
+        except ValueError:
+            return default
+
     max_w, max_h = display.get_primary_resolution()
 
     settings = GameSettings(
@@ -59,6 +66,21 @@ def scan_game_config(exe_path: str) -> dict[str, Any]:
         window_maximized=read("gxMaximize", "0") == "1",
         vsync=read("gxVSync", "1") != "0",
         multisample=to_int("gxMultisample", 1),
+        farclip=to_int("farclip", 1277),
+        environment_detail=to_float("environmentDetail", 1.5),
+        base_mip=1 if read("baseMip", "") == "1" else 0,
+        shadow_level=0 if read("shadowLevel", "1") == "0" else 1,
+        ground_effect_density=to_int("groundEffectDensity", 0),
+        texture_filtering_mode=to_int("textureFilteringMode", 1),
+        ground_effect_dist=to_int("groundEffectDist", 140),
+        weather_density=to_int("weatherDensity", 2),
+        ext_shadow_quality=to_int("extShadowQuality", 0),
+        component_texture_level=9 if read("componentTextureLevel", "") == "9" else 0,
+        particle_density=to_float("particleDensity", 1.0),
+        specular=read("specular", "0") == "1",
+        ffx_death=read("ffxDeath", "1") != "0",
+        ffx_glow=read("ffxGlow", "1") != "0",
+        projected_textures=read("projectedTextures", "0") == "1",
     )
     log("DEBUG", Tags.SETTINGS, f"Scanned config for {exe_path}")
     return settings.to_dict()
@@ -78,6 +100,13 @@ def apply_game_settings(settings: dict[str, Any], exe_path: str) -> None:
     windowed = bool(settings.get("windowed", False))
     vsync = bool(settings.get("vsync", True))
     multisample = int(settings.get("multisample", 1))
+    texture_filtering_mode = int(settings.get("texture_filtering_mode", 1))
+    weather_density = int(settings.get("weather_density", 2))
+    ground_effect_density = int(settings.get("ground_effect_density", 0))
+    ext_shadow_quality = int(settings.get("ext_shadow_quality", 0))
+    component_texture_level = int(settings.get("component_texture_level", 0))
+    base_mip = int(settings.get("base_mip", 0))
+    shadow_level = int(settings.get("shadow_level", 1))
 
     config_updates: dict[str, str | None] = {
         "realmList": settings.get("realm_list") or None,
@@ -89,6 +118,21 @@ def apply_game_settings(settings: dict[str, Any], exe_path: str) -> None:
         "gxMaximize": "1" if settings.get("window_maximized", False) else None,
         "gxVSync": "0" if not vsync else None,
         "gxMultisample": str(multisample) if multisample != 1 else None,
+        "specular": "1" if settings.get("specular", False) else None,
+        "ffxDeath": "0" if not settings.get("ffx_death", True) else None,
+        "ffxGlow": "0" if not settings.get("ffx_glow", True) else None,
+        "projectedTextures": "1" if settings.get("projected_textures", False) else None,
+        "farclip": str(int(settings.get("farclip", 1277))),
+        "environmentDetail": str(float(settings.get("environment_detail", 1.5))),
+        "baseMip": "1" if base_mip == 1 else None,
+        "shadowLevel": "0" if shadow_level == 0 else None,
+        "groundEffectDensity": str(ground_effect_density) if ground_effect_density != 0 else None,
+        "textureFilteringMode": None if texture_filtering_mode == 1 else str(texture_filtering_mode),
+        "groundEffectDist": str(int(settings.get("ground_effect_dist", 140))),
+        "weatherDensity": None if weather_density == 2 else str(weather_density),
+        "extShadowQuality": str(ext_shadow_quality) if ext_shadow_quality != 0 else None,
+        "componentTextureLevel": "9" if component_texture_level == 9 else None,
+        "particleDensity": str(float(settings.get("particle_density", 1.0))),
     }
     wtf.write_config_wtf(config_path, config_updates)
 
@@ -126,5 +170,20 @@ def config_file_fingerprint(settings: dict[str, Any]) -> dict[str, Any]:
         "window_maximized",
         "vsync",
         "multisample",
+        "farclip",
+        "environment_detail",
+        "base_mip",
+        "shadow_level",
+        "ground_effect_density",
+        "texture_filtering_mode",
+        "ground_effect_dist",
+        "weather_density",
+        "ext_shadow_quality",
+        "component_texture_level",
+        "particle_density",
+        "specular",
+        "ffx_death",
+        "ffx_glow",
+        "projected_textures",
     ]
     return {key: settings.get(key) for key in keys}
