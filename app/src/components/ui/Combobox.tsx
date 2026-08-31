@@ -87,6 +87,10 @@ export function Combobox<T = unknown>({ value, onChange, options, onSelect, plac
         }}
         onFocus={() => setOpen(true)}
         placeholder={placeholder}
+        spellCheck={false}
+        autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="off"
       />
 
       {open && filtered.length > 0 ? (
