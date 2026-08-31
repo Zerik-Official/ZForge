@@ -1,12 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
-import { api } from "@/services/api";
-import type { Game, GameSettings, ServerEntry } from "@/types/pywebview";
+import { useState } from "react";
 import { Select, type SelectOption } from "@/components/ui/Select";
-import { Combobox, type ComboboxOption } from "@/components/ui/Combobox";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Modal, ModalHeader, ModalFooter } from "@/components/ui/Modal";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { toDisplaySrc } from "@/utils/asset";
+import { Combobox } from "@/components/ui/Combobox";
+import { useGameSettingsForm } from "@/hooks/useGameSettingsForm";
+import type { Game } from "@/types/domains/game";
 
 interface GameSettingsModalProps {
   open: boolean;
@@ -52,154 +51,55 @@ function parseResolution(value: string): { w: number; h: number } {
 
 export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProps) {
   const [category, setCategory] = useState<Category>("launch");
-  const [settings, setSettings] = useState<GameSettings>({
-    launch_args: "", launch_priority: "normal", clear_cache_on_launch: false,
-    realm_list: "", realm_name: "", refresh_rate: 60, resolution: "1920x1080",
-    windowed: false, window_resize_lock: false, window_maximized: false,
-    vsync: true, multisample: 1,
-  });
-  const [busy, setBusy] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [display, setDisplay] = useState<{ width: number; height: number }>({ width: 1920, height: 1080 });
-  const [servers, setServers] = useState<ServerEntry[]>([]);
-  const [pendingSave, setPendingSave] = useState<{ apply: boolean } | null>(null);
+  const {
+    settings,
+    display,
+    loading,
+    busy,
+    error,
+    pendingSave,
+    setPendingSave,
+    realmlistOptions,
+    realmOptions,
+    update,
+    persistSettings,
+  } = useGameSettingsForm(game, open);
 
-  useEffect(() => {
-    if (!open || !game) return;
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    (async () => {
-      try {
-        const saved = await api.getGameSettings(game.id);
-        if (saved && Object.keys(saved).length > 0) {
-          if (!cancelled) setSettings({ ...settings, ...saved });
-        } else {
-          const scanned = await api.scanGameConfig(game.id);
-          await api.saveGameSettings(game.id, scanned);
-          if (!cancelled) setSettings(scanned);
-        }
-        const disp = await api.getDisplayResolution();
-        if (!cancelled) setDisplay(disp);
-        const list = await api.listServers();
-        if (!cancelled) setServers(list);
-      } catch (err) {
-        if (!cancelled) setError("No se pudo cargar la configuración del juego.");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [open, game]);
-
-  const realmlistOptions = useMemo<ComboboxOption<{ realms: string[] }>[]>(
-    () =>
-      servers.flatMap((server) =>
-        server.realmlists.map((realmlist) => ({
-          value: realmlist,
-          label: server.name,
-          sublabel: realmlist,
-          thumb: server.logo ? toDisplaySrc(server.logo) : undefined,
-          badge: server.custom ? "Personalizado" : undefined,
-          meta: { realms: server.realms },
-        })),
-      ),
-    [servers],
-  );
-
-  const matchedServers = useMemo(
-    () =>
-      servers.filter((server) =>
-        server.realmlists.some((rl) => rl.trim().toLowerCase() === settings.realm_list.trim().toLowerCase()),
-      ),
-    [servers, settings.realm_list],
-  );
-
-  const realmOptions = useMemo<ComboboxOption[]>(() => {
-    const seen = new Set<string>();
-    matchedServers.forEach((server) => server.realms.forEach((realm) => seen.add(realm)));
-    return Array.from(seen).map((realm) => ({ value: realm, label: realm }));
-  }, [matchedServers]);
-
-  const visibleResolutions = useMemo<SelectOption[]>(() => {
-    const opts = RESOLUTIONS
-      .filter((res) => {
-        const { w, h } = parseResolution(res);
-        return w <= display.width && h <= display.height;
-      })
-      .map((res) => ({ value: res, label: res }));
+  const visibleResolutions: SelectOption[] = (() => {
+    const opts = RESOLUTIONS.filter((res) => {
+      const { w, h } = parseResolution(res);
+      return w <= display.width && h <= display.height;
+    }).map((res) => ({ value: res, label: res }));
     if (!opts.some((o) => o.value === settings.resolution)) {
       opts.push({ value: settings.resolution, label: `${settings.resolution} (actual)` });
     }
     return opts;
-  }, [settings.resolution, display.width, display.height]);
+  })();
 
-  const refreshOptions = useMemo<SelectOption[]>(
-    () => REFRESH_RATES.map((rate) => ({ value: String(rate), label: `${rate} Hz` })),
-    [],
-  );
+  const refreshOptions: SelectOption[] = REFRESH_RATES.map((rate) => ({
+    value: String(rate),
+    label: `${rate} Hz`,
+  }));
 
   if (!open || !game) return null;
 
-  function update<K extends keyof GameSettings>(key: K, value: GameSettings[K]) {
-    setSettings((prev) => ({ ...prev, [key]: value }));
-  }
-
-  async function persistSettings(apply: boolean, saveGlobal = false) {
-    if (!game) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const realmlist = settings.realm_list.trim();
-      const realmName = settings.realm_name.trim();
-
-      if (saveGlobal && realmlist) {
-        await api.saveCustomServer({ realmlist, name: realmlist, realm: realmName || undefined });
-        setServers(await api.listServers());
-      } else if (realmlist && realmName) {
-        const customMatch = matchedServers.find((server) => server.custom);
-        if (customMatch && !customMatch.realms.includes(realmName)) {
-          await api.addCustomRealm(realmlist, realmName);
-          setServers(await api.listServers());
-        }
-      }
-
-      await api.saveGameSettings(game.id, settings);
-      if (apply) {
-        const result = await api.applyGameSettings(game.id);
-        if (!result.ok) {
-          setError(result.error ?? "No se pudo aplicar al juego.");
-          return;
-        }
-      }
-      onClose();
-    } catch (err) {
-      setError("Error al guardar la configuración.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function handleSave(apply: boolean) {
-    if (!game) return;
     const realmlist = settings.realm_list.trim();
-    const isKnown = servers.some((server) =>
-      server.realmlists.some((rl) => rl.trim().toLowerCase() === realmlist.toLowerCase()),
-    );
+    const isKnown = realmlist === "" || realmlistOptions.some((opt) => opt.value.toLowerCase() === realmlist.toLowerCase());
     if (realmlist && !isKnown) {
       setPendingSave({ apply });
       return;
     }
     await persistSettings(apply);
+    onClose();
   }
 
   function resolvePendingSave(saveGlobal: boolean) {
     const pending = pendingSave;
     setPendingSave(null);
-    if (pending) persistSettings(pending.apply, saveGlobal);
+    if (pending) {
+      persistSettings(pending.apply, saveGlobal).then(() => onClose());
+    }
   }
 
   return (
@@ -207,158 +107,147 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
       <ModalHeader icon="fa-solid fa-gear" title="Configuración" subtitle={game.name} onClose={onClose} />
 
       <div className="flex min-h-0 flex-1">
-          <aside className="flex w-44 shrink-0 flex-col gap-1 border-r border-(--border) bg-(--bg-soft) p-3">
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat.key}
-                className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-[12.5px] transition-colors cursor-pointer ${
-                  category === cat.key
-                    ? "bg-(--accent-dim) text-(--accent)"
-                    : "text-(--text-soft) hover:bg-(--bg-hover)"
-                }`}
-                onClick={() => setCategory(cat.key)}
-              >
-                <i className={`${cat.icon} text-[13px]`} />
-                {cat.label}
-              </button>
-            ))}
-          </aside>
+        <aside className="flex w-44 shrink-0 flex-col gap-1 border-r border-(--border) bg-(--bg-soft) p-3">
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat.key}
+              className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-[12.5px] transition-colors cursor-pointer ${
+                category === cat.key ? "bg-(--accent-dim) text-(--accent)" : "text-(--text-soft) hover:bg-(--bg-hover)"
+              }`}
+              onClick={() => setCategory(cat.key)}
+            >
+              <i className={`${cat.icon} text-[13px]`} />
+              {cat.label}
+            </button>
+          ))}
+        </aside>
 
-          <section className="min-w-0 flex-1 overflow-y-auto px-6 py-5">
-            {loading ? (
-              <div className="flex h-full items-center justify-center text-(--muted)">
-                <i className="fa-solid fa-spinner fa-spin text-[18px]" />
-              </div>
-            ) : (
-              <>
-                {category === "launch" && (
-                  <div className="flex flex-col gap-5">
-                    <span className="section-label">
-                      <i className="fa-solid fa-rocket" /> Lanzamiento
-                    </span>
+        <section className="min-w-0 flex-1 overflow-y-auto px-6 py-5">
+          {loading ? (
+            <div className="flex h-full items-center justify-center text-(--muted)">
+              <i className="fa-solid fa-spinner fa-spin text-[18px]" />
+            </div>
+          ) : (
+            <>
+              {category === "launch" && (
+                <div className="flex flex-col gap-5">
+                  <span className="section-label">
+                    <i className="fa-solid fa-rocket" /> Lanzamiento
+                  </span>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="field-label">Argumentos de inicio</label>
+                    <input
+                      className="field-input"
+                      value={settings.launch_args}
+                      onChange={(e) => update("launch_args", e.target.value)}
+                      placeholder="-console -windowed"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="field-label">Prioridad de proceso</label>
+                    <Select
+                      value={settings.launch_priority}
+                      options={PRIORITY_OPTIONS}
+                      onChange={(value) => update("launch_priority", value as typeof settings.launch_priority)}
+                    />
+                  </div>
+                  <Checkbox
+                    checked={settings.clear_cache_on_launch}
+                    onChange={(value) => update("clear_cache_on_launch", value)}
+                    label="Borrar caché al iniciar"
+                  />
+                </div>
+              )}
+
+              {category === "multi" && (
+                <div className="flex h-full flex-col items-center justify-center gap-3 text-(--muted)">
+                  <i className="fa-solid fa-users text-2xl" />
+                  <span className="text-[13px]">Multicuenta — en desarrollo</span>
+                </div>
+              )}
+
+              {category === "server" && (
+                <div className="flex flex-col gap-5">
+                  <span className="section-label">
+                    <i className="fa-solid fa-server" /> Servidor
+                  </span>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="field-label">Realm list</label>
+                    <Combobox
+                      value={settings.realm_list}
+                      onChange={(value) => {
+                        update("realm_list", value);
+                        update("realm_name", "");
+                      }}
+                      options={realmlistOptions}
+                      onSelect={(option) => {
+                        update("realm_list", option.value);
+                        update("realm_name", "");
+                      }}
+                      placeholder="comunidad.naerzone.com"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="field-label">Reino</label>
+                    <Combobox
+                      value={settings.realm_name}
+                      onChange={(value) => update("realm_name", value)}
+                      options={realmOptions}
+                      placeholder="Thalassa"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {category === "graphics" && (
+                <div className="flex flex-col gap-5">
+                  <span className="section-label">
+                    <i className="fa-solid fa-display" /> Gráficos
+                  </span>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div className="flex flex-col gap-1.5">
-                      <label className="field-label">Argumentos de inicio</label>
-                      <input
-                        className="field-input"
-                        value={settings.launch_args}
-                        onChange={(e) => update("launch_args", e.target.value)}
-                        placeholder="-console -windowed"
-                      />
-                      <span className="text-[11px] text-(--muted)">
-                        Separados por espacios. Ej: -console -windowed
-                      </span>
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <label className="field-label">Prioridad de proceso</label>
+                      <label className="field-label">Tasa de refresco</label>
                       <Select
-                        value={settings.launch_priority}
-                        options={PRIORITY_OPTIONS}
-                        onChange={(value) => update("launch_priority", value as GameSettings["launch_priority"])}
-                      />
-                    </div>
-                    <Checkbox
-                      checked={settings.clear_cache_on_launch}
-                      onChange={(value) => update("clear_cache_on_launch", value)}
-                      label="Borrar caché al iniciar"
-                    />
-                  </div>
-                )}
-
-                {category === "multi" && (
-                  <div className="flex h-full flex-col items-center justify-center gap-3 text-(--muted)">
-                    <i className="fa-solid fa-users text-2xl" />
-                    <span className="text-[13px]">Multicuenta — en desarrollo</span>
-                  </div>
-                )}
-
-                {category === "server" && (
-                  <div className="flex flex-col gap-5">
-                    <span className="section-label">
-                      <i className="fa-solid fa-server" /> Servidor
-                    </span>
-                    <div className="flex flex-col gap-1.5">
-                      <label className="field-label">Realm list</label>
-                      <Combobox
-                        value={settings.realm_list}
-                        onChange={(value) => update("realm_list", value)}
-                        options={realmlistOptions}
-                        onSelect={(option) => update("realm_list", option.value)}
-                        placeholder="comunidad.naerzone.com"
+                        value={String(settings.refresh_rate)}
+                        options={refreshOptions}
+                        onChange={(value) => update("refresh_rate", parseInt(value, 10))}
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label className="field-label">Reino</label>
-                      <Combobox
-                        value={settings.realm_name}
-                        onChange={(value) => update("realm_name", value)}
-                        options={realmOptions}
-                        placeholder="Thalassa"
-                      />
+                      <label className="field-label">Resolución</label>
+                      <Select value={settings.resolution} options={visibleResolutions} onChange={(value) => update("resolution", value)} />
                     </div>
                   </div>
-                )}
-
-                {category === "graphics" && (
-                  <div className="flex flex-col gap-5">
-                    <span className="section-label">
-                      <i className="fa-solid fa-display" /> Gráficos
-                    </span>
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                      <div className="flex flex-col gap-1.5">
-                        <label className="field-label">Tasa de refresco</label>
-                        <Select
-                          value={String(settings.refresh_rate)}
-                          options={refreshOptions}
-                          onChange={(value) => update("refresh_rate", parseInt(value, 10))}
-                        />
-                      </div>
-                      <div className="flex flex-col gap-1.5">
-                        <label className="field-label">Resolución</label>
-                        <Select
-                          value={settings.resolution}
-                          options={visibleResolutions}
-                          onChange={(value) => update("resolution", value)}
-                        />
-                      </div>
-                    </div>
+                  <Checkbox checked={settings.windowed} onChange={(value) => update("windowed", value)} label="Modo ventana" />
+                  <div className="flex flex-col gap-3 rounded-xl border border-(--border-strong) bg-(--bg-input) p-3">
                     <Checkbox
-                      checked={settings.windowed}
-                      onChange={(value) => update("windowed", value)}
-                      label="Modo ventana"
+                      checked={settings.window_resize_lock}
+                      disabled={!settings.windowed}
+                      onChange={(value) => update("window_resize_lock", value)}
+                      label="Bloquear tamaño de ventana (windowResizeLock)"
                     />
-                    <div className="flex flex-col gap-3 rounded-xl border border-(--border-strong) bg-(--bg-input) p-3">
-                      <Checkbox
-                        checked={settings.window_resize_lock}
-                        disabled={!settings.windowed}
-                        onChange={(value) => update("window_resize_lock", value)}
-                        label="Bloquear tamaño de ventana (windowResizeLock)"
-                      />
-                      <Checkbox
-                        checked={settings.window_maximized}
-                        disabled={!settings.windowed}
-                        onChange={(value) => update("window_maximized", value)}
-                        label="Maximizado sin bordes (gxMaximize)"
-                      />
-                    </div>
                     <Checkbox
-                      checked={settings.vsync}
-                      onChange={(value) => update("vsync", value)}
-                      label="Sincronización vertical (VSync)"
+                      checked={settings.window_maximized}
+                      disabled={!settings.windowed}
+                      onChange={(value) => update("window_maximized", value)}
+                      label="Maximizado sin bordes (gxMaximize)"
                     />
-                    <div className="flex flex-col gap-1.5">
-                      <label className="field-label">Multimuestreo (antialiasing)</label>
-                      <Select
-                        value={String(settings.multisample)}
-                        options={MULTISAMPLE_OPTIONS}
-                        onChange={(value) => update("multisample", parseInt(value, 10))}
-                      />
-                    </div>
                   </div>
-                )}
-              </>
-            )}
-          </section>
-        </div>
+                  <Checkbox checked={settings.vsync} onChange={(value) => update("vsync", value)} label="Sincronización vertical (VSync)" />
+                  <div className="flex flex-col gap-1.5">
+                    <label className="field-label">Multimuestreo (antialiasing)</label>
+                    <Select
+                      value={String(settings.multisample)}
+                      options={MULTISAMPLE_OPTIONS}
+                      onChange={(value) => update("multisample", parseInt(value, 10))}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </section>
+      </div>
 
       <ModalFooter>
         {error && <span className="mr-auto text-[12px] text-(--danger)">{error}</span>}
