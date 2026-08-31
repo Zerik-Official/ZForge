@@ -16,6 +16,21 @@ export interface GameSettings {
   window_maximized: boolean;
   vsync: boolean;
   multisample: number;
+  farclip: number;
+  environment_detail: number;
+  base_mip: number;
+  shadow_level: number;
+  ground_effect_density: number;
+  texture_filtering_mode: number;
+  ground_effect_dist: number;
+  weather_density: number;
+  ext_shadow_quality: number;
+  component_texture_level: number;
+  particle_density: number;
+  specular: boolean;
+  ffx_death: boolean;
+  ffx_glow: boolean;
+  projected_textures: boolean;
 }
 
 export interface ConfigConflict {
