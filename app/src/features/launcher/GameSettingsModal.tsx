@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Select, type SelectOption } from "@/components/ui/Select";
 import { Checkbox } from "@/components/ui/Checkbox";
+import { Slider } from "@/components/ui/Slider";
 import { Modal, ModalHeader, ModalFooter } from "@/components/ui/Modal";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Combobox } from "@/components/ui/Combobox";
@@ -13,13 +14,14 @@ interface GameSettingsModalProps {
   onClose: () => void;
 }
 
-type Category = "launch" | "multi" | "server" | "graphics";
+type Category = "launch" | "multi" | "server" | "graphics" | "effects";
 
 const CATEGORIES: { key: Category; label: string; icon: string }[] = [
   { key: "launch", label: "Lanzamiento", icon: "fa-solid fa-rocket" },
   { key: "multi", label: "Multicuenta", icon: "fa-solid fa-users" },
   { key: "server", label: "Servidor", icon: "fa-solid fa-server" },
   { key: "graphics", label: "Gráficos", icon: "fa-solid fa-display" },
+  { key: "effects", label: "Efectos", icon: "fa-solid fa-wand-magic-sparkles" },
 ];
 
 const RESOLUTIONS = [
@@ -241,6 +243,84 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
                       options={MULTISAMPLE_OPTIONS}
                       onChange={(value) => update("multisample", parseInt(value, 10))}
                     />
+                  </div>
+                </div>
+              )}
+
+              {category === "effects" && (
+                <div className="flex flex-col gap-5">
+                  <span className="section-label">
+                    <i className="fa-solid fa-wand-magic-sparkles" /> Efectos
+                  </span>
+
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="field-label">Distancia de visión</label>
+                      <Slider value={settings.farclip} min={177} max={1277} step={1} onChange={(v) => update("farclip", v)} />
+                      <div className="flex justify-between text-[10px] text-(--muted)"><span>Bajo</span><span>Alto</span></div>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="field-label">Detalle del entorno</label>
+                      <Slider value={settings.environment_detail} options={[0.5, 0.75, 1, 1.25, 1.5]} onChange={(v) => update("environment_detail", v)} />
+                      <div className="flex justify-between text-[10px] text-(--muted)"><span>Bajo</span><span>Alto</span></div>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="field-label">Fusión terreno</label>
+                      <Slider value={settings.shadow_level} options={[0, 1]} onChange={(v) => update("shadow_level", v)} />
+                      <div className="flex justify-between text-[10px] text-(--muted)"><span>Bajo</span><span>Alto</span></div>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="field-label">Resolución de texturas</label>
+                      <Slider value={settings.base_mip} options={[1, 0]} onChange={(v) => update("base_mip", v)} />
+                      <div className="flex justify-between text-[10px] text-(--muted)"><span>Bajo</span><span>Alto</span></div>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="field-label">Densidad det. suelo</label>
+                      <Slider value={settings.ground_effect_density} options={[0, 24, 32, 40, 48, 56, 64]} onChange={(v) => update("ground_effect_density", v)} />
+                      <div className="flex justify-between text-[10px] text-(--muted)"><span>Bajo</span><span>Alto</span></div>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="field-label">Filtro texturas</label>
+                      <Slider value={settings.texture_filtering_mode} options={[0, 1, 2, 3, 4, 5]} onChange={(v) => update("texture_filtering_mode", v)} />
+                      <div className="flex justify-between text-[10px] text-(--muted)"><span>Bajo</span><span>Alto</span></div>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="field-label">Densidad de partículas</label>
+                      <Slider value={settings.particle_density} options={[0.10000000149012, 0.5, 0.80000001192093, 1]} onChange={(v) => update("particle_density", v)} />
+                      <div className="flex justify-between text-[10px] text-(--muted)"><span>Bajo</span><span>Alto</span></div>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="field-label">Distancia det. suelo</label>
+                      <Slider value={settings.ground_effect_dist} options={[70, 80, 90, 100, 110, 120, 130, 140]} onChange={(v) => update("ground_effect_dist", v)} />
+                      <div className="flex justify-between text-[10px] text-(--muted)"><span>Bajo</span><span>Alto</span></div>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="field-label">Intensidad climática</label>
+                      <Slider value={settings.weather_density} options={[0, 1, 2, 3]} onChange={(v) => update("weather_density", v)} />
+                      <div className="flex justify-between text-[10px] text-(--muted)"><span>Bajo</span><span>Alto</span></div>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="field-label">Calidad de sombras</label>
+                      <Slider value={settings.ext_shadow_quality} options={[0, 1, 2, 3, 4, 5]} onChange={(v) => update("ext_shadow_quality", v)} />
+                      <div className="flex justify-between text-[10px] text-(--muted)"><span>Bajo</span><span>Alto</span></div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="field-label">Texturas de personaje</label>
+                    <Slider value={settings.component_texture_level} options={[0, 9]} onChange={(v) => update("component_texture_level", v)} />
+                    <div className="flex justify-between text-[10px] text-(--muted)"><span>Bajo</span><span>Alto</span></div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                    <Checkbox checked={settings.specular} onChange={(v) => update("specular", v)} label="Iluminación especular" />
+                    <Checkbox checked={settings.ffx_death} onChange={(v) => update("ffx_death", v)} label="Efecto mortal" />
+                    <Checkbox checked={settings.ffx_glow} onChange={(v) => update("ffx_glow", v)} label="Brillo a pantalla completa" />
+                    <Checkbox checked={settings.projected_textures} onChange={(v) => update("projected_textures", v)} label="Texturas proyectadas" />
                   </div>
                 </div>
               )}
