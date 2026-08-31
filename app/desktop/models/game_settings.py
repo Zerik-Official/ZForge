@@ -35,6 +35,23 @@ class GameSettings:
     vsync: bool = True
     multisample: int = 1
 
+    # ── Effects ───────────────────────────────────────────────────────────
+    farclip: int = 1277
+    environment_detail: float = 1.5
+    base_mip: int = 0
+    shadow_level: int = 1
+    ground_effect_density: int = 0
+    texture_filtering_mode: int = 1
+    ground_effect_dist: int = 140
+    weather_density: int = 2
+    ext_shadow_quality: int = 0
+    component_texture_level: int = 0
+    particle_density: float = 1.0
+    specular: bool = False
+    ffx_death: bool = True
+    ffx_glow: bool = True
+    projected_textures: bool = False
+
     def to_dict(self) -> dict[str, Any]:
         """Serialise the settings to a JSON-friendly dictionary."""
         return asdict(self)
