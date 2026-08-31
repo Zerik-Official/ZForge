@@ -1,0 +1,96 @@
+[
+  {
+    "logo": "naerzone.png",
+    "name": "NaerZone",
+    "realmlists": [
+      "comunidad.naerzone.com",
+      "comunidad.naerzone.es"
+    ],
+    "realms": [
+      "Thalassa",
+      "Aegwynn"
+    ],
+    "website": "https://naerzone.com/"
+  },
+  {
+    "logo": "warmane.png",
+    "name": "Warmane",
+    "realmlists": [
+      "logon.warmane.com"
+    ],
+    "realms": [
+      "Onyxia",
+      "Lordaeron",
+      "Icecrown",
+      "Blackrock"
+    ],
+    "website": "https://www.warmane.com/"
+  },
+  {
+    "logo": "ultimowow.png",
+    "name": "UltimoWow",
+    "realmlists": [
+      "logon.ultimowow.com"
+    ],
+    "realms": [
+      "Bennu"
+    ],
+    "website": "https://ultimowow.com/"
+  },
+  {
+    "logo": "wowaura.png",
+    "name": "WowAura",
+    "realmlists": [
+      "wow.wowaura.com:3200",
+      "usa.wowaura.com:3200"
+    ],
+    "realms": [
+      "Aura 3.3.5"
+    ],
+    "website": "https://wowaura.com/"
+  },
+  {
+    "logo": "whitemane.png",
+    "name": "Whitemane",
+    "realmlists": [
+      "logon.gamefreedom.org"
+    ],
+    "realms": [
+      "Frostmourne"
+    ],
+    "website": "https://whitemane.gg/"
+  },
+  {
+    "logo": "wowpatagonia.png",
+    "name": "WoWPatagonia",
+    "realmlists": [
+      "logon.wow-patagonia.com"
+    ],
+    "realms": [
+      "Andes"
+    ],
+    "website": "https://www.wow-patagonia.com/"
+  },
+  {
+    "logo": "wowbolivia.png",
+    "name": "WowBolivia",
+    "realmlists": [
+      "logon.wow-bolivia.com"
+    ],
+    "realms": [
+      "Bolvaria"
+    ],
+    "website": "https://www.wow-bolivia.com/"
+  },
+  {
+    "logo": "wowbrasil.png",
+    "name": "WowBrasil",
+    "realmlists": [
+      "realm.wow-brasil.com"
+    ],
+    "realms": [
+      "WoW-Brasil Oficial"
+    ],
+    "website": "https://www.wow-brasil.info/"
+  }
+]
