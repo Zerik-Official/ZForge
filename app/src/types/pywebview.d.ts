@@ -3,8 +3,9 @@ import type { AppConfig, GameSettings, ConfigConflict } from "./domains/settings
 import type { AssetManifest } from "./domains/assets";
 import type { ServerEntry } from "./domains/server";
 import type { ApiResult } from "./domains/api";
+import type { SettingsSchema } from "./domains/schema";
 
-export type { Game, GameInput, AppConfig, GameSettings, ConfigConflict, AssetManifest, ServerEntry, ApiResult };
+export type { Game, GameInput, AppConfig, GameSettings, ConfigConflict, AssetManifest, ServerEntry, ApiResult, SettingsSchema };
 
 declare global {
   interface Window {
@@ -37,6 +38,8 @@ declare global {
         list_servers(): Promise<ServerEntry[]>;
         save_custom_server(payload: { realmlist: string; name?: string; realm?: string }): Promise<ApiResult>;
         add_custom_realm(realmlist: string, realm: string): Promise<ApiResult>;
+        get_settings_schema(version_id: string): Promise<SettingsSchema>;
+        list_settings_versions(): Promise<string[]>;
       };
     };
     __zforge_boot_message?: (message: string, percent: number) => void;
