@@ -16,7 +16,7 @@ from desktop.storage import config as config_store
 from desktop.storage import db as db_store
 from desktop.utils import display
 from desktop.utils.logger import log, Tags
-
+from desktop.utils import audio as audio_utils
 
 def get_settings() -> dict[str, object]:
     """Return the current application settings."""
@@ -154,3 +154,8 @@ def get_settings_schema(version_id: str) -> dict[str, object]:
 def list_settings_versions() -> list[str]:
     """Return all available settings schema version ids."""
     return schema_service.list_available_versions()
+
+
+def list_audio_devices() -> list[dict[str, object]]:
+    """Return available audio output devices for the dropdown."""
+    return audio_utils.list_output_devices()
