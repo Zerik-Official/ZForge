@@ -36,6 +36,7 @@ export const api = {
   getDisplayResolution: () => settingsApi.getDisplayResolution(),
   getSettingsSchema: (versionId: string) => settingsApi.getSettingsSchema(versionId),
   listSettingsVersions: () => settingsApi.listSettingsVersions(),
+  listAudioDevices: () => settingsApi.listAudioDevices(),
   getAppConfig: () => settingsApi.getAppConfig(),
   saveAppConfig: (payload: import("@/types/pywebview").AppConfig) => settingsApi.saveAppConfig(payload),
   listAssets: () => assetsApi.listAssets(),
