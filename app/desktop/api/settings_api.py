@@ -10,6 +10,7 @@ from __future__ import annotations
 
 # Project imports
 from desktop.core import game_config
+from desktop.core import settings_schema as schema_service
 from desktop.models import server as server_catalog
 from desktop.storage import config as config_store
 from desktop.storage import db as db_store
@@ -131,3 +132,25 @@ def add_custom_realm(realmlist: str, realm: str) -> dict[str, object]:
     db_store.add_realm_to_custom_server((realmlist or "").strip(), realm)
     log("INFO", Tags.API, f"add_custom_realm() -> {realmlist} / {realm}")
     return {"ok": True, "error": None}
+
+
+def get_settings_schema(version_id: str) -> dict[str, object]:
+    """
+    Return the settings schema for a given game version.
+
+    Args:
+        version_id: Schema identifier like ``wow-wotlk-335a``.
+
+    Returns:
+        Schema dictionary or error envelope when not found.
+    """
+    log("DEBUG", Tags.API, f"get_settings_schema() -> {version_id}")
+    schema = schema_service.load_schema(version_id)
+    if schema is None:
+        return {"ok": False, "error": f"Schema not found for {version_id}"}
+    return schema
+
+
+def list_settings_versions() -> list[str]:
+    """Return all available settings schema version ids."""
+    return schema_service.list_available_versions()
