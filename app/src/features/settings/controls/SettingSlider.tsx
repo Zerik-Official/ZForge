@@ -6,9 +6,10 @@ interface SettingSliderProps {
   setting: SliderSetting;
   value: number;
   onChange: (value: number) => void;
+  disabled?: boolean;
 }
 
-export function SettingSlider({ setting, value, onChange }: SettingSliderProps) {
+export function SettingSlider({ setting, value, onChange, disabled }: SettingSliderProps) {
   return (
     <div className="flex flex-col gap-1.5">
       <label className="field-label">{t(setting.label)}</label>
@@ -19,6 +20,7 @@ export function SettingSlider({ setting, value, onChange }: SettingSliderProps) 
         step={setting.step}
         options={setting.options}
         onChange={onChange}
+        disabled={disabled}
       />
       <div className="flex justify-between text-[10px] text-(--muted)">
         <span>Bajo</span>
