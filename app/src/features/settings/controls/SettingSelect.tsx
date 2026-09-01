@@ -7,9 +7,10 @@ interface SettingSelectProps {
   value: string;
   onChange: (value: string) => void;
   options?: SelectOption[];
+  disabled?: boolean;
 }
 
-export function SettingSelect({ setting, value, onChange, options }: SettingSelectProps) {
+export function SettingSelect({ setting, value, onChange, options, disabled }: SettingSelectProps) {
   const opts: SelectOption[] =
     options ??
     (Array.isArray(setting.options)
@@ -22,7 +23,7 @@ export function SettingSelect({ setting, value, onChange, options }: SettingSele
         })
       : []);
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className={`flex flex-col gap-1.5 ${disabled ? "opacity-40 pointer-events-none" : ""}`}>
       <label className="field-label">{t(setting.label)}</label>
       <Select value={value} options={opts} onChange={onChange} />
     </div>
