@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Select } from "@/components/ui/Select";
 import { Checkbox } from "@/components/ui/Checkbox";
+import { Slider } from "@/components/ui/Slider";
 import { Modal, ModalHeader, ModalFooter } from "@/components/ui/Modal";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Combobox } from "@/components/ui/Combobox";
@@ -38,6 +39,7 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
     setPendingSave,
     realmlistOptions,
     realmOptions,
+    audioDeviceOptions,
     update,
     persistSettings,
   } = useGameSettingsForm(game, open);
@@ -96,6 +98,7 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
     realms: realmOptions,
     realmlist: realmlistOptions,
     realm: realmOptions,
+    audioDevices: audioDeviceOptions,
   };
 
   const extraOptions = {
@@ -107,6 +110,7 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
       { value: "high", label: t("settings.launch.priority.high") },
       { value: "realtime", label: t("settings.launch.priority.realtime") },
     ],
+    sound_output_driver_index: audioDeviceOptions,
   };
 
   if (!open || !game) return null;
@@ -289,6 +293,88 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
                     ]}
                     onChange={(value) => update("multisample", parseInt(value, 10))}
                   />
+                </div>
+              </div>
+            ) : activeCategory.id === "sound" ? (
+              <div className="flex flex-col gap-5">
+                <div className="flex items-center justify-center gap-2">
+                  <Checkbox
+                    checked={settings.sound_enable_all_sound}
+                    onChange={(v) => update("sound_enable_all_sound", v)}
+                    label={t("settings.sound.enable_all_sound")}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div className="flex flex-col gap-4">
+                    <div className="rounded-xl border border-(--border-strong) bg-(--bg-input) p-3">
+                      <span className="mb-3 block text-[11px] font-semibold uppercase tracking-wide text-(--muted)">Reproducir</span>
+                      <div className="flex flex-col gap-2">
+                        <Checkbox checked={settings.sound_enable_sfx} onChange={(v) => update("sound_enable_sfx", v)} label={t("settings.sound.enable_sfx")} />
+                        <Checkbox checked={settings.sound_enable_error_speech} onChange={(v) => update("sound_enable_error_speech", v)} label={t("settings.sound.enable_error_speech")} disabled={!settings.sound_enable_sfx} />
+                        <Checkbox checked={settings.sound_enable_emote_sounds} onChange={(v) => update("sound_enable_emote_sounds", v)} label={t("settings.sound.enable_emote_sounds")} disabled={!settings.sound_enable_sfx} />
+                        <Checkbox checked={settings.sound_enable_pet_sounds} onChange={(v) => update("sound_enable_pet_sounds", v)} label={t("settings.sound.enable_pet_sounds")} disabled={!settings.sound_enable_sfx} />
+                        <Checkbox checked={settings.sound_enable_music} onChange={(v) => update("sound_enable_music", v)} label={t("settings.sound.enable_music")} />
+                        <Checkbox checked={settings.sound_zone_music_no_delay} onChange={(v) => update("sound_zone_music_no_delay", v)} label={t("settings.sound.zone_music_no_delay")} disabled={!settings.sound_enable_music} />
+                        <Checkbox checked={settings.sound_enable_ambience} onChange={(v) => update("sound_enable_ambience", v)} label={t("settings.sound.enable_ambience")} />
+                        <Checkbox checked={settings.sound_enable_sound_when_game_is_in_bg} onChange={(v) => update("sound_enable_sound_when_game_is_in_bg", v)} label={t("settings.sound.enable_sound_when_game_is_in_bg")} />
+                        <Checkbox checked={settings.sound_enable_reverb} onChange={(v) => update("sound_enable_reverb", v)} label={t("settings.sound.enable_reverb")} />
+                        <Checkbox checked={settings.sound_enable_software_hrtf} onChange={(v) => update("sound_enable_software_hrtf", v)} label={t("settings.sound.enable_software_hrtf")} />
+                        <Checkbox checked={settings.sound_enable_dsp_effects} onChange={(v) => update("sound_enable_dsp_effects", v)} label={t("settings.sound.enable_dsp_effects")} />
+                        <Checkbox checked={settings.sound_listener_at_character} onChange={(v) => update("sound_listener_at_character", v)} label={t("settings.sound.listener_at_character")} />
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="field-label">{t("settings.sound.output_quality")}</label>
+                      <Slider value={settings.sound_output_quality} options={[0, 1, 2]} onChange={(v: number) => update("sound_output_quality", v)} disabled={!settings.sound_enable_all_sound} />
+                      <div className="flex justify-between text-[10px] text-(--muted)"><span>Bajo</span><span>Alto</span></div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-4">
+                    <div className="rounded-xl border border-(--border-strong) bg-(--bg-input) p-3">
+                      <span className="mb-3 block text-[11px] font-semibold uppercase tracking-wide text-(--muted)">Hardware</span>
+                      <div className="flex flex-col gap-3">
+                        <div className="flex flex-col gap-1.5">
+                          <label className="field-label">{t("settings.sound.output_driver")}</label>
+                          <Select
+                            value={String(settings.sound_output_driver_index)}
+                            options={audioDeviceOptions.length ? audioDeviceOptions : [{ value: "0", label: "Predeterminado" }]}
+                            onChange={(v: string) => update("sound_output_driver_index", parseInt(v, 10))}
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <label className="field-label">{t("settings.sound.num_channels")}</label>
+                          <Slider value={settings.sound_num_channels} options={[32, 64]} onChange={(v: number) => update("sound_num_channels", v)} disabled={!settings.sound_enable_all_sound} />
+                          <div className="flex justify-between text-[10px] text-(--muted)"><span>Bajo</span><span>Alto</span></div>
+                        </div>
+                        <Checkbox checked={settings.sound_enable_hardware} onChange={(v) => update("sound_enable_hardware", v)} label={t("settings.sound.enable_hardware")} />
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-(--border-strong) bg-(--bg-input) p-3">
+                      <span className="mb-3 block text-[11px] font-semibold uppercase tracking-wide text-(--muted)">Volumen</span>
+                      <div className="flex flex-col gap-3">
+                        <div className="flex flex-col gap-1.5">
+                          <label className="field-label">{t("settings.sound.master_volume")}</label>
+                          <Slider value={settings.sound_master_volume} min={0} max={1} step={0.1} onChange={(v: number) => update("sound_master_volume", v)} />
+                          <div className="flex justify-between text-[10px] text-(--muted)"><span>{Math.ceil(settings.sound_master_volume * 100)}%</span><span>Alto</span></div>
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <label className="field-label">{t("settings.sound.sfx_volume")}</label>
+                          <Slider value={settings.sound_sfx_volume} min={0} max={1} step={0.1} onChange={(v: number) => update("sound_sfx_volume", v)} />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <label className="field-label">{t("settings.sound.music_volume")}</label>
+                          <Slider value={settings.sound_music_volume} min={0} max={1} step={0.1} onChange={(v: number) => update("sound_music_volume", v)} />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <label className="field-label">{t("settings.sound.ambience_volume")}</label>
+                          <Slider value={settings.sound_ambience_volume} min={0} max={1} step={0.1} onChange={(v: number) => update("sound_ambience_volume", v)} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             ) : (
