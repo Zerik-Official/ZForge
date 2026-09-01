@@ -8,11 +8,12 @@ interface SettingComboboxProps {
   onChange: (value: string) => void;
   onSelect?: (option: ComboboxOption) => void;
   options: ComboboxOption[];
+  disabled?: boolean;
 }
 
-export function SettingCombobox({ setting, value, onChange, onSelect, options }: SettingComboboxProps) {
+export function SettingCombobox({ setting, value, onChange, onSelect, options, disabled }: SettingComboboxProps) {
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className={`flex flex-col gap-1.5 ${disabled ? "opacity-40 pointer-events-none" : ""}`}>
       <label className="field-label">{t(setting.label)}</label>
       <Combobox value={value} onChange={onChange} onSelect={onSelect} options={options} placeholder={setting.placeholder ? t(setting.placeholder) : undefined} />
     </div>
