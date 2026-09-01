@@ -31,6 +31,27 @@ export interface GameSettings {
   ffx_death: boolean;
   ffx_glow: boolean;
   projected_textures: boolean;
+  sound_enable_all_sound: boolean;
+  sound_enable_sfx: boolean;
+  sound_enable_error_speech: boolean;
+  sound_enable_emote_sounds: boolean;
+  sound_enable_pet_sounds: boolean;
+  sound_enable_music: boolean;
+  sound_zone_music_no_delay: boolean;
+  sound_enable_ambience: boolean;
+  sound_enable_sound_when_game_is_in_bg: boolean;
+  sound_enable_reverb: boolean;
+  sound_enable_software_hrtf: boolean;
+  sound_enable_dsp_effects: boolean;
+  sound_listener_at_character: boolean;
+  sound_output_quality: number;
+  sound_output_driver_index: number;
+  sound_num_channels: number;
+  sound_enable_hardware: boolean;
+  sound_master_volume: number;
+  sound_sfx_volume: number;
+  sound_music_volume: number;
+  sound_ambience_volume: number;
 }
 
 export interface ConfigConflict {
