@@ -1,258 +1,713 @@
 {
-  "id": "wow-wotlk-335a",
-  "game": "wow",
-  "expansion": "wotlk",
-  "version": "3.3.5a",
-  "categories": [
-    {
-      "id": "launch",
-      "label": "settings.categories.launch",
-      "icon": "fa-solid fa-rocket",
-      "settings": [
+    "id": "wow-wotlk-335a",
+    "game": "wow",
+    "expansion": "wotlk",
+    "version": "3.3.5a",
+    "categories": [
         {
-          "key": "launch_args",
-          "type": "text",
-          "label": "settings.launch.args",
-          "placeholder": "-console -windowed",
-          "default": "",
-          "wtf": null
+            "id": "launch",
+            "label": "settings.categories.launch",
+            "icon": "fa-solid fa-rocket",
+            "settings": [
+                {
+                    "key": "launch_args",
+                    "type": "text",
+                    "label": "settings.launch.args",
+                    "placeholder": "-console -windowed",
+                    "default": "",
+                    "wtf": null
+                },
+                {
+                    "key": "launch_priority",
+                    "type": "select",
+                    "label": "settings.launch.priority.label",
+                    "default": "normal",
+                    "options": [
+                        {
+                            "value": "normal",
+                            "label": "settings.launch.priority.normal"
+                        },
+                        {
+                            "value": "high",
+                            "label": "settings.launch.priority.high"
+                        },
+                        {
+                            "value": "realtime",
+                            "label": "settings.launch.priority.realtime"
+                        }
+                    ],
+                    "wtf": null
+                },
+                {
+                    "key": "clear_cache_on_launch",
+                    "type": "checkbox",
+                    "label": "settings.launch.clear_cache",
+                    "default": false,
+                    "wtf": null
+                }
+            ]
         },
         {
-          "key": "launch_priority",
-          "type": "select",
-          "label": "settings.launch.priority.label",
-          "default": "normal",
-          "options": [
-            { "value": "normal", "label": "settings.launch.priority.normal" },
-            { "value": "high", "label": "settings.launch.priority.high" },
-            { "value": "realtime", "label": "settings.launch.priority.realtime" }
-          ],
-          "wtf": null
+            "id": "server",
+            "label": "settings.categories.server",
+            "icon": "fa-solid fa-server",
+            "settings": [
+                {
+                    "key": "realm_list",
+                    "type": "combobox",
+                    "label": "settings.server.realm_list",
+                    "placeholder": "comunidad.naerzone.com",
+                    "default": "",
+                    "wtf": {
+                        "key": "realmList",
+                        "type": "string"
+                    },
+                    "source": "realmlists"
+                },
+                {
+                    "key": "realm_name",
+                    "type": "combobox",
+                    "label": "settings.server.realm_name",
+                    "placeholder": "Thalassa",
+                    "default": "",
+                    "wtf": {
+                        "key": "realmName",
+                        "type": "string"
+                    },
+                    "source": "realms"
+                }
+            ]
         },
         {
-          "key": "clear_cache_on_launch",
-          "type": "checkbox",
-          "label": "settings.launch.clear_cache",
-          "default": false,
-          "wtf": null
+            "id": "graphics",
+            "label": "settings.categories.graphics",
+            "icon": "fa-solid fa-display",
+            "settings": [
+                {
+                    "key": "refresh_rate",
+                    "type": "select",
+                    "label": "settings.graphics.refresh_rate",
+                    "default": 60,
+                    "options": [
+                        23,
+                        24,
+                        25,
+                        29,
+                        30,
+                        50,
+                        59,
+                        60
+                    ],
+                    "wtf": {
+                        "key": "gxRefresh",
+                        "type": "int"
+                    }
+                },
+                {
+                    "key": "resolution",
+                    "type": "select",
+                    "label": "settings.graphics.resolution",
+                    "default": "1920x1080",
+                    "wtf": {
+                        "key": "gxResolution",
+                        "type": "string"
+                    }
+                },
+                {
+                    "key": "windowed",
+                    "type": "checkbox",
+                    "label": "settings.graphics.windowed",
+                    "default": false,
+                    "wtf": {
+                        "key": "gxWindow",
+                        "type": "bool",
+                        "present": "1"
+                    }
+                },
+                {
+                    "key": "window_resize_lock",
+                    "type": "checkbox",
+                    "label": "settings.graphics.window_resize_lock",
+                    "default": false,
+                    "wtf": {
+                        "key": "windowResizeLock",
+                        "type": "bool",
+                        "present": "1"
+                    },
+                    "visibleWhen": {
+                        "field": "windowed",
+                        "equals": true
+                    }
+                },
+                {
+                    "key": "window_maximized",
+                    "type": "checkbox",
+                    "label": "settings.graphics.window_maximized",
+                    "default": false,
+                    "wtf": {
+                        "key": "gxMaximize",
+                        "type": "bool",
+                        "present": "1"
+                    },
+                    "visibleWhen": {
+                        "field": "windowed",
+                        "equals": true
+                    }
+                },
+                {
+                    "key": "vsync",
+                    "type": "checkbox",
+                    "label": "settings.graphics.vsync",
+                    "default": true,
+                    "wtf": {
+                        "key": "gxVSync",
+                        "type": "bool",
+                        "present": "0",
+                        "invert": true
+                    }
+                },
+                {
+                    "key": "multisample",
+                    "type": "select",
+                    "label": "settings.graphics.multisample.label",
+                    "default": 1,
+                    "options": [
+                        {
+                            "value": "1",
+                            "label": "settings.graphics.multisample.1"
+                        },
+                        {
+                            "value": "2",
+                            "label": "settings.graphics.multisample.2"
+                        },
+                        {
+                            "value": "4",
+                            "label": "settings.graphics.multisample.4"
+                        },
+                        {
+                            "value": "8",
+                            "label": "settings.graphics.multisample.8"
+                        },
+                        {
+                            "value": "16",
+                            "label": "settings.graphics.multisample.16"
+                        }
+                    ],
+                    "wtf": {
+                        "key": "gxMultisample",
+                        "type": "int",
+                        "absentMeans": 1
+                    }
+                }
+            ]
+        },
+        {
+            "id": "effects",
+            "label": "settings.categories.effects",
+            "icon": "fa-solid fa-wand-magic-sparkles",
+            "settings": [
+                {
+                    "key": "farclip",
+                    "type": "slider",
+                    "label": "settings.effects.farclip",
+                    "default": 1277,
+                    "min": 177,
+                    "max": 1277,
+                    "step": 1,
+                    "wtf": {
+                        "key": "farclip",
+                        "type": "int"
+                    }
+                },
+                {
+                    "key": "environment_detail",
+                    "type": "slider",
+                    "label": "settings.effects.environment_detail",
+                    "default": 1.5,
+                    "options": [
+                        0.5,
+                        0.75,
+                        1,
+                        1.25,
+                        1.5
+                    ],
+                    "wtf": {
+                        "key": "environmentDetail",
+                        "type": "float"
+                    }
+                },
+                {
+                    "key": "shadow_level",
+                    "type": "slider",
+                    "label": "settings.effects.shadow_level",
+                    "default": 1,
+                    "options": [
+                        0,
+                        1
+                    ],
+                    "wtf": {
+                        "key": "shadowLevel",
+                        "type": "int",
+                        "absentMeans": 1
+                    }
+                },
+                {
+                    "key": "base_mip",
+                    "type": "slider",
+                    "label": "settings.effects.base_mip",
+                    "default": 0,
+                    "options": [
+                        1,
+                        0
+                    ],
+                    "wtf": {
+                        "key": "baseMip",
+                        "type": "int",
+                        "absentMeans": 0
+                    }
+                },
+                {
+                    "key": "ground_effect_density",
+                    "type": "slider",
+                    "label": "settings.effects.ground_effect_density",
+                    "default": 0,
+                    "options": [
+                        0,
+                        24,
+                        32,
+                        40,
+                        48,
+                        56,
+                        64
+                    ],
+                    "wtf": {
+                        "key": "groundEffectDensity",
+                        "type": "int",
+                        "absentMeans": 0
+                    }
+                },
+                {
+                    "key": "texture_filtering_mode",
+                    "type": "slider",
+                    "label": "settings.effects.texture_filtering_mode",
+                    "default": 1,
+                    "options": [
+                        0,
+                        1,
+                        2,
+                        3,
+                        4,
+                        5
+                    ],
+                    "wtf": {
+                        "key": "textureFilteringMode",
+                        "type": "int",
+                        "absentMeans": 1
+                    }
+                },
+                {
+                    "key": "ground_effect_dist",
+                    "type": "slider",
+                    "label": "settings.effects.ground_effect_dist",
+                    "default": 140,
+                    "options": [
+                        70,
+                        80,
+                        90,
+                        100,
+                        110,
+                        120,
+                        130,
+                        140
+                    ],
+                    "wtf": {
+                        "key": "groundEffectDist",
+                        "type": "int"
+                    }
+                },
+                {
+                    "key": "weather_density",
+                    "type": "slider",
+                    "label": "settings.effects.weather_density",
+                    "default": 2,
+                    "options": [
+                        0,
+                        1,
+                        2,
+                        3
+                    ],
+                    "wtf": {
+                        "key": "weatherDensity",
+                        "type": "int",
+                        "absentMeans": 2
+                    }
+                },
+                {
+                    "key": "ext_shadow_quality",
+                    "type": "slider",
+                    "label": "settings.effects.ext_shadow_quality",
+                    "default": 0,
+                    "options": [
+                        0,
+                        1,
+                        2,
+                        3,
+                        4,
+                        5
+                    ],
+                    "wtf": {
+                        "key": "extShadowQuality",
+                        "type": "int",
+                        "absentMeans": 0
+                    }
+                },
+                {
+                    "key": "component_texture_level",
+                    "type": "slider",
+                    "label": "settings.effects.component_texture_level",
+                    "default": 0,
+                    "options": [
+                        0,
+                        9
+                    ],
+                    "wtf": {
+                        "key": "componentTextureLevel",
+                        "type": "int",
+                        "absentMeans": 0
+                    }
+                },
+                {
+                    "key": "particle_density",
+                    "type": "slider",
+                    "label": "settings.effects.particle_density",
+                    "default": 1.0,
+                    "options": [
+                        0.10000000149012,
+                        0.5,
+                        0.80000001192093,
+                        1.0
+                    ],
+                    "wtf": {
+                        "key": "particleDensity",
+                        "type": "float"
+                    }
+                },
+                {
+                    "key": "specular",
+                    "type": "checkbox",
+                    "label": "settings.effects.specular",
+                    "default": false,
+                    "wtf": {
+                        "key": "specular",
+                        "type": "bool",
+                        "present": "1"
+                    }
+                },
+                {
+                    "key": "ffx_death",
+                    "type": "checkbox",
+                    "label": "settings.effects.ffx_death",
+                    "default": true,
+                    "wtf": {
+                        "key": "ffxDeath",
+                        "type": "bool",
+                        "present": "0",
+                        "invert": true
+                    }
+                },
+                {
+                    "key": "ffx_glow",
+                    "type": "checkbox",
+                    "label": "settings.effects.ffx_glow",
+                    "default": true,
+                    "wtf": {
+                        "key": "ffxGlow",
+                        "type": "bool",
+                        "present": "0",
+                        "invert": true
+                    }
+                },
+                {
+                    "key": "projected_textures",
+                    "type": "checkbox",
+                    "label": "settings.effects.projected_textures",
+                    "default": false,
+                    "wtf": {
+                        "key": "projectedTextures",
+                        "type": "bool",
+                        "present": "1"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "sound",
+            "label": "settings.categories.sound",
+            "icon": "fa-solid fa-volume-high",
+            "settings": [
+                {
+                    "key": "sound_enable_all_sound",
+                    "type": "checkbox",
+                    "label": "settings.sound.enable_all_sound",
+                    "default": true,
+                    "wtf": {
+                        "key": "Sound_EnableAllSound",
+                        "type": "bool",
+                        "present": "1"
+                    }
+                },
+                {
+                    "key": "sound_enable_sfx",
+                    "type": "checkbox",
+                    "label": "settings.sound.enable_sfx",
+                    "default": true,
+                    "wtf": {
+                        "key": "Sound_EnableSFX",
+                        "type": "bool",
+                        "present": "1"
+                    }
+                },
+                {
+                    "key": "sound_enable_error_speech",
+                    "type": "checkbox",
+                    "label": "settings.sound.enable_error_speech",
+                    "default": true,
+                    "wtf": {
+                        "key": "Sound_EnableErrorSpeech",
+                        "type": "bool",
+                        "present": "1"
+                    },
+                    "enabledWhen": {
+                        "equals": true,
+                        "field": "sound_enable_sfx"
+                    }
+                },
+                {
+                    "key": "sound_enable_emote_sounds",
+                    "type": "checkbox",
+                    "label": "settings.sound.enable_emote_sounds",
+                    "default": true,
+                    "wtf": {
+                        "key": "Sound_EnableEmoteSounds",
+                        "type": "bool",
+                        "present": "1"
+                    },
+                    "enabledWhen": {
+                        "equals": true,
+                        "field": "sound_enable_sfx"
+                    }
+                },
+                {
+                    "key": "sound_enable_pet_sounds",
+                    "type": "checkbox",
+                    "label": "settings.sound.enable_pet_sounds",
+                    "default": true,
+                    "wtf": {
+                        "key": "Sound_EnablePetSounds",
+                        "type": "bool",
+                        "present": "1"
+                    },
+                    "enabledWhen": {
+                        "equals": true,
+                        "field": "sound_enable_sfx"
+                    }
+                },
+                {
+                    "key": "sound_enable_music",
+                    "type": "checkbox",
+                    "label": "settings.sound.enable_music",
+                    "default": true,
+                    "wtf": {
+                        "key": "Sound_EnableMusic",
+                        "type": "bool",
+                        "present": "1"
+                    }
+                },
+                {
+                    "key": "sound_zone_music_no_delay",
+                    "type": "checkbox",
+                    "label": "settings.sound.zone_music_no_delay",
+                    "default": false,
+                    "wtf": {
+                        "key": "Sound_ZoneMusicNoDelay",
+                        "type": "bool",
+                        "present": "1"
+                    },
+                    "enabledWhen": {
+                        "equals": true,
+                        "field": "sound_enable_music"
+                    }
+                },
+                {
+                    "key": "sound_enable_ambience",
+                    "type": "checkbox",
+                    "label": "settings.sound.enable_ambience",
+                    "default": true,
+                    "wtf": {
+                        "key": "Sound_EnableAmbience",
+                        "type": "bool",
+                        "present": "1"
+                    }
+                },
+                {
+                    "key": "sound_enable_sound_when_game_is_in_bg",
+                    "type": "checkbox",
+                    "label": "settings.sound.enable_sound_when_game_is_in_bg",
+                    "default": false,
+                    "wtf": {
+                        "key": "Sound_EnableSoundWhenGameIsInBG",
+                        "type": "bool",
+                        "present": "1"
+                    }
+                },
+                {
+                    "key": "sound_enable_reverb",
+                    "type": "checkbox",
+                    "label": "settings.sound.enable_reverb",
+                    "default": true,
+                    "wtf": {
+                        "key": "Sound_EnableReverb",
+                        "type": "bool",
+                        "present": "1"
+                    }
+                },
+                {
+                    "key": "sound_enable_software_hrtf",
+                    "type": "checkbox",
+                    "label": "settings.sound.enable_software_hrtf",
+                    "default": false,
+                    "wtf": {
+                        "key": "Sound_EnableSoftwareHRTF",
+                        "type": "bool",
+                        "present": "1"
+                    }
+                },
+                {
+                    "key": "sound_enable_dsp_effects",
+                    "type": "checkbox",
+                    "label": "settings.sound.enable_dsp_effects",
+                    "default": true,
+                    "wtf": {
+                        "key": "Sound_EnableDSPEffects",
+                        "type": "bool",
+                        "present": "1"
+                    }
+                },
+                {
+                    "key": "sound_listener_at_character",
+                    "type": "checkbox",
+                    "label": "settings.sound.listener_at_character",
+                    "default": true,
+                    "wtf": {
+                        "key": "Sound_ListenerAtCharacter",
+                        "type": "bool",
+                        "present": "1"
+                    }
+                },
+                {
+                    "key": "sound_output_quality",
+                    "type": "slider",
+                    "label": "settings.sound.output_quality",
+                    "default": 2,
+                    "options": [
+                        0,
+                        1,
+                        2
+                    ],
+                    "wtf": {
+                        "key": "Sound_OutputQuality",
+                        "type": "int"
+                    }
+                },
+                {
+                    "key": "sound_output_driver_index",
+                    "type": "select",
+                    "label": "settings.sound.output_driver",
+                    "default": 0,
+                    "source": "audioDevices",
+                    "wtf": {
+                        "key": "Sound_OutputDriverIndex",
+                        "type": "int"
+                    }
+                },
+                {
+                    "key": "sound_num_channels",
+                    "type": "slider",
+                    "label": "settings.sound.num_channels",
+                    "default": 64,
+                    "options": [
+                        32,
+                        64
+                    ],
+                    "wtf": {
+                        "key": "Sound_NumChannels",
+                        "type": "int"
+                    }
+                },
+                {
+                    "key": "sound_enable_hardware",
+                    "type": "checkbox",
+                    "label": "settings.sound.enable_hardware",
+                    "default": false,
+                    "wtf": {
+                        "key": "Sound_EnableHardware",
+                        "type": "bool",
+                        "present": "1"
+                    }
+                },
+                {
+                    "key": "sound_master_volume",
+                    "type": "slider",
+                    "label": "settings.sound.master_volume",
+                    "default": 1.0,
+                    "min": 0,
+                    "max": 1,
+                    "step": 0.1,
+                    "wtf": {
+                        "key": "Sound_MasterVolume",
+                        "type": "float"
+                    }
+                },
+                {
+                    "key": "sound_sfx_volume",
+                    "type": "slider",
+                    "label": "settings.sound.sfx_volume",
+                    "default": 1.0,
+                    "min": 0,
+                    "max": 1,
+                    "step": 0.1,
+                    "wtf": {
+                        "key": "Sound_SFXVolume",
+                        "type": "float"
+                    }
+                },
+                {
+                    "key": "sound_music_volume",
+                    "type": "slider",
+                    "label": "settings.sound.music_volume",
+                    "default": 1.0,
+                    "min": 0,
+                    "max": 1,
+                    "step": 0.1,
+                    "wtf": {
+                        "key": "Sound_MusicVolume",
+                        "type": "float"
+                    }
+                },
+                {
+                    "key": "sound_ambience_volume",
+                    "type": "slider",
+                    "label": "settings.sound.ambience_volume",
+                    "default": 1.0,
+                    "min": 0,
+                    "max": 1,
+                    "step": 0.1,
+                    "wtf": {
+                        "key": "Sound_AmbienceVolume",
+                        "type": "float"
+                    }
+                }
+            ]
         }
-      ]
-    },
-    {
-      "id": "server",
-      "label": "settings.categories.server",
-      "icon": "fa-solid fa-server",
-      "settings": [
-        {
-          "key": "realm_list",
-          "type": "combobox",
-          "label": "settings.server.realm_list",
-          "placeholder": "comunidad.naerzone.com",
-          "default": "",
-          "wtf": { "key": "realmList", "type": "string" },
-          "source": "realmlists"
-        },
-        {
-          "key": "realm_name",
-          "type": "combobox",
-          "label": "settings.server.realm_name",
-          "placeholder": "Thalassa",
-          "default": "",
-          "wtf": { "key": "realmName", "type": "string" },
-          "source": "realms"
-        }
-      ]
-    },
-    {
-      "id": "graphics",
-      "label": "settings.categories.graphics",
-      "icon": "fa-solid fa-display",
-      "settings": [
-        {
-          "key": "refresh_rate",
-          "type": "select",
-          "label": "settings.graphics.refresh_rate",
-          "default": 60,
-          "options": [23, 24, 25, 29, 30, 50, 59, 60],
-          "wtf": { "key": "gxRefresh", "type": "int" }
-        },
-        {
-          "key": "resolution",
-          "type": "select",
-          "label": "settings.graphics.resolution",
-          "default": "1920x1080",
-          "wtf": { "key": "gxResolution", "type": "string" }
-        },
-        {
-          "key": "windowed",
-          "type": "checkbox",
-          "label": "settings.graphics.windowed",
-          "default": false,
-          "wtf": { "key": "gxWindow", "type": "bool", "present": "1" }
-        },
-        {
-          "key": "window_resize_lock",
-          "type": "checkbox",
-          "label": "settings.graphics.window_resize_lock",
-          "default": false,
-          "wtf": { "key": "windowResizeLock", "type": "bool", "present": "1" },
-          "visibleWhen": { "field": "windowed", "equals": true }
-        },
-        {
-          "key": "window_maximized",
-          "type": "checkbox",
-          "label": "settings.graphics.window_maximized",
-          "default": false,
-          "wtf": { "key": "gxMaximize", "type": "bool", "present": "1" },
-          "visibleWhen": { "field": "windowed", "equals": true }
-        },
-        {
-          "key": "vsync",
-          "type": "checkbox",
-          "label": "settings.graphics.vsync",
-          "default": true,
-          "wtf": { "key": "gxVSync", "type": "bool", "present": "0", "invert": true }
-        },
-        {
-          "key": "multisample",
-          "type": "select",
-          "label": "settings.graphics.multisample.label",
-          "default": 1,
-          "options": [
-            { "value": "1", "label": "settings.graphics.multisample.1" },
-            { "value": "2", "label": "settings.graphics.multisample.2" },
-            { "value": "4", "label": "settings.graphics.multisample.4" },
-            { "value": "8", "label": "settings.graphics.multisample.8" },
-            { "value": "16", "label": "settings.graphics.multisample.16" }
-          ],
-          "wtf": { "key": "gxMultisample", "type": "int", "absentMeans": 1 }
-        }
-      ]
-    },
-    {
-      "id": "effects",
-      "label": "settings.categories.effects",
-      "icon": "fa-solid fa-wand-magic-sparkles",
-      "settings": [
-        {
-          "key": "farclip",
-          "type": "slider",
-          "label": "settings.effects.farclip",
-          "default": 1277,
-          "min": 177,
-          "max": 1277,
-          "step": 1,
-          "wtf": { "key": "farclip", "type": "int" }
-        },
-        {
-          "key": "environment_detail",
-          "type": "slider",
-          "label": "settings.effects.environment_detail",
-          "default": 1.5,
-          "options": [0.5, 0.75, 1, 1.25, 1.5],
-          "wtf": { "key": "environmentDetail", "type": "float" }
-        },
-        {
-          "key": "shadow_level",
-          "type": "slider",
-          "label": "settings.effects.shadow_level",
-          "default": 1,
-          "options": [0, 1],
-          "wtf": { "key": "shadowLevel", "type": "int", "absentMeans": 1 }
-        },
-        {
-          "key": "base_mip",
-          "type": "slider",
-          "label": "settings.effects.base_mip",
-          "default": 0,
-          "options": [1, 0],
-          "wtf": { "key": "baseMip", "type": "int", "absentMeans": 0 }
-        },
-        {
-          "key": "ground_effect_density",
-          "type": "slider",
-          "label": "settings.effects.ground_effect_density",
-          "default": 0,
-          "options": [0, 24, 32, 40, 48, 56, 64],
-          "wtf": { "key": "groundEffectDensity", "type": "int", "absentMeans": 0 }
-        },
-        {
-          "key": "texture_filtering_mode",
-          "type": "slider",
-          "label": "settings.effects.texture_filtering_mode",
-          "default": 1,
-          "options": [0, 1, 2, 3, 4, 5],
-          "wtf": { "key": "textureFilteringMode", "type": "int", "absentMeans": 1 }
-        },
-        {
-          "key": "ground_effect_dist",
-          "type": "slider",
-          "label": "settings.effects.ground_effect_dist",
-          "default": 140,
-          "options": [70, 80, 90, 100, 110, 120, 130, 140],
-          "wtf": { "key": "groundEffectDist", "type": "int" }
-        },
-        {
-          "key": "weather_density",
-          "type": "slider",
-          "label": "settings.effects.weather_density",
-          "default": 2,
-          "options": [0, 1, 2, 3],
-          "wtf": { "key": "weatherDensity", "type": "int", "absentMeans": 2 }
-        },
-        {
-          "key": "ext_shadow_quality",
-          "type": "slider",
-          "label": "settings.effects.ext_shadow_quality",
-          "default": 0,
-          "options": [0, 1, 2, 3, 4, 5],
-          "wtf": { "key": "extShadowQuality", "type": "int", "absentMeans": 0 }
-        },
-        {
-          "key": "component_texture_level",
-          "type": "slider",
-          "label": "settings.effects.component_texture_level",
-          "default": 0,
-          "options": [0, 9],
-          "wtf": { "key": "componentTextureLevel", "type": "int", "absentMeans": 0 }
-        },
-        {
-          "key": "particle_density",
-          "type": "slider",
-          "label": "settings.effects.particle_density",
-          "default": 1.0,
-          "options": [0.10000000149012, 0.5, 0.80000001192093, 1.0],
-          "wtf": { "key": "particleDensity", "type": "float" }
-        },
-        {
-          "key": "specular",
-          "type": "checkbox",
-          "label": "settings.effects.specular",
-          "default": false,
-          "wtf": { "key": "specular", "type": "bool", "present": "1" }
-        },
-        {
-          "key": "ffx_death",
-          "type": "checkbox",
-          "label": "settings.effects.ffx_death",
-          "default": true,
-          "wtf": { "key": "ffxDeath", "type": "bool", "present": "0", "invert": true }
-        },
-        {
-          "key": "ffx_glow",
-          "type": "checkbox",
-          "label": "settings.effects.ffx_glow",
-          "default": true,
-          "wtf": { "key": "ffxGlow", "type": "bool", "present": "0", "invert": true }
-        },
-        {
-          "key": "projected_textures",
-          "type": "checkbox",
-          "label": "settings.effects.projected_textures",
-          "default": false,
-          "wtf": { "key": "projectedTextures", "type": "bool", "present": "1" }
-        }
-      ]
-    }
-  ]
+    ]
 }
