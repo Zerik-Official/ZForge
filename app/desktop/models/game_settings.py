@@ -52,6 +52,29 @@ class GameSettings:
     ffx_glow: bool = True
     projected_textures: bool = False
 
+    # ── Sound ─────────────────────────────────────────────────────────────
+    sound_enable_all_sound: bool = True
+    sound_enable_sfx: bool = True
+    sound_enable_error_speech: bool = True
+    sound_enable_emote_sounds: bool = True
+    sound_enable_pet_sounds: bool = True
+    sound_enable_music: bool = True
+    sound_zone_music_no_delay: bool = False
+    sound_enable_ambience: bool = True
+    sound_enable_sound_when_game_is_in_bg: bool = False
+    sound_enable_reverb: bool = True
+    sound_enable_software_hrtf: bool = False
+    sound_enable_dsp_effects: bool = True
+    sound_listener_at_character: bool = True
+    sound_output_quality: int = 2
+    sound_output_driver_index: int = 0
+    sound_num_channels: int = 64
+    sound_enable_hardware: bool = False
+    sound_master_volume: float = 1.0
+    sound_sfx_volume: float = 1.0
+    sound_music_volume: float = 1.0
+    sound_ambience_volume: float = 1.0
+
     def to_dict(self) -> dict[str, Any]:
         """Serialise the settings to a JSON-friendly dictionary."""
         return asdict(self)
