@@ -249,6 +249,22 @@ class Api:
         """
         return settings_api.pull_game_settings(game_id)
 
+    def get_settings_schema(self, version_id: str) -> dict:
+        """
+        Return the settings schema for a given game version.
+
+        Args:
+            version_id: Schema identifier like ``wow-wotlk-335a``.
+
+        Returns:
+            Schema dictionary or error envelope.
+        """
+        return settings_api.get_settings_schema(version_id)
+
+    def list_settings_versions(self) -> list[str]:
+        """Return all available settings schema version ids."""
+        return settings_api.list_settings_versions()
+
     # ── Asset pickers ─────────────────────────────────────────────────────
 
     def list_assets(self) -> dict:
