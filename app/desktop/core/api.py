@@ -265,6 +265,10 @@ class Api:
         """Return all available settings schema version ids."""
         return settings_api.list_settings_versions()
 
+    def list_audio_devices(self) -> list[dict]:
+        """Return available audio output devices."""
+        return settings_api.list_audio_devices()
+
     # ── Asset pickers ─────────────────────────────────────────────────────
 
     def list_assets(self) -> dict:
