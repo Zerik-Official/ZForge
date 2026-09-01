@@ -50,6 +50,10 @@ export class SettingsApi {
   listSettingsVersions(): Promise<string[]> {
     return bridge().list_settings_versions();
   }
+
+  listAudioDevices(): Promise<{ index: number; name: string }[]> {
+    return bridge().list_audio_devices();
+  }
 }
 
 export const settingsApi = new SettingsApi();
