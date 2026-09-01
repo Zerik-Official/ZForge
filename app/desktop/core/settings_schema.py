@@ -54,7 +54,7 @@ def load_schema(version_id: str) -> dict[str, Any] | None:
     for path in candidates:
         if path.exists():
             try:
-                data: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+                data: dict[str, Any] = json.loads(path.read_text(encoding="utf-8-sig"))
                 _schema_cache[version_id] = data
                 log("DEBUG", Tags.SETTINGS, f"Loaded schema {version_id} from {path.name}")
                 return data
@@ -65,7 +65,7 @@ def load_schema(version_id: str) -> dict[str, Any] | None:
     fallback: Path = SCHEMA_ROOT / "wotlk-335a.json"
     if fallback.exists():
         try:
-            data = json.loads(fallback.read_text(encoding="utf-8"))
+            data = json.loads(fallback.read_text(encoding="utf-8-sig"))
             _schema_cache[version_id] = data
             return data
         except (json.JSONDecodeError, OSError):
@@ -111,7 +111,7 @@ def list_available_versions() -> list[str]:
     for path in SCHEMA_ROOT.glob("*.json"):
         data: dict[str, Any] | None = None
         try:
-            data = json.loads(path.read_text(encoding="utf-8"))
+            data = json.loads(path.read_text(encoding="utf-8-sig"))
             vid: str | None = data.get("id")
             if vid:
                 versions.append(vid)
