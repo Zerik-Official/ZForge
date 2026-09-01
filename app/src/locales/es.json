@@ -5,6 +5,7 @@
       "server": "Servidor",
       "graphics": "Gráficos",
       "effects": "Efectos",
+      "sound": "Sonido",
       "multi": "Multicuenta"
     },
     "launch": {
@@ -53,6 +54,29 @@
       "ffx_death": "Efecto mortal",
       "ffx_glow": "Brillo a pantalla completa",
       "projected_textures": "Texturas proyectadas"
+    },
+    "sound": {
+      "enable_all_sound": "Activar el sonido",
+      "enable_sfx": "Efectos de sonido",
+      "enable_error_speech": "Sonidos de error",
+      "enable_emote_sounds": "Emosonidos",
+      "enable_pet_sounds": "Sonidos de mascotas",
+      "enable_music": "Música",
+      "zone_music_no_delay": "Música continuada",
+      "enable_ambience": "Sonido ambiental",
+      "enable_sound_when_game_is_in_bg": "Sonido segundo plano",
+      "enable_reverb": "Activar reverberación",
+      "enable_software_hrtf": "Modo auriculares",
+      "enable_dsp_effects": "Efectos DSP",
+      "listener_at_character": "Voces caballeros M.",
+      "output_quality": "Calidad de sonido",
+      "output_driver": "Salida de sonido del juego",
+      "num_channels": "Canales de sonido",
+      "enable_hardware": "Usar hardware",
+      "master_volume": "Volumen general",
+      "sfx_volume": "Sonido",
+      "music_volume": "Música",
+      "ambience_volume": "Entorno"
     }
   }
 }
