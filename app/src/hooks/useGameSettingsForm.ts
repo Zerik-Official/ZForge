@@ -34,9 +34,31 @@ export function useGameSettingsForm(game: Game | null, open: boolean) {
     ffx_death: true,
     ffx_glow: true,
     projected_textures: false,
+    sound_enable_all_sound: true,
+    sound_enable_sfx: true,
+    sound_enable_error_speech: true,
+    sound_enable_emote_sounds: true,
+    sound_enable_pet_sounds: true,
+    sound_enable_music: true,
+    sound_zone_music_no_delay: false,
+    sound_enable_ambience: true,
+    sound_enable_sound_when_game_is_in_bg: false,
+    sound_enable_reverb: true,
+    sound_enable_software_hrtf: false,
+    sound_enable_dsp_effects: true,
+    sound_listener_at_character: true,
+    sound_output_quality: 2,
+    sound_output_driver_index: 0,
+    sound_num_channels: 64,
+    sound_enable_hardware: false,
+    sound_master_volume: 1.0,
+    sound_sfx_volume: 1.0,
+    sound_music_volume: 1.0,
+    sound_ambience_volume: 1.0,
   });
   const [display, setDisplay] = useState<{ width: number; height: number }>({ width: 1920, height: 1080 });
   const [servers, setServers] = useState<ServerEntry[]>([]);
+  const [audioDevices, setAudioDevices] = useState<{ index: number; name: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +83,12 @@ export function useGameSettingsForm(game: Game | null, open: boolean) {
         if (!cancelled) setDisplay(disp);
         const list = await serversApi.listServers();
         if (!cancelled) setServers(list);
+        try {
+          const devices = await settingsApi.listAudioDevices();
+          if (!cancelled) setAudioDevices(devices);
+        } catch {
+          if (!cancelled) setAudioDevices([{ index: 0, name: "Predeterminado" }]);
+        }
       } catch {
         if (!cancelled) setError("No se pudo cargar la configuración del juego.");
       } finally {
@@ -101,6 +129,11 @@ export function useGameSettingsForm(game: Game | null, open: boolean) {
     return Array.from(seen).map((realm) => ({ value: realm, label: realm }));
   }, [matchedServers]);
 
+  const audioDeviceOptions = useMemo(
+    () => audioDevices.map((d) => ({ value: String(d.index), label: d.name })),
+    [audioDevices]
+  );
+
   function update<K extends keyof GameSettings>(key: K, value: GameSettings[K]) {
     setSettings((prev: GameSettings) => ({ ...prev, [key]: value }));
   }
@@ -138,6 +171,8 @@ export function useGameSettingsForm(game: Game | null, open: boolean) {
     settings,
     display,
     servers,
+    audioDevices,
+    audioDeviceOptions,
     loading,
     busy,
     error,
