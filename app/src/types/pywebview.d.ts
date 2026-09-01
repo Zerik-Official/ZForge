@@ -40,6 +40,7 @@ declare global {
         add_custom_realm(realmlist: string, realm: string): Promise<ApiResult>;
         get_settings_schema(version_id: string): Promise<SettingsSchema>;
         list_settings_versions(): Promise<string[]>;
+        list_audio_devices(): Promise<{ index: number; name: string }[]>;
       };
     };
     __zforge_boot_message?: (message: string, percent: number) => void;
