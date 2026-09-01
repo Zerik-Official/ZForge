@@ -1,5 +1,6 @@
 import { bridge } from "../bridge";
 import type { ApiResult, AppConfig, GameSettings } from "@/types/pywebview";
+import type { SettingsSchema } from "@/types/domains/schema";
 
 export class SettingsApi {
   getSettings(): Promise<Record<string, unknown>> {
@@ -40,6 +41,14 @@ export class SettingsApi {
 
   pullGameSettings(gameId: string): Promise<ApiResult> {
     return bridge().pull_game_settings(gameId);
+  }
+
+  getSettingsSchema(versionId: string): Promise<SettingsSchema> {
+    return bridge().get_settings_schema(versionId);
+  }
+
+  listSettingsVersions(): Promise<string[]> {
+    return bridge().list_settings_versions();
   }
 }
 
