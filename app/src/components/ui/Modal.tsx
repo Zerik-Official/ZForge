@@ -113,14 +113,13 @@ interface ModalBodyProps {
 }
 
 /**
- * Scrollable modal content area.
- *
- * Utilizes `min-h-0` to guarantee correct flex layout behavior and prevent stale-paint bugs 
- * inside height-capped flex containers.
+ *  Scrollable modal body container with padding and gap spacing.
  */
 export function ModalBody({ children, className = "" }: ModalBodyProps) {
   return (
-    <div className={`flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-6 py-5 ${className}`}>{children}</div>
+    <div className={`flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-6 py-5 will-change-transform ${className}`}>
+      {children}
+    </div>
   );
 }
 
