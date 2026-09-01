@@ -159,7 +159,7 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
           ))}
         </aside>
 
-        <section className="min-w-0 flex-1 overflow-y-auto px-6 py-5">
+        <section className="min-w-0 flex-1 overflow-y-auto px-6 py-5 will-change-transform">
           {loading ? (
             <div className="flex h-full items-center justify-center text-(--muted)">
               <i className="fa-solid fa-spinner fa-spin text-[18px]" />
