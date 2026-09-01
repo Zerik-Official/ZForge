@@ -1,0 +1,58 @@
+{
+  "settings": {
+    "categories": {
+      "launch": "Lanzamiento",
+      "server": "Servidor",
+      "graphics": "Gráficos",
+      "effects": "Efectos",
+      "multi": "Multicuenta"
+    },
+    "launch": {
+      "args": "Argumentos de inicio",
+      "priority": {
+        "label": "Prioridad de proceso",
+        "normal": "Normal",
+        "high": "Alta (/HIGH)",
+        "realtime": "Tiempo real (/REALTIME)"
+      },
+      "clear_cache": "Borrar caché al iniciar"
+    },
+    "server": {
+      "realm_list": "Realm list",
+      "realm_name": "Reino"
+    },
+    "graphics": {
+      "refresh_rate": "Tasa de refresco",
+      "resolution": "Resolución",
+      "windowed": "Modo ventana",
+      "window_resize_lock": "Bloquear tamaño de ventana (windowResizeLock)",
+      "window_maximized": "Maximizado sin bordes (gxMaximize)",
+      "vsync": "Sincronización vertical (VSync)",
+      "multisample": {
+        "label": "Multimuestreo (antialiasing)",
+        "1": "Color 24 bits, Profundidad 24 bits, Multimuestreo 1x",
+        "2": "Color 24 bits, Profundidad 24 bits, Multimuestreo 2x",
+        "4": "Color 24 bits, Profundidad 24 bits, Multimuestreo 4x",
+        "8": "Color 24 bits, Profundidad 24 bits, Multimuestreo 8x",
+        "16": "Color 24 bits, Profundidad 24 bits, Multimuestreo 16x"
+      }
+    },
+    "effects": {
+      "farclip": "Distancia de visión",
+      "environment_detail": "Detalle del entorno",
+      "base_mip": "Resolución de texturas",
+      "shadow_level": "Fusión terreno",
+      "ground_effect_density": "Densidad det. suelo",
+      "texture_filtering_mode": "Filtro texturas",
+      "ground_effect_dist": "Distancia det. suelo",
+      "weather_density": "Intensidad climática",
+      "ext_shadow_quality": "Calidad de sombras",
+      "component_texture_level": "Texturas de personaje",
+      "particle_density": "Densidad de partículas",
+      "specular": "Iluminación especular",
+      "ffx_death": "Efecto mortal",
+      "ffx_glow": "Brillo a pantalla completa",
+      "projected_textures": "Texturas proyectadas"
+    }
+  }
+}
