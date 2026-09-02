@@ -15,6 +15,7 @@
     "search": "Buscar",
     "select": "Seleccionar",
     "confirmDeleteGame": "¿Eliminar este juego?",
+    "confirmDeleteGameDescription": "\"{name}\" se eliminará del launcher. Esta acción no se puede deshacer, pero tus archivos del juego permanecerán en el disco.",
     "low": "Bajo",
     "high": "Alto",
     "actual": "(actual)",
