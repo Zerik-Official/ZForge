@@ -15,6 +15,7 @@
     "search": "Search",
     "select": "Select",
     "confirmDeleteGame": "Delete this game?",
+    "confirmDeleteGameDescription": "\"{name}\" will be removed from the launcher. This action cannot be undone, but your game files will remain on disk.",
     "low": "Low",
     "high": "High",
     "actual": "(current)",
