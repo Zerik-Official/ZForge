@@ -24,12 +24,38 @@ def get_settings() -> dict[str, object]:
     return config_store.load_app_config().to_dict()
 
 
+SUPPORTED_LANGUAGES: set[str] = {"en", "es"}
+
+
+def _apply_app_config_patch(current: object, payload: dict[str, object]) -> None:
+    """
+    Apply a partial payload to the given ``AppSettings`` instance.
+
+    Validates ``language`` when present and ignores unknown keys.
+
+    Args:
+        current: ``AppSettings`` instance to mutate.
+        payload: Dictionary received from the frontend.
+    """
+    if "theme" in payload:
+        current.theme = payload.get("theme", current.theme)  # type: ignore[assignment]
+    if "last_active_game" in payload:
+        current.last_active_game = payload.get("last_active_game", current.last_active_game)  # type: ignore[assignment]
+    if "language" in payload:
+        raw = payload.get("language")
+        if raw is None:
+            current.language = None  # type: ignore[assignment]
+        elif isinstance(raw, str) and raw in SUPPORTED_LANGUAGES:
+            current.language = raw  # type: ignore[assignment]
+        else:
+            log("WARNING", Tags.API, f"save_app_config: unsupported language '{raw}' — ignored")
+
+
 def save_settings(payload: dict[str, object]) -> dict[str, object]:
     """Persist updated settings."""
     log("DEBUG", Tags.API, f"save_settings() called — keys: {list(payload.keys())}")
     current = config_store.load_app_config()
-    current.theme = payload.get("theme", current.theme)  # type: ignore[assignment]
-    current.last_active_game = payload.get("last_active_game", current.last_active_game)  # type: ignore[assignment]
+    _apply_app_config_patch(current, payload)
     config_store.save_app_config(current)
     return {"ok": True, "error": None}
 
@@ -42,8 +68,7 @@ def get_app_config() -> dict[str, object]:
 def save_app_config(payload: dict[str, object]) -> dict[str, object]:
     """Persist global application settings."""
     current = config_store.load_app_config()
-    current.theme = payload.get("theme", current.theme)  # type: ignore[assignment]
-    current.last_active_game = payload.get("last_active_game", current.last_active_game)  # type: ignore[assignment]
+    _apply_app_config_patch(current, payload)
     config_store.save_app_config(current)
     return {"ok": True, "error": None}
 
