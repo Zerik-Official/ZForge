@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { t, useLocale } from "@/locales/i18n";
 import { settingsApi } from "@/services/api/domains/settings.api";
 import { serversApi } from "@/services/api/domains/servers.api";
 import type { Game } from "@/types/domains/game";
@@ -6,6 +7,8 @@ import type { GameSettings } from "@/types/domains/settings";
 import type { ServerEntry } from "@/types/domains/server";
 
 export function useGameSettingsForm(game: Game | null, open: boolean) {
+  const locale = useLocale();
+
   const [settings, setSettings] = useState<GameSettings>({
     launch_args: "",
     launch_priority: "normal",
@@ -87,10 +90,10 @@ export function useGameSettingsForm(game: Game | null, open: boolean) {
           const devices = await settingsApi.listAudioDevices();
           if (!cancelled) setAudioDevices(devices);
         } catch {
-          if (!cancelled) setAudioDevices([{ index: 0, name: "Predeterminado" }]);
+          if (!cancelled) setAudioDevices([{ index: 0, name: "Default" }]);
         }
       } catch {
-        if (!cancelled) setError("No se pudo cargar la configuración del juego.");
+        if (!cancelled) setError(t("common.errors.loadGameSettings"));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -108,11 +111,11 @@ export function useGameSettingsForm(game: Game | null, open: boolean) {
           label: server.name,
           sublabel: realmlist,
           thumb: server.logo ?? undefined,
-          badge: server.custom ? "Personalizado" : undefined,
+          badge: server.custom ? t("common.custom") : undefined,
           meta: { realms: server.realms },
         }))
       ),
-    [servers]
+    [servers, locale]
   );
 
   const matchedServers = useMemo(
@@ -130,8 +133,12 @@ export function useGameSettingsForm(game: Game | null, open: boolean) {
   }, [matchedServers]);
 
   const audioDeviceOptions = useMemo(
-    () => audioDevices.map((d) => ({ value: String(d.index), label: d.name })),
-    [audioDevices]
+    () =>
+      audioDevices.map((d) => ({
+        value: String(d.index),
+        label: d.index === 0 || d.name === "Predeterminado" || d.name === "Default" ? t("common.defaultDevice") : d.name,
+      })),
+    [audioDevices, locale]
   );
 
   function update<K extends keyof GameSettings>(key: K, value: GameSettings[K]) {
@@ -158,10 +165,10 @@ export function useGameSettingsForm(game: Game | null, open: boolean) {
       await settingsApi.saveGameSettings(game.id, settings);
       if (apply) {
         const result = await settingsApi.applyGameSettings(game.id);
-        if (!result.ok) setError(result.error ?? "No se pudo aplicar al juego.");
+        if (!result.ok) setError(result.error ?? t("common.errors.applyGameSettings"));
       }
     } catch {
-      setError("Error al guardar la configuración.");
+      setError(t("common.errors.saveGameSettings"));
     } finally {
       setBusy(false);
     }
