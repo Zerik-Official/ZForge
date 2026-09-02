@@ -5,6 +5,7 @@ import { toDisplaySrc } from "@/utils/asset";
 import type { Game } from "@/types/pywebview";
 import { GamesView } from "./GamesView";
 import { GameSettingsModal } from "./GameSettingsModal";
+import { t } from "@/locales/i18n";
 import "@/styles/launcher.css";
 
 interface EmptyStateProps {
@@ -23,9 +24,9 @@ interface HomeStageProps {
 type View = "home" | "games" | "addons" | "settings";
 
 const NAV_ITEMS: { key: View; icon: string; label: string }[] = [
-  { key: "home", icon: "fa-solid fa-house", label: "Inicio" },
-  { key: "games", icon: "fa-solid fa-gamepad", label: "Juegos" },
-  { key: "addons", icon: "fa-solid fa-puzzle-piece", label: "Addons" },
+  { key: "home", icon: "fa-solid fa-house", label: t("launcher.sidebar.home") },
+  { key: "games", icon: "fa-solid fa-gamepad", label: t("launcher.sidebar.games") },
+  { key: "addons", icon: "fa-solid fa-puzzle-piece", label: t("launcher.sidebar.addons") },
 ];
 
 /**
@@ -72,7 +73,7 @@ function Sidebar({ view, onSelect }: SidebarProps) {
             view === "settings" ? "bg-(--accent)/15 text-(--accent)" : "text-(--muted) hover:text-(--text)"
           }`}
           onClick={() => onSelect("settings")}
-          title="Ajustes"
+          title={t("launcher.sidebar.settings")}
         >
           <i className="fa-solid fa-gear" />
         </button>
@@ -163,11 +164,11 @@ function HomeStage({ onGoGames }: HomeStageProps) {
           ) : (
             <i className="fa-solid fa-play text-[12px] cursor-pointer" />
           )}
-          {launching ? "Lanzando..." : "Jugar"}
+          {launching ? t("common.playing") : t("common.play")}
         </button>
         <button className="flex h-11 w-11 items-center justify-center rounded-xl border border-(--border-strong) bg-(--bg-elevated) text-(--text-soft) transition-all duration-150 hover:rotate-20 hover:border-(--primary) hover:bg-(--bg-hover) cursor-pointer"
         onClick={() => setSettingsOpen(true)}
-        title="Configuración del juego"
+        title={t("common.gameSettings")}
         >
           <i className="fa-solid fa-gear text-[15px] cursor-pointer" />
         </button>
@@ -216,17 +217,15 @@ function EmptyState({ onAdd }: EmptyStateProps) {
         <i className="fa-solid fa-gamepad text-2xl text-(--muted-2)" />
       </div>
       <div className="flex max-w-sm flex-col items-center gap-1.5 text-center">
-        <h1 className="text-[16px] font-semibold text-(--text)">No tienes ningún juego añadido</h1>
-        <p className="text-[13px] leading-relaxed text-(--muted)">
-          Añade tu instalación de World of Warcraft para empezar a jugar, verificar archivos e instalar addons.
-        </p>
+        <h1 className="text-[16px] font-semibold text-(--text)">{t("launcher.home.emptyTitle")}</h1>
+        <p className="text-[13px] leading-relaxed text-(--muted)">{t("launcher.home.emptyDesc")}</p>
       </div>
       <button
         className="flex items-center gap-2 rounded-lg bg-[linear-gradient(160deg,var(--primary-hover),var(--primary-active))] px-5 py-2.5 text-[13px] font-semibold text-white shadow-[0_0_30px_var(--primary-glow),0_6px_20px_rgba(0,0,0,0.35)] transition-[transform,filter] duration-150 hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0 cursor-pointer"
         onClick={onAdd}
       >
         <i className="fa-solid fa-plus text-[12px]" />
-        Añadir juego
+        {t("common.addGame")}
       </button>
     </div>
   );
@@ -236,7 +235,7 @@ function EmptyState({ onAdd }: EmptyStateProps) {
 function Placeholder({ title }: { title: string }) {
   return (
     <div className="flex h-full w-full items-center justify-center bg-(--bg) text-(--muted)">
-      <span className="text-lg">{title} — próximamente</span>
+      <span className="text-lg">{title}{t("common.comingSoon")}</span>
     </div>
   );
 }
