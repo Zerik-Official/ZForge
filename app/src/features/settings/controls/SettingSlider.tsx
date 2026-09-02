@@ -23,8 +23,8 @@ export function SettingSlider({ setting, value, onChange, disabled }: SettingSli
         disabled={disabled}
       />
       <div className="flex justify-between text-[10px] text-(--muted)">
-        <span>Bajo</span>
-        <span>Alto</span>
+        <span>{t("common.low")}</span>
+        <span>{t("common.high")}</span>
       </div>
     </div>
   );
