@@ -1,4 +1,78 @@
 {
+  "common": {
+    "play": "Jugar",
+    "playing": "Lanzando...",
+    "add": "Añadir",
+    "addGame": "Añadir juego",
+    "edit": "Editar",
+    "editGame": "Editar juego",
+    "save": "Guardar",
+    "saving": "Guardando...",
+    "saveAndApply": "Guardar y aplicar",
+    "applying": "Aplicando...",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "search": "Buscar",
+    "select": "Seleccionar",
+    "confirmDeleteGame": "¿Eliminar este juego?",
+    "low": "Bajo",
+    "high": "Alto",
+    "actual": "(actual)",
+    "defaultDevice": "Predeterminado",
+    "gameSettings": "Configuración del juego",
+    "comingSoon": " — próximamente",
+    "onHome": " · en inicio",
+    "configConflict": {
+      "title": "Configuración de juego detectada",
+      "description": "Se detectó un cambio en la configuración del juego {name} (expansión {expansion}). ¿Deseas reescribir la del juego con la guardada, o reescribir la guardada con la del juego?",
+      "useGame": "Usar la del juego",
+      "useSaved": "Usar guardada"
+    },
+    "confirmSaveRealmlist": {
+      "title": "Guardar realmlist como global",
+      "description": "\"{realmlist}\" no está en el catálogo de servidores. ¿Quieres guardarlo para que se autocomplete en futuros juegos?",
+      "confirm": "Sí, guardar",
+      "cancel": "Solo este juego"
+    }
+  },
+  "launcher": {
+    "home": {
+      "emptyTitle": "No tienes ningún juego añadido",
+      "emptyDesc": "Añade tu instalación de World of Warcraft para empezar a jugar, verificar archivos e instalar addons."
+    },
+    "games": {
+      "title": "Juegos",
+      "empty": "Aún no tienes juegos. Haz clic para añadir uno.",
+      "add": "Añadir"
+    },
+    "sidebar": {
+      "home": "Inicio",
+      "games": "Juegos",
+      "addons": "Addons",
+      "settings": "Ajustes"
+    }
+  },
+  "addGame": {
+    "basicInfo": "Información básica",
+    "name": "Nombre",
+    "namePlaceholder": "Mi WoW 3.3.5a",
+    "expansion": "Expansión",
+    "executable": "Ejecutable (.exe)",
+    "selectExe": "Selecciona wow.exe",
+    "multimedia": "Multimedia",
+    "videoBg": "Video de fondo",
+    "selectVideo": "Selecciona un video",
+    "icon": "Ícono",
+    "selectIcon": "Selecciona un ícono",
+    "poster": "Póster",
+    "selectPoster": "Selecciona un póster",
+    "preview": "Vista previa",
+    "previewGame": "Nombre del juego",
+    "showOnHome": "Mostrar en la pantalla de inicio",
+    "useCustom": "Usar archivo personalizado",
+    "add": "Añadir",
+    "save": "Guardar"
+  },
   "settings": {
     "categories": {
       "launch": "Lanzamiento",
@@ -76,7 +150,12 @@
       "master_volume": "Volumen general",
       "sfx_volume": "Sonido",
       "music_volume": "Música",
-      "ambience_volume": "Entorno"
+      "ambience_volume": "Entorno",
+      "sections": {
+        "playback": "Reproducir",
+        "hardware": "Hardware",
+        "volume": "Volumen"
+      }
     }
   }
 }
