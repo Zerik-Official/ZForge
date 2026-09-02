@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { t } from "@/locales/i18n";
 import type { Game } from "@/types/pywebview";
 import { toDisplaySrc } from "@/utils/asset";
 
@@ -53,7 +54,7 @@ export function GameCard({ game, onEdit, onRemove }: GameCardProps) {
         <button
           className="absolute inset-0 cursor-pointer"
           onClick={() => onEdit(game)}
-          title="Editar"
+          title={t("common.edit")}
         >
           <img
             src={toDisplaySrc(game.box || game.poster || game.icon)}
@@ -77,7 +78,7 @@ export function GameCard({ game, onEdit, onRemove }: GameCardProps) {
         <span className="truncate text-center text-[12.5px] font-semibold leading-tight text-(--text)">{game.name}</span>
         <span className="text-center text-[10px] uppercase tracking-wide text-(--muted)">
           {game.expansion}
-          {game.show_on_main ? " · en inicio" : ""}
+          {game.show_on_main ? t("common.onHome") : ""}
         </span>
       </div>
 
@@ -86,7 +87,7 @@ export function GameCard({ game, onEdit, onRemove }: GameCardProps) {
           className="ghost-btn flex-1 rounded-lg py-1.5 text-[11px] cursor-pointer"
           onClick={() => onEdit(game)}
         >
-          Editar
+          {t("common.edit")}
         </button>
         <button
           className="ghost-btn rounded-lg px-3 py-1.5 text-[11px] text-(--danger) cursor-pointer"
