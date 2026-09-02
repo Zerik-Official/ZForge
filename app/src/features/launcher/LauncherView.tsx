@@ -5,7 +5,7 @@ import { toDisplaySrc } from "@/utils/asset";
 import type { Game } from "@/types/pywebview";
 import { GamesView } from "./GamesView";
 import { GameSettingsModal } from "./GameSettingsModal";
-import { t } from "@/locales/i18n";
+import { t, useLocale } from "@/locales/i18n";
 import "@/styles/launcher.css";
 
 interface EmptyStateProps {
@@ -23,17 +23,13 @@ interface HomeStageProps {
 
 type View = "home" | "games" | "addons" | "settings";
 
-const NAV_ITEMS: { key: View; icon: string; label: string }[] = [
-  { key: "home", icon: "fa-solid fa-house", label: t("launcher.sidebar.home") },
-  { key: "games", icon: "fa-solid fa-gamepad", label: t("launcher.sidebar.games") },
-  { key: "addons", icon: "fa-solid fa-puzzle-piece", label: t("launcher.sidebar.addons") },
-];
-
 /**
  * Main post-splash screen: a sidebar plus a content area that switches
  * between the home stage and the games management view.
  */
 export function LauncherView() {
+  // Subscribe to locale so all t() calls below re-render on language change.
+  useLocale();
   const [view, setView] = useState<View>("home");
 
   return (
@@ -51,6 +47,13 @@ export function LauncherView() {
 
 /** Left navigation rail. */
 function Sidebar({ view, onSelect }: SidebarProps) {
+  useLocale();
+  const NAV_ITEMS: { key: View; icon: string; label: string }[] = [
+    { key: "home", icon: "fa-solid fa-house", label: t("launcher.sidebar.home") },
+    { key: "games", icon: "fa-solid fa-gamepad", label: t("launcher.sidebar.games") },
+    { key: "addons", icon: "fa-solid fa-puzzle-piece", label: t("launcher.sidebar.addons") },
+  ];
+
   return (
     <aside className="flex h-full w-16 flex-col items-center gap-2 border-r border-(--border) bg-(--bg-elevated) py-4">
       {NAV_ITEMS.map((item) => (
@@ -89,6 +92,7 @@ function Sidebar({ view, onSelect }: SidebarProps) {
  * @returns The home stage component.
  */
 function HomeStage({ onGoGames }: HomeStageProps) {
+  useLocale();
   const games = useGamesStore((state) => state.games);
   const activeId = useGamesStore((state) => state.activeId);
   const setActive = useGamesStore((state) => state.setActive);
@@ -211,6 +215,7 @@ function HomeStage({ onGoGames }: HomeStageProps) {
 
 /** Shown on the home stage when there are no games yet. */
 function EmptyState({ onAdd }: EmptyStateProps) {
+  useLocale();
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-5 bg-(--bg)">
       <div className="flex h-19 w-19 items-center justify-center rounded-2xl border border-(--border-strong) bg-(--bg-card)">
@@ -233,6 +238,7 @@ function EmptyState({ onAdd }: EmptyStateProps) {
 
 /** Placeholder for not-yet-implemented tabs. */
 function Placeholder({ title }: { title: string }) {
+  useLocale();
   return (
     <div className="flex h-full w-full items-center justify-center bg-(--bg) text-(--muted)">
       <span className="text-lg">{title}{t("common.comingSoon")}</span>
