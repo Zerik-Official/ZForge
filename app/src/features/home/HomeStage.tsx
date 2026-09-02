@@ -5,6 +5,7 @@ import { toDisplaySrc } from "@/utils/asset";
 import type { Game } from "@/types/pywebview";
 import { GameSettingsModal } from "@/features/game-settings/GameSettingsModal";
 import { t, useLocale } from "@/locales/i18n";
+import { TooltipSimple } from "@/components/ui/Tooltip";
 import { EmptyState } from "./EmptyState";
 import { HomeDock } from "./HomeDock";
 
@@ -66,13 +67,14 @@ export function HomeStage({ onGoGames }: HomeStageProps) {
           )}
           {launching ? t("common.playing") : t("common.play")}
         </button>
-        <button
-          className="flex h-11 w-11 items-center justify-center rounded-xl border border-(--border-strong) bg-(--bg-elevated) text-(--text-soft) transition-all duration-150 hover:rotate-20 hover:border-(--primary) hover:bg-(--bg-hover) cursor-pointer"
-          onClick={() => setSettingsOpen(true)}
-          title={t("common.gameSettings")}
-        >
-          <i className="fa-solid fa-gear text-[15px] cursor-pointer" />
-        </button>
+        <TooltipSimple content={t("common.gameSettings")} side="top" align="center">
+          <button
+            className="flex h-11 w-11 items-center justify-center rounded-xl border border-(--border-strong) bg-(--bg-elevated) text-(--text-soft) transition-all duration-150 hover:rotate-20 hover:border-(--primary) hover:bg-(--bg-hover) cursor-pointer"
+            onClick={() => setSettingsOpen(true)}
+          >
+            <i className="fa-solid fa-gear text-[15px] cursor-pointer" />
+          </button>
+        </TooltipSimple>
       </div>
 
       <GameSettingsModal open={settingsOpen} game={active} onClose={() => setSettingsOpen(false)} />
