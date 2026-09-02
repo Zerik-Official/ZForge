@@ -19,9 +19,15 @@
     "high": "Alto",
     "actual": "(actual)",
     "defaultDevice": "Predeterminado",
+    "custom": "Personalizado",
     "gameSettings": "Configuración del juego",
     "comingSoon": " — próximamente",
     "onHome": " · en inicio",
+    "errors": {
+      "loadGameSettings": "No se pudo cargar la configuración del juego.",
+      "applyGameSettings": "No se pudo aplicar al juego.",
+      "saveGameSettings": "Error al guardar la configuración."
+    },
     "configConflict": {
       "title": "Configuración de juego detectada",
       "description": "Se detectó un cambio en la configuración del juego {name} (expansión {expansion}). ¿Deseas reescribir la del juego con la guardada, o reescribir la guardada con la del juego?",
@@ -69,6 +75,14 @@
     "previewGame": "Nombre del juego",
     "showOnHome": "Mostrar en la pantalla de inicio",
     "useCustom": "Usar archivo personalizado"
+  },
+  "language": {
+    "selectTitle": "Elige tu idioma",
+    "selectSubtitle": "Selecciona un idioma para continuar",
+    "hint": "Podrás cambiarlo luego en Ajustes",
+    "spanish": "Español",
+    "english": "Inglés",
+    "continue": "Continuar"
   },
   "settings": {
     "categories": {
