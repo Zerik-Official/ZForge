@@ -6,6 +6,7 @@ import { Select, type SelectOption } from "@/components/ui/Select";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Modal, ModalHeader, ModalFooter } from "@/components/ui/Modal";
 import { t, useLocale } from "@/locales/i18n";
+import { TooltipSimple } from "@/components/ui/Tooltip";
 import type { Game, GameInput } from "@/types/pywebview";
 
 /**
@@ -206,13 +207,23 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-(--border-strong) bg-(--bg-input)">
                     <i className="fa-solid fa-file-invoice text-[13px] text-(--muted)" />
                   </div>
-                  <input
-                    className="field-input flex-1 truncate"
-                    value={form.exePath}
-                    readOnly
-                    placeholder={t("addGame.selectExe")}
-                    title={form.exePath}
-                  />
+                  {form.exePath ? (
+                    <TooltipSimple content={form.exePath} side="top" align="center" sideOffset={6}>
+                      <input
+                        className="field-input flex-1 truncate cursor-default"
+                        value={form.exePath}
+                        readOnly
+                        placeholder={t("addGame.selectExe")}
+                      />
+                    </TooltipSimple>
+                  ) : (
+                    <input
+                      className="field-input flex-1 truncate"
+                      value={form.exePath}
+                      readOnly
+                      placeholder={t("addGame.selectExe")}
+                    />
+                  )}
                 </div>
                 <button className="ghost-btn w-full rounded-lg px-3 py-2 text-[12px] cursor-pointer" onClick={pickExe}>
                   <i className="fa-solid fa-folder-open mr-1.5" />
@@ -237,9 +248,11 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
                   <div className="min-w-0 flex-1">
                     <Select value={form.bgVideo} options={videoOptions} onChange={(val) => setForm((prev) => ({ ...prev, bgVideo: val }))} placeholder={t("addGame.selectVideo")} />
                   </div>
-                  <button className="icon-btn cursor-pointer" title={t("addGame.useCustom")} onClick={() => pickCustom("scenes")}>
-                    <i className="fa-solid fa-upload text-[12px]" />
-                  </button>
+                  <TooltipSimple content={t("addGame.useCustom")} side="top">
+                    <button className="icon-btn cursor-pointer" onClick={() => pickCustom("scenes")}>
+                      <i className="fa-solid fa-upload text-[12px]" />
+                    </button>
+                  </TooltipSimple>
                 </div>
               </div>
 
@@ -249,9 +262,11 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
                   <div className="min-w-0 flex-1">
                     <Select value={form.icon} options={iconOptions} onChange={(val) => setForm((prev) => ({ ...prev, icon: val }))} placeholder={t("addGame.selectIcon")} />
                   </div>
-                  <button className="icon-btn cursor-pointer" title={t("addGame.useCustom")} onClick={() => pickCustom("icos")}>
-                    <i className="fa-solid fa-upload text-[12px]" />
-                  </button>
+                  <TooltipSimple content={t("addGame.useCustom")} side="top">
+                    <button className="icon-btn cursor-pointer" onClick={() => pickCustom("icos")}>
+                      <i className="fa-solid fa-upload text-[12px]" />
+                    </button>
+                  </TooltipSimple>
                 </div>
               </div>
 
@@ -261,9 +276,11 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
                   <div className="min-w-0 flex-1">
                     <Select value={form.poster} options={posterOptions} onChange={(val) => setForm((prev) => ({ ...prev, poster: val }))} placeholder={t("addGame.selectPoster")} />
                   </div>
-                  <button className="icon-btn cursor-pointer" title={t("addGame.useCustom")} onClick={() => pickCustom("logos")}>
-                    <i className="fa-solid fa-upload text-[12px]" />
-                  </button>
+                  <TooltipSimple content={t("addGame.useCustom")} side="top">
+                    <button className="icon-btn cursor-pointer" onClick={() => pickCustom("logos")}>
+                      <i className="fa-solid fa-upload text-[12px]" />
+                    </button>
+                  </TooltipSimple>
                 </div>
               </div>
             </div>
