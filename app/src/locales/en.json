@@ -19,9 +19,15 @@
     "high": "High",
     "actual": "(current)",
     "defaultDevice": "Default",
+    "custom": "Custom",
     "gameSettings": "Game settings",
     "comingSoon": " — coming soon",
     "onHome": " · on home",
+    "errors": {
+      "loadGameSettings": "Failed to load game settings.",
+      "applyGameSettings": "Failed to apply to game.",
+      "saveGameSettings": "Failed to save settings."
+    },
     "configConflict": {
       "title": "Game configuration detected",
       "description": "A change was detected in the configuration of the game {name} (expansion {expansion}). Do you want to overwrite the game configuration with the saved one, or overwrite the saved configuration with the game's?",
@@ -69,6 +75,14 @@
     "previewGame": "Game name",
     "showOnHome": "Show on home screen",
     "useCustom": "Use custom file"
+  },
+  "language": {
+    "selectTitle": "Choose your language",
+    "selectSubtitle": "Select a language to continue",
+    "hint": "You can change this later in Settings",
+    "spanish": "Spanish",
+    "english": "English",
+    "continue": "Continue"
   },
   "settings": {
     "categories": {
