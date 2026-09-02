@@ -1,12 +1,16 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { TitleBar } from "@/components/layout/TitleBar";
 import { SplashScreen } from "@/components/layout/SplashScreen";
+import { LanguageSelector } from "@/components/LanguageSelector";
 import { LauncherView } from "@/features/launcher/LauncherView";
 import { ConfigConflictModal } from "@/features/launcher/ConfigConflictModal";
 import { useBridge } from "@/hooks/useBridge";
 import { useBootEvents } from "@/hooks/useBootEvents";
 import { useConfigConflict } from "@/hooks/useConfigConflict";
 import { useGamesStore } from "@/store/gamesStore";
+import { api } from "@/services/api";
+import { setLocale, type Locale } from "@/locales/i18n";
+import type { AppConfig } from "@/types/domains/settings";
 
 export default function App() {
   const { ready: bridgeReady } = useBridge();
@@ -17,12 +21,74 @@ export default function App() {
   /** True once the splash fade-out transition ends. */
   const [splashGone, setSplashGone] = useState(false);
 
-  /** Load persisted games/assets/config once the Python bridge is ready. */
+  /** Language gate — null until we know if the user has chosen one. */
+  const [languageChecked, setLanguageChecked] = useState(false);
+  const [needsLanguage, setNeedsLanguage] = useState(false);
+  const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
+
+  /**
+   * Resolve language as soon as the bridge is ready.
+   * If no language is stored, show the selector and defer hydration.
+   */
   useEffect(() => {
-    if (bridgeReady) {
-      void hydrate();
-    }
-  }, [bridgeReady, hydrate]);
+    if (!bridgeReady) return;
+
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const config = (await api.getAppConfig()) as AppConfig;
+        if (cancelled) return;
+
+        setAppConfig(config);
+
+        const lang = config.language as Locale | null;
+        if (lang === "en" || lang === "es") {
+          setLocale(lang);
+          setNeedsLanguage(false);
+        } else {
+          setNeedsLanguage(true);
+        }
+      } catch {
+        if (!cancelled) setNeedsLanguage(true);
+      } finally {
+        if (!cancelled) setLanguageChecked(true);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [bridgeReady]);
+
+  /** Load persisted games/assets/config once language is resolved. */
+  useEffect(() => {
+    if (!bridgeReady || !languageChecked || needsLanguage) return;
+    void hydrate();
+  }, [bridgeReady, languageChecked, needsLanguage, hydrate]);
+
+  const handleSelectLanguage = useCallback(
+    async (locale: Locale) => {
+      setLocale(locale);
+      
+      const base: AppConfig = appConfig ?? { theme: "dark", last_active_game: null, language: null };
+      const next: AppConfig = { ...base, language: locale };
+
+      try {
+        await api.saveAppConfig(next);
+        setAppConfig(next);
+      } catch {
+
+        setAppConfig(next);
+      }
+
+      setNeedsLanguage(false);
+
+    },
+    [appConfig],
+  );
+
+  const showLanguageSelector = bridgeReady && languageChecked && needsLanguage;
 
   return (
     <div
@@ -36,8 +102,7 @@ export default function App() {
         overflow: "hidden",
       }}
     >
-      {/* ── Splash screen (unmounted after fade-out) ───────────── */}
-      {!splashGone && (
+      {!splashGone && !showLanguageSelector && (
         <SplashScreen
           bridgeReady={bridgeReady}
           step={step}
@@ -46,7 +111,7 @@ export default function App() {
         />
       )}
 
-      {/* ── Main layout (rendered underneath splash) ───────────── */}
+      {showLanguageSelector && <LanguageSelector onSelect={handleSelectLanguage} />}
       <TitleBar bridgeReady={bridgeReady} />
 
       <main
@@ -54,7 +119,7 @@ export default function App() {
           flex: 1,
           display: "flex",
           minHeight: 0,
-          opacity: splashGone ? 1 : 0,
+          opacity: splashGone && !showLanguageSelector ? 1 : 0,
           transition: "opacity 0.3s ease",
         }}
       >
