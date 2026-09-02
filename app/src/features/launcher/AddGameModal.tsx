@@ -5,6 +5,7 @@ import { toDisplaySrc } from "@/utils/asset";
 import { Select, type SelectOption } from "@/components/ui/Select";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Modal, ModalHeader, ModalFooter } from "@/components/ui/Modal";
+import { t } from "@/locales/i18n";
 import type { Game, GameInput } from "@/types/pywebview";
 
 /**
@@ -170,7 +171,7 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
     <Modal open={open} onClose={onClose} className="h-135 w-full max-w-3xl">
       <ModalHeader
         icon="fa-solid fa-gamepad"
-        title={initial ? "Editar juego" : "Añadir juego"}
+        title={initial ? t("common.editGame") : t("common.addGame")}
         onClose={onClose}
       />
 
@@ -179,26 +180,26 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
           <div className="flex flex-col gap-3">
             <span className="section-label">
               <i className="fa-solid fa-circle-info" />
-              Información básica
+              {t("addGame.basicInfo")}
             </span>
 
             <div className="flex flex-col gap-1.5">
-              <label className="field-label">Nombre</label>
+              <label className="field-label">{t("addGame.name")}</label>
               <input
                 className="field-input"
                 value={form.name}
                 onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
-                placeholder="Mi WoW 3.3.5a"
+                placeholder={t("addGame.namePlaceholder")}
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="field-label">Expansión</label>
+              <label className="field-label">{t("addGame.expansion")}</label>
               <Select value={form.expansion} options={expansionOptions} onChange={handleExpansionChange} />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="field-label">Ejecutable (.exe)</label>
+              <label className="field-label">{t("addGame.executable")}</label>
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-(--border-strong) bg-(--bg-input)">
@@ -208,13 +209,13 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
                     className="field-input flex-1 truncate"
                     value={form.exePath}
                     readOnly
-                    placeholder="Selecciona wow.exe"
+                    placeholder={t("addGame.selectExe")}
                     title={form.exePath}
                   />
                 </div>
                 <button className="ghost-btn w-full rounded-lg px-3 py-2 text-[12px] cursor-pointer" onClick={pickExe}>
                   <i className="fa-solid fa-folder-open mr-1.5" />
-                  Buscar
+                  {t("common.search")}
                 </button>
               </div>
             </div>
@@ -226,40 +227,40 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
             <div className="flex flex-col gap-3">
               <span className="section-label">
                 <i className="fa-solid fa-photo-film" />
-                Multimedia
+                {t("addGame.multimedia")}
               </span>
 
               <div className="flex flex-col gap-2">
-                <label className="field-label">Video de fondo</label>
+                <label className="field-label">{t("addGame.videoBg")}</label>
                 <div className="flex items-center gap-2">
                   <div className="min-w-0 flex-1">
-                    <Select value={form.bgVideo} options={videoOptions} onChange={(val) => setForm((prev) => ({ ...prev, bgVideo: val }))} placeholder="Selecciona un video" />
+                    <Select value={form.bgVideo} options={videoOptions} onChange={(val) => setForm((prev) => ({ ...prev, bgVideo: val }))} placeholder={t("addGame.selectVideo")} />
                   </div>
-                  <button className="icon-btn cursor-pointer" title="Usar archivo personalizado" onClick={() => pickCustom("scenes")}>
+                  <button className="icon-btn cursor-pointer" title={t("addGame.useCustom")} onClick={() => pickCustom("scenes")}>
                     <i className="fa-solid fa-upload text-[12px]" />
                   </button>
                 </div>
               </div>
 
               <div className="flex flex-col gap-2">
-                <label className="field-label">Ícono</label>
+                <label className="field-label">{t("addGame.icon")}</label>
                 <div className="flex items-center gap-2">
                   <div className="min-w-0 flex-1">
-                    <Select value={form.icon} options={iconOptions} onChange={(val) => setForm((prev) => ({ ...prev, icon: val }))} placeholder="Selecciona un ícono" />
+                    <Select value={form.icon} options={iconOptions} onChange={(val) => setForm((prev) => ({ ...prev, icon: val }))} placeholder={t("addGame.selectIcon")} />
                   </div>
-                  <button className="icon-btn cursor-pointer" title="Usar archivo personalizado" onClick={() => pickCustom("icos")}>
+                  <button className="icon-btn cursor-pointer" title={t("addGame.useCustom")} onClick={() => pickCustom("icos")}>
                     <i className="fa-solid fa-upload text-[12px]" />
                   </button>
                 </div>
               </div>
 
               <div className="flex flex-col gap-2">
-                <label className="field-label">Póster</label>
+                <label className="field-label">{t("addGame.poster")}</label>
                 <div className="flex items-center gap-2">
                   <div className="min-w-0 flex-1">
-                    <Select value={form.poster} options={posterOptions} onChange={(val) => setForm((prev) => ({ ...prev, poster: val }))} placeholder="Selecciona un póster" />
+                    <Select value={form.poster} options={posterOptions} onChange={(val) => setForm((prev) => ({ ...prev, poster: val }))} placeholder={t("addGame.selectPoster")} />
                   </div>
-                  <button className="icon-btn cursor-pointer" title="Usar archivo personalizado" onClick={() => pickCustom("logos")}>
+                  <button className="icon-btn cursor-pointer" title={t("addGame.useCustom")} onClick={() => pickCustom("logos")}>
                     <i className="fa-solid fa-upload text-[12px]" />
                   </button>
                 </div>
@@ -269,7 +270,7 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
             <div className="flex flex-col gap-3">
               <span className="section-label">
                 <i className="fa-solid fa-eye" />
-                Vista previa
+                {t("addGame.preview")}
               </span>
 
             <div className="flex items-center gap-3 rounded-xl border border-(--border-strong) bg-(--bg-input) p-3">
@@ -281,7 +282,7 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[13px] font-semibold text-(--text)">{form.name || "Nombre del juego"}</p>
+                <p className="truncate text-[13px] font-semibold text-(--text)">{form.name || t("addGame.previewGame")}</p>
                 <p className="text-[11px] uppercase tracking-wide text-(--muted)">{form.expansion}</p>
                 <p className="mt-1 flex items-center gap-1.5 text-[10px] text-(--muted-2)">
                   <span className="h-4 w-4 overflow-hidden rounded bg-(--bg-card) p-0.5">
@@ -292,7 +293,7 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
               </div>
             </div>
 
-              <Checkbox checked={form.showOnMain} onChange={(val) => setForm((prev) => ({ ...prev, showOnMain: val }))} label="Mostrar en la pantalla de inicio" />
+              <Checkbox checked={form.showOnMain} onChange={(val) => setForm((prev) => ({ ...prev, showOnMain: val }))} label={t("addGame.showOnHome")} />
             </div>
           </div>
         </div>
@@ -300,14 +301,14 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
 
       <ModalFooter>
         <button className="ghost-btn rounded-lg px-4 py-2 text-[13px] cursor-pointer" onClick={onClose}>
-          Cancelar
+          {t("common.cancel")}
         </button>
         <button
           className="play-btn rounded-lg px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-40 cursor-pointer"
           onClick={handleSave}
           disabled={busy || !form.name.trim() || !form.exePath.trim()}
         >
-          {busy ? "Guardando..." : initial ? "Guardar" : "Añadir"}
+          {busy ? t("common.saving") : initial ? t("common.save") : t("common.add")}
         </button>
       </ModalFooter>
     </Modal>
