@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { t } from "@/locales/i18n";
+import { t, useLocale } from "@/locales/i18n";
 import type { Game } from "@/types/pywebview";
 import { toDisplaySrc } from "@/utils/asset";
 
@@ -10,6 +10,7 @@ interface GameCardProps {
 }
 
 export function GameCard({ game, onEdit, onRemove }: GameCardProps) {
+  useLocale();
   const cardRef = useRef<HTMLDivElement>(null);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const [glare, setGlare] = useState({ x: 50, y: 50 });

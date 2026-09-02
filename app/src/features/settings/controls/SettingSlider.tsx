@@ -1,5 +1,5 @@
 import { Slider } from "@/components/ui/Slider";
-import { t } from "@/locales/i18n";
+import { t, useLocale } from "@/locales/i18n";
 import type { SliderSetting } from "@/types/domains/schema";
 
 interface SettingSliderProps {
@@ -10,6 +10,7 @@ interface SettingSliderProps {
 }
 
 export function SettingSlider({ setting, value, onChange, disabled }: SettingSliderProps) {
+  useLocale();
   return (
     <div className="flex flex-col gap-1.5">
       <label className="field-label">{t(setting.label)}</label>

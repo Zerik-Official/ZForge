@@ -1,5 +1,5 @@
 import { SettingsRenderer } from "./SettingsRenderer";
-import { t } from "@/locales/i18n";
+import { t, useLocale } from "@/locales/i18n";
 import type { SettingsCategory as Category } from "@/types/domains/schema";
 
 interface SettingsCategoryProps {
@@ -11,6 +11,7 @@ interface SettingsCategoryProps {
 }
 
 export function SettingsCategory({ category, values, onChange, sources, extraOptions }: SettingsCategoryProps) {
+  useLocale();
   const checkboxes = category.settings.filter((setting) => setting.type === "checkbox");
   const others = category.settings.filter((setting) => setting.type !== "checkbox");
 

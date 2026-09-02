@@ -5,7 +5,7 @@ import { toDisplaySrc } from "@/utils/asset";
 import { Select, type SelectOption } from "@/components/ui/Select";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Modal, ModalHeader, ModalFooter } from "@/components/ui/Modal";
-import { t } from "@/locales/i18n";
+import { t, useLocale } from "@/locales/i18n";
 import type { Game, GameInput } from "@/types/pywebview";
 
 /**
@@ -49,6 +49,7 @@ const initialFormState: GameFormState = {
  * Modal to create or edit a game installation using a unified state object.
  */
 export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
+  useLocale();
   const assets = useGamesStore((state) => state.assets);
   const addGame = useGamesStore((state) => state.addGame);
   const updateGame = useGamesStore((state) => state.updateGame);

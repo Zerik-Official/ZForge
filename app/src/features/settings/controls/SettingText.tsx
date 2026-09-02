@@ -1,4 +1,4 @@
-import { t } from "@/locales/i18n";
+import { t, useLocale } from "@/locales/i18n";
 import type { TextSetting } from "@/types/domains/schema";
 
 interface SettingTextProps {
@@ -9,6 +9,7 @@ interface SettingTextProps {
 }
 
 export function SettingText({ setting, value, onChange, disabled }: SettingTextProps) {
+  useLocale();
   return (
     <div className={`flex flex-col gap-1.5 ${disabled ? "opacity-40 pointer-events-none" : ""}`}>
       <label className="field-label">{t(setting.label)}</label>

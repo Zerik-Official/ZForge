@@ -3,12 +3,13 @@ import { useGamesStore } from "@/store/gamesStore";
 import type { Game } from "@/types/pywebview";
 import { GameCard } from "./GameCard";
 import { AddGameModal } from "./AddGameModal";
-import { t } from "@/locales/i18n";
+import { t, useLocale } from "@/locales/i18n";
 
 /**
  * Management view listing every saved game with add/edit/remove controls.
  */
 export function GamesView() {
+  useLocale();
   const games = useGamesStore((state) => state.games);
   const removeGame = useGamesStore((state) => state.removeGame);
 

@@ -6,7 +6,7 @@ import { Modal, ModalHeader, ModalFooter } from "@/components/ui/Modal";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Combobox } from "@/components/ui/Combobox";
 import { SettingsCategory } from "@/features/settings/SettingsCategory";
-import { t } from "@/locales/i18n";
+import { t, useLocale } from "@/locales/i18n";
 import { useGameSettingsForm } from "@/hooks/useGameSettingsForm";
 import { settingsApi } from "@/services/api/domains/settings.api";
 import type { Game } from "@/types/domains/game";
@@ -28,6 +28,7 @@ function getSchemaIdForGame(game: Game): string {
 }
 
 export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProps) {
+  useLocale();
   const [category, setCategory] = useState<string>("launch");
   const {
     settings,

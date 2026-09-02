@@ -1,5 +1,5 @@
 import { Select, type SelectOption } from "@/components/ui/Select";
-import { t } from "@/locales/i18n";
+import { t, useLocale } from "@/locales/i18n";
 import type { SelectSetting } from "@/types/domains/schema";
 
 interface SettingSelectProps {
@@ -11,6 +11,7 @@ interface SettingSelectProps {
 }
 
 export function SettingSelect({ setting, value, onChange, options, disabled }: SettingSelectProps) {
+  useLocale();
   const opts: SelectOption[] =
     options ??
     (Array.isArray(setting.options)

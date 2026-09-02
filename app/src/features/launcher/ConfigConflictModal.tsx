@@ -1,4 +1,4 @@
-import { t } from "@/locales/i18n";
+import { t, useLocale } from "@/locales/i18n";
 import type { ConfigConflict } from "@/types/pywebview";
 import type { ConflictChoice } from "@/hooks/useConfigConflict";
 
@@ -8,6 +8,7 @@ interface ConfigConflictModalProps {
 }
 
 export function ConfigConflictModal({ conflict, onResolve }: ConfigConflictModalProps) {
+  useLocale();
   const applyFirst = conflict.recommended === "db";
 
   return (

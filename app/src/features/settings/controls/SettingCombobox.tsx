@@ -1,5 +1,5 @@
 import { Combobox, type ComboboxOption } from "@/components/ui/Combobox";
-import { t } from "@/locales/i18n";
+import { t, useLocale } from "@/locales/i18n";
 import type { ComboboxSetting } from "@/types/domains/schema";
 
 interface SettingComboboxProps {
@@ -12,6 +12,7 @@ interface SettingComboboxProps {
 }
 
 export function SettingCombobox({ setting, value, onChange, onSelect, options, disabled }: SettingComboboxProps) {
+  useLocale();
   return (
     <div className={`flex flex-col gap-1.5 ${disabled ? "opacity-40 pointer-events-none" : ""}`}>
       <label className="field-label">{t(setting.label)}</label>
