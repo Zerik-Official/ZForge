@@ -55,7 +55,6 @@ export function GameCard({ game, onEdit, onRemove }: GameCardProps) {
         <button
           className="absolute inset-0 cursor-pointer"
           onClick={() => onEdit(game)}
-          title={t("common.edit")}
         >
           <img
             src={toDisplaySrc(game.box || game.poster || game.icon)}
@@ -73,6 +72,31 @@ export function GameCard({ game, onEdit, onRemove }: GameCardProps) {
         />
 
         <div className="pointer-events-none absolute inset-0 rounded-[10px] shadow-[inset_0_1px_0_rgba(255,255,255,0.18),inset_0_-1px_0_rgba(0,0,0,0.35)]" />
+
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-16 rounded-t-[10px] bg-linear-to-b from-black/70 to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+
+        <div className="absolute inset-x-2 top-2 flex -translate-y-1.5 items-center justify-between opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100">
+          <button
+            className="card-icon-btn"
+            onClick={(event) => {
+              event.stopPropagation();
+              onEdit(game);
+            }}
+            title={t("common.edit")}
+          >
+            <i className="fa-solid fa-pen text-[11px]" />
+          </button>
+          <button
+            className="card-icon-btn card-icon-btn--danger"
+            onClick={(event) => {
+              event.stopPropagation();
+              onRemove(game.id);
+            }}
+            title={t("common.delete")}
+          >
+            <i className="fa-solid fa-trash text-[11px]" />
+          </button>
+        </div>
       </div>
 
       <div className="flex w-full flex-col gap-1 px-1">
@@ -81,21 +105,6 @@ export function GameCard({ game, onEdit, onRemove }: GameCardProps) {
           {game.expansion}
           {game.show_on_main ? t("common.onHome") : ""}
         </span>
-      </div>
-
-      <div className="flex w-full items-center gap-2">
-        <button
-          className="ghost-btn flex-1 rounded-lg py-1.5 text-[11px] cursor-pointer"
-          onClick={() => onEdit(game)}
-        >
-          {t("common.edit")}
-        </button>
-        <button
-          className="ghost-btn rounded-lg px-3 py-1.5 text-[11px] text-(--danger) cursor-pointer"
-          onClick={() => onRemove(game.id)}
-        >
-          <i className="fa-solid fa-trash" />
-        </button>
       </div>
     </div>
   );
