@@ -1,6 +1,9 @@
+export type AppLanguage = "en" | "es";
+
 export interface AppConfig {
   theme: string;
   last_active_game: string | null;
+  language: AppLanguage | null;
 }
 
 export interface GameSettings {
