@@ -42,8 +42,7 @@
     },
     "games": {
       "title": "Juegos",
-      "empty": "Aún no tienes juegos. Haz clic para añadir uno.",
-      "add": "Añadir"
+      "empty": "Aún no tienes juegos. Haz clic para añadir uno."
     },
     "sidebar": {
       "home": "Inicio",
@@ -69,9 +68,7 @@
     "preview": "Vista previa",
     "previewGame": "Nombre del juego",
     "showOnHome": "Mostrar en la pantalla de inicio",
-    "useCustom": "Usar archivo personalizado",
-    "add": "Añadir",
-    "save": "Guardar"
+    "useCustom": "Usar archivo personalizado"
   },
   "settings": {
     "categories": {
