@@ -20,9 +20,9 @@ def list_output_devices() -> list[dict[str, Any]]:
 
     Returns:
         List of dictionaries with ``index`` and ``name`` keys. Always
-        includes a ``Predeterminado`` entry at index 0.
+        includes a sentinel ``Default`` entry at index 0.
     """
-    devices: list[dict[str, Any]] = [{"index": 0, "name": "Predeterminado"}]
+    devices: list[dict[str, Any]] = [{"index": 0, "name": "Default"}]
 
     try:
         
