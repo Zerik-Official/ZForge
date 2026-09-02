@@ -1,4 +1,5 @@
 import { VscChromeMinimize, VscChromeClose } from "react-icons/vsc";
+import { TooltipSimple } from "@/components/ui/Tooltip";
 import { api } from "@/services/api";
 
 const IS_DEV = import.meta.env.DEV;
@@ -50,12 +51,13 @@ export function TitleBar({
 
         {/* Status dot — development only */}
         {IS_DEV && (
-          <span
-            title={bridgeReady ? "Bridge connected" : "Connecting…"}
-            className={`w-1.25 h-1.25 rounded-full transition-colors duration-400 shrink-0 ${
-              bridgeReady ? "bg-(--success)" : "bg-(--muted-3)"
-            }`}
-          />
+          <TooltipSimple content={bridgeReady ? "Bridge connected" : "Connecting…"} side="bottom" align="center">
+            <span
+              className={`w-1.25 h-1.25 rounded-full transition-colors duration-400 shrink-0 ${
+                bridgeReady ? "bg-(--success)" : "bg-(--muted-3)"
+              }`}
+            />
+          </TooltipSimple>
         )}
       </div>
 
