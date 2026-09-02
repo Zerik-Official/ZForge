@@ -1,3 +1,4 @@
+import { t } from "@/locales/i18n";
 import type { ConfigConflict } from "@/types/pywebview";
 import type { ConflictChoice } from "@/hooks/useConfigConflict";
 
@@ -16,14 +17,13 @@ export function ConfigConflictModal({ conflict, onResolve }: ConfigConflictModal
           <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-(--border-strong) bg-(--warning)">
             <i className="fa-solid fa-triangle-exclamation text-[13px] text-[#1a1205]" />
           </div>
-          <h2 className="text-[14.5px] font-semibold text-(--text)">Configuración de juego detectada</h2>
+          <h2 className="text-[14.5px] font-semibold text-(--text)">{t("common.configConflict.title")}</h2>
         </div>
 
         <p className="text-[13px] leading-relaxed text-(--text-soft)">
-          Se detectó un cambio en la configuración del juego{" "}
-          <span className="font-semibold text-(--text)">{conflict.name}</span> (expansión{" "}
-          <span className="uppercase">{conflict.expansion}</span>). ¿Deseas reescribir la del juego con la
-          guardada, o reescribir la guardada con la del juego?
+          {t("common.configConflict.description")
+            .replace("{name}", conflict.name)
+            .replace("{expansion}", conflict.expansion)}
         </p>
 
         <div className="mt-6 flex items-center justify-end gap-2">
@@ -31,13 +31,13 @@ export function ConfigConflictModal({ conflict, onResolve }: ConfigConflictModal
             className={`ghost-btn rounded-lg px-4 py-2 text-[13px] cursor-pointer ${applyFirst ? "" : "ring-1 ring-(--accent)"}`}
             onClick={() => onResolve("pull")}
           >
-            Usar la del juego
+            {t("common.configConflict.useGame")}
           </button>
           <button
             className={`play-btn rounded-lg px-4 py-2 text-[13px] font-semibold text-white cursor-pointer ${applyFirst ? "ring-1 ring-(--accent)" : ""}`}
             onClick={() => onResolve("apply")}
           >
-            Usar guardada
+            {t("common.configConflict.useSaved")}
           </button>
         </div>
       </div>
