@@ -3,6 +3,7 @@ import { useGamesStore } from "@/store/gamesStore";
 import type { Game } from "@/types/pywebview";
 import { GameCard } from "./GameCard";
 import { AddGameModal } from "./AddGameModal";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { t, useLocale } from "@/locales/i18n";
 
 /**
@@ -15,6 +16,7 @@ export function GamesView() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Game | null>(null);
+  const [pendingRemove, setPendingRemove] = useState<Game | null>(null);
 
   /** Open the modal to create a new game. */
   function openCreate() {
@@ -28,10 +30,15 @@ export function GamesView() {
     setModalOpen(true);
   }
 
-  /** Confirm and delete a game. */
-  async function handleRemove(id: string) {
-    if (!window.confirm(t("common.confirmDeleteGame"))) return;
-    await removeGame(id);
+  function handleRemove(id: string) {
+    const game = games.find((g) => g.id === id) ?? null;
+    setPendingRemove(game);
+  }
+
+  async function confirmRemove() {
+    if (!pendingRemove) return;
+    await removeGame(pendingRemove.id);
+    setPendingRemove(null);
   }
 
   return (
@@ -64,6 +71,19 @@ export function GamesView() {
       )}
 
       <AddGameModal open={modalOpen} initial={editing} onClose={() => setModalOpen(false)} />
+
+      <ConfirmDialog
+        open={pendingRemove !== null}
+        icon="fa-solid fa-trash"
+        title={t("common.confirmDeleteGame")}
+        description={
+          pendingRemove ? t("common.confirmDeleteGameDescription", { name: pendingRemove.name }) : ""
+        }
+        confirmLabel={t("common.delete")}
+        cancelLabel={t("common.cancel")}
+        onConfirm={confirmRemove}
+        onCancel={() => setPendingRemove(null)}
+      />
     </div>
   );
 }
