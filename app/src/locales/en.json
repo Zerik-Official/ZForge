@@ -1,0 +1,158 @@
+{
+  "common": {
+    "play": "Play",
+    "playing": "Launching...",
+    "add": "Add",
+    "addGame": "Add game",
+    "edit": "Edit",
+    "editGame": "Edit game",
+    "save": "Save",
+    "saving": "Saving...",
+    "saveAndApply": "Save and apply",
+    "applying": "Applying...",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "search": "Search",
+    "select": "Select",
+    "confirmDeleteGame": "Delete this game?",
+    "low": "Low",
+    "high": "High",
+    "actual": "(current)",
+    "defaultDevice": "Default",
+    "gameSettings": "Game settings",
+    "comingSoon": " — coming soon",
+    "onHome": " · on home",
+    "configConflict": {
+      "title": "Game configuration detected",
+      "description": "A change was detected in the configuration of the game {name} (expansion {expansion}). Do you want to overwrite the game configuration with the saved one, or overwrite the saved configuration with the game's?",
+      "useGame": "Use game's",
+      "useSaved": "Use saved"
+    },
+    "confirmSaveRealmlist": {
+      "title": "Save realmlist as global",
+      "description": "\"{realmlist}\" is not in the server catalog. Do you want to save it so it auto-completes in future games?",
+      "confirm": "Yes, save",
+      "cancel": "This game only"
+    }
+  },
+  "launcher": {
+    "home": {
+      "emptyTitle": "You haven't added any games yet",
+      "emptyDesc": "Add your World of Warcraft installation to start playing, verify files, and install addons."
+    },
+    "games": {
+      "title": "Games",
+      "empty": "You don't have any games yet. Click to add one."
+    },
+    "sidebar": {
+      "home": "Home",
+      "games": "Games",
+      "addons": "Addons",
+      "settings": "Settings"
+    }
+  },
+  "addGame": {
+    "basicInfo": "Basic information",
+    "name": "Name",
+    "namePlaceholder": "My WoW 3.3.5a",
+    "expansion": "Expansion",
+    "executable": "Executable (.exe)",
+    "selectExe": "Select wow.exe",
+    "multimedia": "Multimedia",
+    "videoBg": "Background video",
+    "selectVideo": "Select a video",
+    "icon": "Icon",
+    "selectIcon": "Select an icon",
+    "poster": "Poster",
+    "selectPoster": "Select a poster",
+    "preview": "Preview",
+    "previewGame": "Game name",
+    "showOnHome": "Show on home screen",
+    "useCustom": "Use custom file"
+  },
+  "settings": {
+    "categories": {
+      "launch": "Launch",
+      "server": "Server",
+      "graphics": "Graphics",
+      "effects": "Effects",
+      "sound": "Sound",
+      "multi": "Multi-account"
+    },
+    "launch": {
+      "args": "Launch arguments",
+      "priority": {
+        "label": "Process priority",
+        "normal": "Normal",
+        "high": "High (/HIGH)",
+        "realtime": "Realtime (/REALTIME)"
+      },
+      "clear_cache": "Clear cache on launch"
+    },
+    "server": {
+      "realm_list": "Realm list",
+      "realm_name": "Realm"
+    },
+    "graphics": {
+      "refresh_rate": "Refresh rate",
+      "resolution": "Resolution",
+      "windowed": "Windowed mode",
+      "window_resize_lock": "Lock window size (windowResizeLock)",
+      "window_maximized": "Borderless maximized (gxMaximize)",
+      "vsync": "Vertical synchronization (VSync)",
+      "multisample": {
+        "label": "Multisampling (antialiasing)",
+        "1": "Color 24-bit, Depth 24-bit, Multisampling 1x",
+        "2": "Color 24-bit, Depth 24-bit, Multisampling 2x",
+        "4": "Color 24-bit, Depth 24-bit, Multisampling 4x",
+        "8": "Color 24-bit, Depth 24-bit, Multisampling 8x",
+        "16": "Color 24-bit, Depth 24-bit, Multisampling 16x"
+      }
+    },
+    "effects": {
+      "farclip": "View distance",
+      "environment_detail": "Environment detail",
+      "base_mip": "Texture resolution",
+      "shadow_level": "Terrain blending",
+      "ground_effect_density": "Ground effect density",
+      "texture_filtering_mode": "Texture filtering",
+      "ground_effect_dist": "Ground effect distance",
+      "weather_density": "Weather intensity",
+      "ext_shadow_quality": "Shadow quality",
+      "component_texture_level": "Character textures",
+      "particle_density": "Particle density",
+      "specular": "Specular lighting",
+      "ffx_death": "Death effect",
+      "ffx_glow": "Full-screen glow",
+      "projected_textures": "Projected textures"
+    },
+    "sound": {
+      "enable_all_sound": "Enable sound",
+      "enable_sfx": "Sound effects",
+      "enable_error_speech": "Error sounds",
+      "enable_emote_sounds": "Emote sounds",
+      "enable_pet_sounds": "Pet sounds",
+      "enable_music": "Music",
+      "zone_music_no_delay": "Continuous music",
+      "enable_ambience": "Ambient sound",
+      "enable_sound_when_game_is_in_bg": "Background sound",
+      "enable_reverb": "Enable reverb",
+      "enable_software_hrtf": "Headphone mode",
+      "enable_dsp_effects": "DSP effects",
+      "listener_at_character": "M. Knight voices",
+      "output_quality": "Sound quality",
+      "output_driver": "Game sound output",
+      "num_channels": "Sound channels",
+      "enable_hardware": "Use hardware",
+      "master_volume": "Master volume",
+      "sfx_volume": "Sound",
+      "music_volume": "Music",
+      "ambience_volume": "Ambience",
+      "sections": {
+        "playback": "Playback",
+        "hardware": "Hardware",
+        "volume": "Volume"
+      }
+    }
+  }
+}
