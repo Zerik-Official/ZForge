@@ -88,7 +88,7 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
       return w <= display.width && h <= display.height;
     }).map((res) => ({ value: res, label: res }));
     if (!opts.some((o) => o.value === settings.resolution)) {
-      opts.push({ value: settings.resolution, label: `${settings.resolution} (actual)` });
+      opts.push({ value: settings.resolution, label: `${settings.resolution} ${t("common.actual")}` });
     }
     return opts;
   })();
@@ -172,7 +172,7 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
             activeCategory.id === "multi" ? (
               <div className="flex h-full flex-col items-center justify-center gap-3 text-(--muted)">
                 <i className="fa-solid fa-users text-2xl" />
-                <span className="text-[13px]">{t("settings.categories.multi") ?? "Multicuenta — en desarrollo"}</span>
+                <span className="text-[13px]">{t("settings.categories.multi")}</span>
               </div>
             ) : activeCategory.id === "effects" ? (
               <SettingsCategory
@@ -308,7 +308,7 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="flex flex-col gap-4">
                     <div className="rounded-xl border border-(--border-strong) bg-(--bg-input) p-3">
-                      <span className="mb-3 block text-[11px] font-semibold uppercase tracking-wide text-(--muted)">Reproducir</span>
+                      <span className="mb-3 block text-[11px] font-semibold uppercase tracking-wide text-(--muted)">{t("settings.sound.sections.playback")}</span>
                       <div className="flex flex-col gap-2">
                         <Checkbox checked={settings.sound_enable_sfx} onChange={(v) => update("sound_enable_sfx", v)} label={t("settings.sound.enable_sfx")} />
                         <Checkbox checked={settings.sound_enable_error_speech} onChange={(v) => update("sound_enable_error_speech", v)} label={t("settings.sound.enable_error_speech")} disabled={!settings.sound_enable_sfx} />
@@ -333,13 +333,13 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
 
                   <div className="flex flex-col gap-4">
                     <div className="rounded-xl border border-(--border-strong) bg-(--bg-input) p-3">
-                      <span className="mb-3 block text-[11px] font-semibold uppercase tracking-wide text-(--muted)">Hardware</span>
+                      <span className="mb-3 block text-[11px] font-semibold uppercase tracking-wide text-(--muted)">{t("settings.sound.sections.hardware")}</span>
                       <div className="flex flex-col gap-3">
                         <div className="flex flex-col gap-1.5">
                           <label className="field-label">{t("settings.sound.output_driver")}</label>
                           <Select
                             value={String(settings.sound_output_driver_index)}
-                            options={audioDeviceOptions.length ? audioDeviceOptions : [{ value: "0", label: "Predeterminado" }]}
+                            options={audioDeviceOptions.length ? audioDeviceOptions : [{ value: "0", label: t("common.defaultDevice") }]}
                             onChange={(v: string) => update("sound_output_driver_index", parseInt(v, 10))}
                           />
                         </div>
@@ -353,7 +353,7 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
                     </div>
 
                     <div className="rounded-xl border border-(--border-strong) bg-(--bg-input) p-3">
-                      <span className="mb-3 block text-[11px] font-semibold uppercase tracking-wide text-(--muted)">Volumen</span>
+                      <span className="mb-3 block text-[11px] font-semibold uppercase tracking-wide text-(--muted)">{t("settings.sound.sections.volume")}</span>
                       <div className="flex flex-col gap-3">
                         <div className="flex flex-col gap-1.5">
                           <label className="field-label">{t("settings.sound.master_volume")}</label>
@@ -393,31 +393,31 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
       <ModalFooter>
         {error && <span className="mr-auto text-[12px] text-(--danger)">{error}</span>}
         <button className="ghost-btn rounded-lg px-4 py-2 text-[13px] cursor-pointer" onClick={onClose}>
-          Cancelar
+          {t("common.cancel")}
         </button>
         <button
           className="ghost-btn rounded-lg px-4 py-2 text-[13px] cursor-pointer"
           onClick={() => handleSave(false)}
           disabled={busy || loading}
         >
-          Guardar
+          {t("common.save")}
         </button>
         <button
           className="play-btn rounded-lg px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-40 cursor-pointer"
           onClick={() => handleSave(true)}
           disabled={busy || loading}
         >
-          {busy ? "Aplicando..." : "Guardar y aplicar"}
+          {busy ? t("common.applying") : t("common.saveAndApply")}
         </button>
       </ModalFooter>
 
       <ConfirmDialog
         open={pendingSave !== null}
         icon="fa-solid fa-server"
-        title="Guardar realmlist como global"
-        description={`"${settings.realm_list.trim()}" no está en el catálogo de servidores. ¿Quieres guardarlo para que se autocomplete en futuros juegos?`}
-        confirmLabel="Sí, guardar"
-        cancelLabel="Solo este juego"
+        title={t("common.confirmSaveRealmlist.title")}
+        description={t("common.confirmSaveRealmlist.description").replace("{realmlist}", settings.realm_list.trim())}
+        confirmLabel={t("common.confirmSaveRealmlist.confirm")}
+        cancelLabel={t("common.confirmSaveRealmlist.cancel")}
         onConfirm={() => resolvePendingSave(true)}
         onCancel={() => resolvePendingSave(false)}
       />
