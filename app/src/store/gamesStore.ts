@@ -73,7 +73,7 @@ export const useGamesStore = create<GamesState>((set, get) => ({
   },
 
   async setActive(id) {
-    const config = get().config ?? { theme: "dark", last_active_game: null };
+    const config = get().config ?? { theme: "dark", last_active_game: null, language: null };
     const next: AppConfig = { ...config, last_active_game: id };
     await settingsApi.saveAppConfig(next);
     set({ activeId: id, config: next });
