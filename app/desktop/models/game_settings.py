@@ -7,10 +7,14 @@ The data round-trips to JSON in the database and to the game's ``Config.wtf``
 / ``realmlist.wtf`` files.
 """
 
+# Standard library
 from __future__ import annotations
 
 from dataclasses import dataclass, asdict
 from typing import Any
+
+# Project imports
+from desktop.utils import display
 
 
 @dataclass
@@ -88,7 +92,6 @@ class GameSettings:
     @classmethod
     def defaults(cls) -> "GameSettings":
         """Return a fresh instance with the built-in default values."""
-        from desktop.utils import display
 
         width, height = display.get_primary_resolution()
         return cls(resolution=f"{width}x{height}")
