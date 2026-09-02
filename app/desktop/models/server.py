@@ -7,6 +7,7 @@ frontend can offer autocomplete suggestions for the realm list + realm name
 fields in the game settings modal.
 """
 
+# Standard library
 from __future__ import annotations
 
 import json
@@ -14,7 +15,10 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Any
 
+
+# Project imports
 from desktop.utils.paths import servers_data_path
+from desktop.storage import db as db_store
 
 
 @dataclass
@@ -66,8 +70,7 @@ def list_servers() -> list[dict[str, Any]]:
     Returns:
         List of serialised ``ServerEntry`` dictionaries.
     """
-    from desktop.storage import db as db_store
-
+    
     bundled = _load_bundled()
     custom = [
         ServerEntry(
