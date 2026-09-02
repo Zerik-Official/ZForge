@@ -327,7 +327,7 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
                     <div className="flex flex-col gap-1.5">
                       <label className="field-label">{t("settings.sound.output_quality")}</label>
                       <Slider value={settings.sound_output_quality} options={[0, 1, 2]} onChange={(v: number) => update("sound_output_quality", v)} disabled={!settings.sound_enable_all_sound} />
-                      <div className="flex justify-between text-[10px] text-(--muted)"><span>Bajo</span><span>Alto</span></div>
+                      <div className="flex justify-between text-[10px] text-(--muted)"><span>{t("common.low")}</span><span>{t("common.high")}</span></div>
                     </div>
                   </div>
 
@@ -346,7 +346,7 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
                         <div className="flex flex-col gap-1.5">
                           <label className="field-label">{t("settings.sound.num_channels")}</label>
                           <Slider value={settings.sound_num_channels} options={[32, 64]} onChange={(v: number) => update("sound_num_channels", v)} disabled={!settings.sound_enable_all_sound} />
-                          <div className="flex justify-between text-[10px] text-(--muted)"><span>Bajo</span><span>Alto</span></div>
+                          <div className="flex justify-between text-[10px] text-(--muted)"><span>{t("common.low")}</span><span>{t("common.high")}</span></div>
                         </div>
                         <Checkbox checked={settings.sound_enable_hardware} onChange={(v) => update("sound_enable_hardware", v)} label={t("settings.sound.enable_hardware")} />
                       </div>
@@ -358,7 +358,7 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
                         <div className="flex flex-col gap-1.5">
                           <label className="field-label">{t("settings.sound.master_volume")}</label>
                           <Slider value={settings.sound_master_volume} min={0} max={1} step={0.1} onChange={(v: number) => update("sound_master_volume", v)} />
-                          <div className="flex justify-between text-[10px] text-(--muted)"><span>{Math.ceil(settings.sound_master_volume * 100)}%</span><span>Alto</span></div>
+                          <div className="flex justify-between text-[10px] text-(--muted)"><span>{Math.ceil(settings.sound_master_volume * 100)}%</span><span>{t("common.high")}</span></div>
                         </div>
                         <div className="flex flex-col gap-1.5">
                           <label className="field-label">{t("settings.sound.sfx_volume")}</label>
