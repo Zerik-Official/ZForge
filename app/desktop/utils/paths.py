@@ -82,3 +82,13 @@ def servers_data_path() -> Path:
     Ships with the build under ``app/desktop/data/servers/servers.json``.
     """
     return Path(__file__).resolve().parents[1] / "data" / "servers" / "servers.json"
+
+
+def tools_dir() -> Path:
+    """Return the directory holding external tools (e.g. WoWControlSDK)."""
+    return app_data_dir() / "tools"
+
+
+def sdk_installations_dir() -> Path:
+    """Return the parent directory that contains ``WoWControlSDK-v*`` folders."""
+    return tools_dir()
