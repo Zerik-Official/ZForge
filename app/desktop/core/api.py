@@ -363,3 +363,11 @@ class Api:
     def check_sdk_update(self) -> dict | None:
         """Check GitHub for a newer SDK release."""
         return sdk_api.check_sdk_update()
+
+    def get_sdk_license(self) -> dict:
+        """Fetch the SDK LICENSE text."""
+        return sdk_api.get_sdk_license()
+
+    def open_external_url(self, url: str) -> dict:
+        """Open an external URL in the system browser."""
+        return sdk_api.open_external_url(url)
