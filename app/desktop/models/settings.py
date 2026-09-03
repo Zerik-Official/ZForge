@@ -23,6 +23,9 @@ class AppSettings:
     theme: str = "dark"
     last_active_game: str | None = None
     language: AppLanguage | None = None
+    discord_enabled: bool = False
+    discord_auto_update: bool = True
+    sdk_last_error: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Serialise the settings to a JSON-friendly dictionary."""
@@ -48,4 +51,7 @@ class AppSettings:
             theme=data.get("theme", "dark"),
             last_active_game=data.get("last_active_game"),
             language=language,
+            discord_enabled=bool(data.get("discord_enabled", False)),
+            discord_auto_update=bool(data.get("discord_auto_update", True)),
+            sdk_last_error=data.get("sdk_last_error"),
         )
