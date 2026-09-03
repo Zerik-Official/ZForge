@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 # Project imports
+from desktop.core.events import emitter
 from desktop.constants import SDK_EXPECTED_PREFIX
 from desktop.services.sdk.validation import find_installed_sdk, is_sdk_valid, missing_files
 from desktop.services.sdk.version import fetch_latest_release
@@ -118,7 +119,6 @@ def _download_and_install_inner(on_progress: ProgressCallback | None) -> dict[st
             if on_progress:
                 on_progress(info)
             try:
-                from desktop.core.events import emitter
 
                 emitter.emit(
                     "sdk_download_progress",
@@ -210,7 +210,7 @@ def check_and_repair_on_boot() -> dict[str, Any] | None:
         msg = "En la última comprobación, se detectó una corrupción en el SDK o este fue eliminado."
         settings.sdk_last_error = msg
         config_store.save_app_config(settings)
-        log("WARNING", Tags.API, f"SDK needs repair/install: {status}")
+        log("WARNING", Tags.API, f"SDK needs repair/install")
         if not app_settings.discord_enabled:
             log("INFO", Tags.API, "SDK repair skipped — Discord Rich Presence is disabled")
             return None
@@ -240,8 +240,7 @@ def check_and_repair_on_boot() -> dict[str, Any] | None:
         return None
 
     log("INFO", Tags.API, f"SDK update available {local_version} -> {remote_version}, downloading...")
-    try:
-        from desktop.core.events import emitter
+    try:        
 
         emitter.boot_message(f"Actualizando SDK v{remote_version}…", 50)
     except Exception:
