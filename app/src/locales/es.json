@@ -56,6 +56,56 @@
       "games": "Juegos",
       "addons": "Addons",
       "settings": "Ajustes"
+    },
+    "settings": {
+      "tabs": {
+        "general": "General",
+        "richPresence": "Rich Presence"
+      },
+      "general": {
+        "title": "Ajustes generales",
+        "description": "Gestiona las preferencias generales del launcher.",
+        "language": "Idioma",
+        "languageDescription": "Selecciona el idioma de la interfaz del launcher."
+      },
+      "richPresence": {
+        "title": "Rich Presence",
+        "empty": "La integración con Discord Rich Presence está actualmente en desarrollo.",
+        "sdkNotFound": {
+          "title": "SDK no encontrado",
+          "description": "No se encontró WoWControlSDK en la carpeta tools del launcher. Es necesario para interactuar con World of Warcraft.",
+          "download": "Descargar SDK",
+          "downloading": "Descargando SDK…",
+          "installing": "Instalando SDK…"
+        },
+        "sdkCorrupted": {
+          "title": "SDK corrupto",
+          "description": "Faltan algunos archivos del SDK o están dañados.",
+          "repair": "Reparar SDK"
+        },
+        "repairing": "Reparando SDK…",
+        "applicationIdMissing": {
+          "title": "Application ID no configurado",
+          "description": "Debe configurarse un Application ID de Discord en el archivo .env (DISCORD_CLIENT_ID) antes de poder usar Rich Presence."
+        },
+        "corruptionError": "En la última comprobación, se detectó una corrupción en el SDK o este fue eliminado.",
+        "settings": {
+          "enableDiscord": "Activar Discord Rich Presence",
+          "enableDiscordDescription": "Muestra tu estado dentro del juego en Discord.",
+          "autoUpdate": "Buscar actualizaciones automáticas del SDK",
+          "autoUpdateDescription": "Si está activado, el launcher comprueba GitHub al iniciar y descarga una versión más reciente del SDK si existe."
+        },
+        "version": {
+          "installed": "Instalado: v{version}",
+          "latest": "Última: v{version}",
+          "updateAvailable": "Actualización disponible"
+        },
+        "progress": {
+          "speed": "{speed}/s",
+          "remaining": "{time} restante",
+          "downloaded": "{downloaded} / {total}"
+        }
+      }
     }
   },
   "addGame": {

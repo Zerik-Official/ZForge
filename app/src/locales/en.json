@@ -56,6 +56,56 @@
       "games": "Games",
       "addons": "Addons",
       "settings": "Settings"
+    },
+    "settings": {
+      "tabs": {
+        "general": "General",
+        "richPresence": "Rich Presence"
+      },
+      "general": {
+        "title": "General settings",
+        "description": "Manage general launcher preferences.",
+        "language": "Language",
+        "languageDescription": "Select the display language for the launcher."
+      },
+      "richPresence": {
+        "title": "Rich Presence",
+        "empty": "Discord Rich Presence integration is currently in development.",
+        "sdkNotFound": {
+          "title": "SDK not found",
+          "description": "The WoWControlSDK was not found in the launcher tools folder. It is required to interact with World of Warcraft.",
+          "download": "Download SDK",
+          "downloading": "Downloading SDK…",
+          "installing": "Installing SDK…"
+        },
+        "sdkCorrupted": {
+          "title": "SDK corrupted",
+          "description": "Some SDK files are missing or corrupted.",
+          "repair": "Repair SDK"
+        },
+        "repairing": "Repairing SDK…",
+        "applicationIdMissing": {
+          "title": "Application ID not configured",
+          "description": "A Discord Application ID must be configured in the .env file (DISCORD_CLIENT_ID) before Rich Presence can be used."
+        },
+        "corruptionError": "During the last check, SDK corruption was detected or it was removed.",
+        "settings": {
+          "enableDiscord": "Enable Discord Rich Presence",
+          "enableDiscordDescription": "Show your in-game status on Discord.",
+          "autoUpdate": "Check for SDK updates automatically",
+          "autoUpdateDescription": "When enabled, the launcher checks GitHub at startup and downloads a newer SDK version if available."
+        },
+        "version": {
+          "installed": "Installed: v{version}",
+          "latest": "Latest: v{version}",
+          "updateAvailable": "Update available"
+        },
+        "progress": {
+          "speed": "{speed}/s",
+          "remaining": "{time} remaining",
+          "downloaded": "{downloaded} / {total}"
+        }
+      }
     }
   },
   "addGame": {
