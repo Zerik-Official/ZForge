@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Checkbox } from "@/components/ui/Checkbox";
+import { TooltipSimple } from "@/components/ui/Tooltip";
 import { t, useLocale } from "@/locales/i18n";
 import { api } from "@/services/api";
 import type { SdkDownloadProgress, SdkStatus } from "@/types/domains/sdk";
 import type { AppConfig } from "@/types/domains/settings";
 import { formatBytes, formatEta, formatSpeed } from "@/utils/formatters";
+import { SdkInfoModal } from "../components/SdkInfoModal";
 
 function cleanVersion(v: string | null | undefined): string {
   if (!v) return "";
@@ -22,6 +24,7 @@ export function RichPresenceTab() {
   const [progress, setProgress] = useState<SdkDownloadProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
+  const [showInfo, setShowInfo] = useState(false);
 
   const refreshStatus = useCallback(async () => {
     try {
@@ -179,14 +182,25 @@ export function RichPresenceTab() {
               </div>
             </div>
           ) : (
-            <button
-              className="flex w-fit items-center gap-2 rounded-lg bg-[linear-gradient(160deg,var(--primary-hover),var(--primary-active))] px-4 py-2 text-[13px] font-semibold text-white shadow-[0_0_20px_var(--primary-glow)] hover:brightness-105 cursor-pointer disabled:opacity-50"
-              onClick={handleInstall}
-              disabled={downloading}
-            >
-              <i className="fa-solid fa-download text-[12px]" />
-              {needsRepair ? t("launcher.settings.richPresence.sdkCorrupted.repair") : t("launcher.settings.richPresence.sdkNotFound.download")}
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                className="flex w-fit items-center gap-2 rounded-lg bg-[linear-gradient(160deg,var(--primary-hover),var(--primary-active))] px-4 py-2 text-[13px] font-semibold text-white shadow-[0_0_20px_var(--primary-glow)] hover:brightness-105 cursor-pointer disabled:opacity-50"
+                onClick={handleInstall}
+                disabled={downloading}
+              >
+                <i className="fa-solid fa-download text-[12px]" />
+                {needsRepair ? t("launcher.settings.richPresence.sdkCorrupted.repair") : t("launcher.settings.richPresence.sdkNotFound.download")}
+              </button>
+              <TooltipSimple content={t("launcher.settings.richPresence.moreInfo")} side="top">
+                <button
+                  className="flex items-center gap-2 rounded-lg border border-(--border-strong) bg-(--bg-elevated) px-3 py-2 text-[13px] font-medium text-(--text-soft) hover:bg-(--bg-hover) hover:text-(--text) cursor-pointer"
+                  onClick={() => setShowInfo(true)}
+                >
+                  <i className="fa-solid fa-circle-info text-[12px]" />
+                  {t("launcher.settings.richPresence.moreInfo")}
+                </button>
+              </TooltipSimple>
+            </div>
           )}
 
           {error ? <span className="text-[12px] text-(--danger)">{error}</span> : null}
@@ -246,6 +260,8 @@ export function RichPresenceTab() {
           </span>
         </div>
       ) : null}
+
+      <SdkInfoModal open={showInfo} onClose={() => setShowInfo(false)} />
     </div>
   );
 }
