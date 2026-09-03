@@ -5,11 +5,13 @@ Per-game data lives in the SQLite database; this module only handles the
 small global ``config.json`` file.
 """
 
+# Standard library
 from __future__ import annotations
 
 import json
 from typing import Any
 
+# Project imports
 from desktop.models.settings import AppSettings
 from desktop.utils.paths import config_path
 
