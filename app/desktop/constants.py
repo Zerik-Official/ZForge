@@ -34,3 +34,5 @@ DEFAULT_ICON_KIND: Final[str] = "icos"
 DEFAULT_LOGO_KIND: Final[str] = "logos"
 DEFAULT_BOX_KIND: Final[str] = "boxes"
 DEFAULT_SCENE_KIND: Final[str] = "scenes"
+
+SUPPORTED_LANGUAGES: frozenset[str] = {"en", "es"}
