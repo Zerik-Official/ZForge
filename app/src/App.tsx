@@ -71,7 +71,9 @@ export default function App() {
     async (locale: Locale) => {
       setLocale(locale);
       
-      const base: AppConfig = appConfig ?? { theme: "dark", last_active_game: null, language: null };
+      const base: AppConfig =
+        appConfig ??
+        ({ theme: "dark", last_active_game: null, language: null, discord_enabled: false, discord_auto_update: true, sdk_last_error: null } as AppConfig);
       const next: AppConfig = { ...base, language: locale };
 
       try {
