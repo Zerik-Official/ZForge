@@ -4,6 +4,9 @@ export interface AppConfig {
   theme: string;
   last_active_game: string | null;
   language: AppLanguage | null;
+  discord_enabled: boolean;
+  discord_auto_update: boolean;
+  sdk_last_error: string | null;
 }
 
 export interface GameSettings {
