@@ -14,8 +14,14 @@ from pathlib import Path
 # Project imports
 from desktop.core import game_config
 from desktop.core.events import emitter
+from desktop.services.sdk import manager as sdk_manager
 from desktop.storage import db as db_store
 from desktop.utils.logger import log, Tags
+
+import threading
+
+_boot_lock = threading.Lock()
+_boot_has_run = False
 
 
 def _scan_and_compare(game: object) -> dict[str, object] | None:
@@ -73,10 +79,25 @@ def boot_sequence() -> None:
     Real boot sequence: scan every game and reconcile its saved configuration.
 
     Runs in a background thread so it doesn't block the webview loop.
+    Guarded against double invocation caused by duplicate ``loaded`` events.
     """
+    global _boot_has_run
+    with _boot_lock:
+        if _boot_has_run:
+            log("WARNING", Tags.API, "boot_sequence already running — ignoring duplicate call")
+            return
+        _boot_has_run = True
+
     time.sleep(0.5)
 
     emitter.boot_message("Inicializando núcleo…", 8)
+
+    try:
+        emitter.boot_message("Verificando SDK…", 12)
+        sdk_manager.check_and_repair_on_boot()
+    except Exception as exc:
+        log("WARNING", Tags.API, f"SDK boot check failed: {exc}")
+
     games = db_store.list_games()
     emitter.boot_message(f"Cargando {len(games)} juego(s)…", 22)
 
