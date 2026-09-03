@@ -4,8 +4,9 @@ import type { AssetManifest } from "./domains/assets";
 import type { ServerEntry } from "./domains/server";
 import type { ApiResult } from "./domains/api";
 import type { SettingsSchema } from "./domains/schema";
+import type { SdkStatus, SdkLatestInfo } from "./domains/sdk";
 
-export type { Game, GameInput, AppConfig, GameSettings, ConfigConflict, AssetManifest, ServerEntry, ApiResult, SettingsSchema };
+export type { Game, GameInput, AppConfig, GameSettings, ConfigConflict, AssetManifest, ServerEntry, ApiResult, SettingsSchema, SdkStatus, SdkLatestInfo };
 
 declare global {
   interface Window {
@@ -41,11 +42,15 @@ declare global {
         get_settings_schema(version_id: string): Promise<SettingsSchema>;
         list_settings_versions(): Promise<string[]>;
         list_audio_devices(): Promise<{ index: number; name: string }[]>;
+        get_sdk_status(): Promise<SdkStatus>;
+        install_sdk(): Promise<ApiResult & { version?: string; path?: string }>;
+        check_sdk_update(): Promise<SdkLatestInfo | null>;
       };
     };
     __zforge_boot_message?: (message: string, percent: number) => void;
     __zforge_boot_done?: () => void;
     __zforge_config_conflict?: (conflict: ConfigConflict) => void;
+    __zforge_sdk_download_progress?: (payload: { percent: number; downloaded: number; total: number; speed: number; eta: number; version: string }) => void;
   }
 }
 
