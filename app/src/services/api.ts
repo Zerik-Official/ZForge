@@ -51,4 +51,6 @@ export const api = {
   getSdkStatus: () => sdkApi.getSdkStatus(),
   installSdk: () => sdkApi.installSdk(),
   checkSdkUpdate: () => sdkApi.checkSdkUpdate(),
+  getSdkLicense: () => sdkApi.getSdkLicense(),
+  openExternalUrl: (url: string) => sdkApi.openExternalUrl(url),
 } as const;

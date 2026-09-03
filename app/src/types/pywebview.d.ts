@@ -45,6 +45,8 @@ declare global {
         get_sdk_status(): Promise<SdkStatus>;
         install_sdk(): Promise<ApiResult & { version?: string; path?: string }>;
         check_sdk_update(): Promise<SdkLatestInfo | null>;
+        get_sdk_license(): Promise<{ ok: boolean; content: string | null; error: string | null }>;
+        open_external_url(url: string): Promise<ApiResult>;
       };
     };
     __zforge_boot_message?: (message: string, percent: number) => void;

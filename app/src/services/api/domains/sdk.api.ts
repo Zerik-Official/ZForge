@@ -14,6 +14,14 @@ export class SdkApi {
   checkSdkUpdate(): Promise<SdkLatestInfo | null> {
     return bridge().check_sdk_update();
   }
+
+  getSdkLicense(): Promise<{ ok: boolean; content: string | null; error: string | null }> {
+    return bridge().get_sdk_license();
+  }
+
+  openExternalUrl(url: string): Promise<ApiResult> {
+    return bridge().open_external_url(url);
+  }
 }
 
 export const sdkApi = new SdkApi();
