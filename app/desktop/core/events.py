@@ -14,9 +14,13 @@ Usage:
 The emitter stores a reference to the pywebview window after it is created.
 Call `emitter.attach(window)` in main.py once the window exists.
 """
+# Standard library
+from __future__ import annotations
 
 import json
 from typing import Any
+
+# Project imports
 from desktop.utils.logger import log, Tags
 
 
