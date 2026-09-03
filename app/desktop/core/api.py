@@ -9,6 +9,7 @@ import webview
 from desktop.api import addon_api
 from desktop.api import debug_api
 from desktop.api import launcher_api
+from desktop.api import sdk_api
 from desktop.api import settings_api
 
 
@@ -348,3 +349,17 @@ class Api:
             Success envelope.
         """
         return launcher_api.reorder_games(ordered_ids)
+
+    # ── SDK / Rich Presence ───────────────────────────────────────────────
+
+    def get_sdk_status(self) -> dict:
+        """Return the current SDK installation and config status."""
+        return sdk_api.get_sdk_status()
+
+    def install_sdk(self) -> dict:
+        """Download and install the latest SDK."""
+        return sdk_api.install_sdk()
+
+    def check_sdk_update(self) -> dict | None:
+        """Check GitHub for a newer SDK release."""
+        return sdk_api.check_sdk_update()
