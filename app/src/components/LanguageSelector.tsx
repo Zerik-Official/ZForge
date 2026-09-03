@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ES, US } from "country-flag-icons/react/3x2";
 import type { Locale } from "@/locales/i18n";
 
 /**
@@ -13,7 +14,7 @@ type LanguageOption = {
   locale: Locale;
   label: string;
   nativeLabel: string;
-  flag: string;
+  Flag: React.ComponentType<{ title?: string; className?: string }>;
 };
 
 /**
@@ -27,8 +28,8 @@ export function LanguageSelector({ onSelect }: LanguageSelectorProps) {
   const [pending, setPending] = useState<Locale | null>(null);
 
   const options: LanguageOption[] = [
-    { locale: "es", label: "Español", nativeLabel: "Spanish · ES", flag: "🇪🇸" },
-    { locale: "en", label: "English", nativeLabel: "English · EN", flag: "🇬🇧" },
+    { locale: "es", label: "Español", nativeLabel: "Spanish · ES", Flag: ES },
+    { locale: "en", label: "English", nativeLabel: "English · EN", Flag: US },
   ];
 
   async function handlePick(locale: Locale) {
@@ -69,8 +70,8 @@ export function LanguageSelector({ onSelect }: LanguageSelectorProps) {
                 ${isBusy && !isPending ? "opacity-60 cursor-not-allowed" : ""}
               `}
             >
-              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-(--bg-elevated) text-[32px] shadow-inner ring-1 ring-(--border-strong) transition-transform duration-200 group-hover:scale-110">
-                {opt.flag}
+              <span className="flex h-12 w-18 items-center justify-center overflow-hidden rounded-lg bg-(--bg-elevated) shadow-inner ring-1 ring-(--border-strong) transition-transform duration-200 group-hover:scale-110">
+                <opt.Flag title={opt.label} className="h-full w-full object-cover" />
               </span>
               <span className="flex flex-col items-center">
                 <span className="text-[15px] font-semibold text-(--text)">{opt.label}</span>
