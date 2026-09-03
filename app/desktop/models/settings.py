@@ -4,15 +4,17 @@ Application-level settings model.
 These are global preferences (not per-game) persisted to ``config.json``.
 """
 
+# Standard library
 from __future__ import annotations
 
 from dataclasses import dataclass, asdict
 from typing import Any, Literal
 
+# Project imports
+from desktop.constants import SUPPORTED_LANGUAGES
+
 
 AppLanguage = Literal["en", "es"]
-SUPPORTED_LANGUAGES: set[str] = {"en", "es"}
-
 
 @dataclass
 class AppSettings:
