@@ -17,14 +17,12 @@ from desktop.storage import db as db_store
 from desktop.utils import display
 from desktop.utils.logger import log, Tags
 from desktop.utils import audio as audio_utils
+from desktop.constants import SUPPORTED_LANGUAGES
 
 def get_settings() -> dict[str, object]:
     """Return the current application settings."""
     log("DEBUG", Tags.API, "get_settings() called")
     return config_store.load_app_config().to_dict()
-
-
-SUPPORTED_LANGUAGES: set[str] = {"en", "es"}
 
 
 def _apply_app_config_patch(current: object, payload: dict[str, object]) -> None:
