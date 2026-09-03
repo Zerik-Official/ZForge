@@ -104,6 +104,20 @@
           "speed": "{speed}/s",
           "remaining": "{time} restante",
           "downloaded": "{downloaded} / {total}"
+        },
+        "moreInfo": "Más información",
+        "info": {
+          "title": "Sobre WoWControlSDK",
+          "whatTitle": "¿Qué es?",
+          "whatDescription": "WoWControlSDK es una DLL ligera inyectada que expone metodos internos de World of Warcraft 3.3.5a mediante una interfaz JSON-RPC 2.0 limpia sobre Named Pipes de Windows. Permite a launchers, overlays y herramientas interactuar con el juego sin modificar el cliente.",
+          "howTitle": "Cómo funciona",
+          "howDescription": "El SDK inyecta WoWControlSDK.dll en Wow.exe vía WowInjector.exe y se comunica a través de un named pipe. El launcher envía llamadas JSON-RPC para ejecución Lua, consultas de unidad, estado del mundo y más, recibiendo respuestas tipadas de forma segura en formato JSON.",
+          "forWhatTitle": "¿Para qué sirve?",
+          "forWhatDescription": "El launcher necesita esta DLL para interactuar con el cliente y mostrar una presencia enriquecida: la zona donde te encuentras, tu nivel, si estás muerto, tu clase y raza, si estás en la pantalla de inicio, en una pantalla de carga y demás. Además, permite al launcher, mediante eventos que emite la DLL, enviar notificaciones cuando alguien te escribe, cuando aparece una mazmorra y no estás en la ventana de World of Warcraft, y muchas más funciones. Es de código abierto, por lo que puedes revisar su código libremente, modificarlo o crear tus propias versiones.",
+          "viewLicense": "Ver Licencia",
+          "hideLicense": "Ocultar Licencia",
+          "repository": "Repositorio",
+          "author": "Autor"
         }
       }
     }
