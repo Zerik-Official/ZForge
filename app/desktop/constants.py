@@ -36,3 +36,10 @@ DEFAULT_BOX_KIND: Final[str] = "boxes"
 DEFAULT_SCENE_KIND: Final[str] = "scenes"
 
 SUPPORTED_LANGUAGES: frozenset[str] = {"en", "es"}
+
+SDK_GITHUB_LATEST_URL: Final[str] = "https://api.github.com/repos/Zerik-Official/WoWControlSDK/releases/latest"
+SDK_GITHUB_REPO: Final[str] = "Zerik-Official/WoWControlSDK"
+SDK_REQUIRED_BINARIES: Final[tuple[str, ...]] = ("WoWControlSDK.dll", "WowInjector.exe")
+SDK_TOOLS_DIRNAME: Final[str] = "tools"
+SDK_EXPECTED_PREFIX: Final[str] = "WoWControlSDK-"
+SDK_VERSION_PREFIX: Final[str] = "v"
