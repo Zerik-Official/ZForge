@@ -3,6 +3,7 @@ import { Sidebar, type View } from "@/components/layout/Sidebar";
 import { HomeStage } from "@/features/home/HomeStage";
 import { GamesView } from "@/features/games/GamesView";
 import { Placeholder } from "@/components/ui/Placeholder";
+import { LauncherSettingsView } from "@/features/launcher-settings/LauncherSettingsView";
 import { t, useLocale } from "@/locales/i18n";
 import "@/styles/launcher.css";
 
@@ -17,7 +18,7 @@ export function LauncherShell() {
         {view === "home" ? <HomeStage onGoGames={() => setView("games")} /> : null}
         {view === "games" ? <GamesView /> : null}
         {view === "addons" ? <Placeholder title={t("launcher.sidebar.addons")} /> : null}
-        {view === "settings" ? <Placeholder title={t("launcher.sidebar.settings")}/> : null}
+        {view === "settings" ? <LauncherSettingsView /> : null}
       </main>
     </div>
   );
