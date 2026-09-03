@@ -47,6 +47,13 @@ def _apply_app_config_patch(current: object, payload: dict[str, object]) -> None
             current.language = raw  # type: ignore[assignment]
         else:
             log("WARNING", Tags.API, f"save_app_config: unsupported language '{raw}' — ignored")
+    if "discord_enabled" in payload:
+        current.discord_enabled = bool(payload.get("discord_enabled"))  # type: ignore[assignment]
+    if "discord_auto_update" in payload:
+        current.discord_auto_update = bool(payload.get("discord_auto_update"))  # type: ignore[assignment]
+    if "sdk_last_error" in payload:
+        raw_err = payload.get("sdk_last_error")
+        current.sdk_last_error = str(raw_err) if isinstance(raw_err, str) and raw_err.strip() else None  # type: ignore[assignment]
 
 
 def save_settings(payload: dict[str, object]) -> dict[str, object]:
