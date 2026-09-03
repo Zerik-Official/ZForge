@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 /**
  * A single option in the {@link Select} dropdown.
@@ -9,7 +9,7 @@ export interface SelectOption {
   /** Label shown to the user in the dropdown list. */
   label: string;
   /** Optional image shown alongside the label, such as a game or server logo. */
-  thumb?: string;
+  thumb?: string | ReactNode;
 }
 
 /**
@@ -58,11 +58,17 @@ export function Select({ value, options, onChange, placeholder = "Seleccionar" }
 
   const selected = options.find((option) => option.value === value);
 
+  function renderThumb(thumb: string | ReactNode | undefined) {
+    if (!thumb) return null;
+    if (typeof thumb === "string") return <img src={thumb} alt="" className="select-thumb" />;
+    return <span className="flex h-[18px] w-[24px] shrink-0 overflow-hidden rounded-[3px] shadow-sm">{thumb}</span>;
+  }
+
   return (
     <div className="select-root" ref={rootRef}>
       <button type="button" className="select-trigger cursor-pointer" onClick={() => setOpen((prev) => !prev)}>
         <span className="flex min-w-0 items-center gap-2">
-          {selected?.thumb ? <img src={selected.thumb} alt="" className="select-thumb" /> : null}
+          {renderThumb(selected?.thumb)}
           <span className="truncate">{selected?.label ?? placeholder}</span>
         </span>
         <i className={`fa-solid fa-chevron-down select-chevron${open ? " select-chevron--open" : ""}`} />
@@ -80,7 +86,7 @@ export function Select({ value, options, onChange, placeholder = "Seleccionar" }
                 setOpen(false);
               }}
             >
-              {option.thumb ? <img src={option.thumb} alt="" className="select-thumb" /> : null}
+              {renderThumb(option.thumb)}
               <span className="truncate">{option.label}</span>
               {option.value === value ? <i className="fa-solid fa-check select-check" /> : null}
             </button>
