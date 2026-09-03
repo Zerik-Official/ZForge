@@ -4,6 +4,7 @@ import { gamesApi } from "./api/domains/games.api";
 import { settingsApi } from "./api/domains/settings.api";
 import { assetsApi } from "./api/domains/assets.api";
 import { serversApi } from "./api/domains/servers.api";
+import { sdkApi } from "./api/domains/sdk.api";
 
 export { waitForBridge } from "./api/bridge";
 export { healthApi } from "./api/domains/health.api";
@@ -12,6 +13,7 @@ export { gamesApi } from "./api/domains/games.api";
 export { settingsApi } from "./api/domains/settings.api";
 export { assetsApi } from "./api/domains/assets.api";
 export { serversApi } from "./api/domains/servers.api";
+export { sdkApi } from "./api/domains/sdk.api";
 
 export const api = {
   ping: () => healthApi.ping(),
@@ -46,4 +48,7 @@ export const api = {
   saveCustomServer: (payload: { realmlist: string; name?: string; realm?: string }) =>
     serversApi.saveCustomServer(payload),
   addCustomRealm: (realmlist: string, realm: string) => serversApi.addCustomRealm(realmlist, realm),
+  getSdkStatus: () => sdkApi.getSdkStatus(),
+  installSdk: () => sdkApi.installSdk(),
+  checkSdkUpdate: () => sdkApi.checkSdkUpdate(),
 } as const;
