@@ -104,7 +104,7 @@ def get_sdk_status() -> dict[str, Any]:
         Dictionary with ``installed``, ``valid``, ``version``, ``path``,
         ``missing_files``, ``needs_install``, ``needs_repair``,
         ``application_id_configured``, ``discord_enabled``,
-        ``discord_auto_update``, ``sdk_last_error``, ``latest_version``,
+        ``discord_auto_update``, ``sdk_last_error``, ``sdk_ever_installed``, ``latest_version``,
         ``latest_url`` and ``update_available``.
     """
     path, version = find_installed_sdk()
@@ -142,6 +142,7 @@ def get_sdk_status() -> dict[str, Any]:
         "discord_enabled": bool(app_settings.discord_enabled),
         "discord_auto_update": bool(app_settings.discord_auto_update),
         "sdk_last_error": app_settings.sdk_last_error,
+        "sdk_ever_installed": bool(app_settings.sdk_ever_installed),
         "latest_version": latest_version,
         "latest_url": latest_info.get("browser_download_url") if latest_info else None,
         "update_available": update_available,
