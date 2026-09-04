@@ -10,6 +10,7 @@ export interface SdkStatus {
   discord_enabled: boolean;
   discord_auto_update: boolean;
   sdk_last_error: string | null;
+  sdk_ever_installed?: boolean;
   latest_version: string | null;
   latest_url: string | null;
   update_available: boolean;
