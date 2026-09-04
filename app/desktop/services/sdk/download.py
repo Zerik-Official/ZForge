@@ -18,16 +18,15 @@ from pathlib import Path
 from typing import Any, Callable
 
 # Project imports
-from desktop.core.events import emitter
 from desktop.constants import SDK_EXPECTED_PREFIX
-from desktop.services.sdk.validation import find_installed_sdk, is_sdk_valid, missing_files
+from desktop.core.events import emitter
+from desktop.services.sdk.validation import find_installed_sdk, get_sdk_status, is_sdk_valid, missing_files
 from desktop.services.sdk.version import fetch_latest_release
+from desktop.services.sdk.version import fetch_latest_release as _fetch
+from desktop.services.sdk.version import is_version_greater
 from desktop.storage import config as config_store
 from desktop.utils.logger import Tags, log
 from desktop.utils.paths import tools_dir
-from desktop.services.sdk.validation import find_installed_sdk, get_sdk_status
-from desktop.services.sdk.version import fetch_latest_release as _fetch
-from desktop.services.sdk.version import is_version_greater
 
 ProgressCallback = Callable[[dict[str, Any]], None]
 
@@ -176,6 +175,7 @@ def _download_and_install_inner(on_progress: ProgressCallback | None) -> dict[st
 
         settings = config_store.load_app_config()
         settings.sdk_last_error = None
+        settings.sdk_ever_installed = True
         config_store.save_app_config(settings)
 
         log("SUCCESS", Tags.API, f"SDK v{version} instalado en {extracted}")
@@ -205,12 +205,22 @@ def check_and_repair_on_boot() -> dict[str, Any] | None:
     status = get_sdk_status()
     app_settings = config_store.load_app_config()
 
+    if status["installed"] and status["valid"] and not app_settings.sdk_ever_installed:
+        app_settings.sdk_ever_installed = True
+        config_store.save_app_config(app_settings)
+
     if status["needs_repair"] or status["needs_install"]:
-        settings = config_store.load_app_config()
-        msg = "En la última comprobación, se detectó una corrupción en el SDK o este fue eliminado."
-        settings.sdk_last_error = msg
-        config_store.save_app_config(settings)
-        log("WARNING", Tags.API, f"SDK needs repair/install")
+        if app_settings.sdk_ever_installed:
+            settings = config_store.load_app_config()
+            msg = "En la última comprobación, se detectó una corrupción en el SDK o este fue eliminado."
+            settings.sdk_last_error = msg
+            config_store.save_app_config(settings)
+            log("WARNING", Tags.API, f"SDK needs repair/install")
+        else:
+            if app_settings.sdk_last_error:
+                app_settings.sdk_last_error = None
+                config_store.save_app_config(app_settings)
+            log("INFO", Tags.API, "SDK not installed — first run, skipping corruption error")
         if not app_settings.discord_enabled:
             log("INFO", Tags.API, "SDK repair skipped — Discord Rich Presence is disabled")
             return None
