@@ -110,6 +110,7 @@ export function RichPresenceTab() {
   const showErrorBanner = useMemo(() => {
     const msg = status?.sdk_last_error;
     if (!msg) return null;
+    if (status?.sdk_ever_installed === false) return null;
     return msg;
   }, [status]);
 
@@ -129,12 +130,9 @@ export function RichPresenceTab() {
   return (
     <div className="flex flex-col gap-4 p-8">
       {showErrorBanner ? (
-        <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3">
-          <i className="fa-solid fa-triangle-exclamation mt-0.5 text-[13px] text-amber-500" />
-          <div className="flex flex-col gap-1">
-            <span className="text-[12px] font-semibold text-amber-500">{t("launcher.settings.richPresence.corruptionError")}</span>
-            <span className="text-[11px] leading-relaxed text-(--muted)">{showErrorBanner}</span>
-          </div>
+        <div className="flex items-center gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3">
+          <i className="fa-solid fa-triangle-exclamation text-[13px] text-amber-500" />
+          <span className="text-[12px] font-semibold text-amber-500">{t("launcher.settings.richPresence.corruptionError")}</span>
         </div>
       ) : null}
 
