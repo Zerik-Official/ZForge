@@ -117,7 +117,26 @@
           "viewLicense": "View License",
           "hideLicense": "Hide License",
           "repository": "Repository",
-          "author": "Author"
+          "author": "Author",
+          "license": {
+            "permissionsTitle": "Permissions",
+            "limitationsTitle": "Limitations",
+            "conditionsTitle": "Conditions",
+            "showRaw": "View full text",
+            "hideRaw": "Hide full text",
+            "items": {
+              "commercialUse": "Commercial use",
+              "modification": "Modification",
+              "distribution": "Distribution",
+              "patentUse": "Patent use",
+              "privateUse": "Private use",
+              "trademarkUse": "Trademark use",
+              "liability": "Liability",
+              "warranty": "Warranty",
+              "licenseAndCopyrightNotice": "License and copyright notice",
+              "stateChanges": "State changes"
+            }
+          }
         }
       }
     }
