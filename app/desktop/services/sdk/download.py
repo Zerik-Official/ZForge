@@ -19,6 +19,7 @@ from typing import Any, Callable
 
 # Project imports
 from desktop.constants import SDK_EXPECTED_PREFIX
+from desktop.core.errors import ErrorCode, make_error_string_envelope
 from desktop.core.events import emitter
 from desktop.services.sdk.validation import find_installed_sdk, get_sdk_status, is_sdk_valid, missing_files
 from desktop.services.sdk.version import fetch_latest_release
@@ -89,7 +90,7 @@ def download_and_install(on_progress: ProgressCallback | None = None) -> dict[st
     """
     global _is_downloading
     if _is_downloading:
-        return {"ok": False, "error": "Ya hay una descarga del SDK en progreso."}
+        return make_error_string_envelope(ErrorCode.SDK_DOWNLOAD_IN_PROGRESS)
     _is_downloading = True
     try:
         return _download_and_install_inner(on_progress)
@@ -100,7 +101,7 @@ def download_and_install(on_progress: ProgressCallback | None = None) -> dict[st
 def _download_and_install_inner(on_progress: ProgressCallback | None) -> dict[str, Any]:
     latest = fetch_latest_release()
     if not latest:
-        return {"ok": False, "error": "No se pudo obtener la última versión del SDK desde GitHub."}
+        return make_error_string_envelope(ErrorCode.SDK_FETCH_FAILED)
 
     url = str(latest["browser_download_url"])
     version = str(latest["version"]).lstrip("v")
@@ -131,7 +132,11 @@ def _download_and_install_inner(on_progress: ProgressCallback | None) -> dict[st
                     },
                 )
                 if info.get("total"):
-                    emitter.boot_message(f"Descargando SDK v{version}… {info.get('percent')} %", 55)
+                    emitter.boot_message(
+                        "boot.downloadingSdk",
+                        55,
+                        {"version": version, "percent": str(info.get("percent"))},
+                    )
             except Exception:
                 pass
 
@@ -159,7 +164,7 @@ def _download_and_install_inner(on_progress: ProgressCallback | None) -> dict[st
             if found:
                 extracted = found
             else:
-                return {"ok": False, "error": "No se encontró la carpeta extraída del SDK."}
+                return make_error_string_envelope(ErrorCode.SDK_EXTRACTION_NOT_FOUND)
 
         for name in ("wowsdk_cli.py", "requirements.txt"):
             p = extracted / name
@@ -171,7 +176,9 @@ def _download_and_install_inner(on_progress: ProgressCallback | None) -> dict[st
 
         if not is_sdk_valid(extracted):
             missing = missing_files(extracted)
-            return {"ok": False, "error": f"SDK incompleto tras instalar. Faltan: {', '.join(missing)}"}
+            return make_error_string_envelope(
+                ErrorCode.SDK_INCOMPLETE, {"missing": ", ".join(missing)}
+            )
 
         settings = config_store.load_app_config()
         settings.sdk_last_error = None
@@ -212,7 +219,7 @@ def check_and_repair_on_boot() -> dict[str, Any] | None:
     if status["needs_repair"] or status["needs_install"]:
         if app_settings.sdk_ever_installed:
             settings = config_store.load_app_config()
-            msg = "En la última comprobación, se detectó una corrupción en el SDK o este fue eliminado."
+            msg = "SDK corruption detected or removed during last check."
             settings.sdk_last_error = msg
             config_store.save_app_config(settings)
             log("WARNING", Tags.API, f"SDK needs repair/install")
@@ -250,9 +257,8 @@ def check_and_repair_on_boot() -> dict[str, Any] | None:
         return None
 
     log("INFO", Tags.API, f"SDK update available {local_version} -> {remote_version}, downloading...")
-    try:        
-
-        emitter.boot_message(f"Actualizando SDK v{remote_version}…", 50)
+    try:
+        emitter.boot_message("boot.updatingSdk", 50, {"version": remote_version})
     except Exception:
         pass
 
