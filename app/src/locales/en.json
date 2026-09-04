@@ -168,6 +168,32 @@
     "english": "English",
     "continue": "Continue"
   },
+  "boot": {
+    "initializingCore": "Initializing core…",
+    "checkingSdk": "Checking SDK…",
+    "loadingGames": "Loading {count} game(s)…",
+    "scanningGame": "Scanning {name} configuration…",
+    "finalizing": "Finalizing…",
+    "downloadingSdk": "Downloading SDK v{version}… {percent}%",
+    "updatingSdk": "Updating SDK v{version}…"
+  },
+  "errors": {
+    "realmlistEmpty": "Realmlist cannot be empty.",
+    "urlEmpty": "URL cannot be empty.",
+    "urlProtocol": "URL must start with http:// or https://",
+    "browserOpenFailed": "Failed to open browser.",
+    "sdkDownloadInProgress": "An SDK download is already in progress.",
+    "sdkFetchFailed": "Failed to fetch latest SDK version from GitHub.",
+    "sdkExtractionNotFound": "Extracted SDK folder not found.",
+    "sdkIncomplete": "SDK incomplete after install. Missing: {missing}",
+    "licenseEmpty": "LICENSE is empty.",
+    "gameNotFound": "Game not found.",
+    "noSavedSettings": "No saved settings for this game.",
+    "schemaNotFound": "Schema not found for {versionId}",
+    "orderedIdsInvalid": "ordered_ids must be a list.",
+    "executableNotFound": "Executable not found: {path}",
+    "unknown": "An unknown error occurred."
+  },
   "settings": {
     "categories": {
       "launch": "Launch",
