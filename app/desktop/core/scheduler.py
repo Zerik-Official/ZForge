@@ -7,6 +7,7 @@ Runs the boot-time reconciliation of saved game settings.
 # Standard library
 from __future__ import annotations
 
+import threading
 import time
 from datetime import datetime
 from pathlib import Path
@@ -16,9 +17,7 @@ from desktop.core import game_config
 from desktop.core.events import emitter
 from desktop.services.sdk import manager as sdk_manager
 from desktop.storage import db as db_store
-from desktop.utils.logger import log, Tags
-
-import threading
+from desktop.utils.logger import Tags, log
 
 _boot_lock = threading.Lock()
 _boot_has_run = False
@@ -90,31 +89,33 @@ def boot_sequence() -> None:
 
     time.sleep(0.5)
 
-    emitter.boot_message("Inicializando núcleo…", 8)
+    emitter.boot_message("boot.initializingCore", 8)
 
     try:
-        emitter.boot_message("Verificando SDK…", 12)
+        emitter.boot_message("boot.checkingSdk", 12)
         sdk_manager.check_and_repair_on_boot()
     except Exception as exc:
         log("WARNING", Tags.API, f"SDK boot check failed: {exc}")
 
     games = db_store.list_games()
-    emitter.boot_message(f"Cargando {len(games)} juego(s)…", 22)
+    emitter.boot_message("boot.loadingGames", 22, {"count": len(games)})
 
     conflicts: list[dict[str, object]] = []
     total: int = max(1, len(games))
     for index, game in enumerate(games):
         emitter.boot_message(
-            f"Escaneando configuración de {game.name}…", 30 + int(55 * (index + 1) / total)  # type: ignore[attr-defined]
+            "boot.scanningGame",
+            30 + int(55 * (index + 1) / total),
+            {"name": game.name},  # type: ignore[attr-defined]
         )
         try:
             conflict = _scan_and_compare(game)
             if conflict is not None:
                 conflicts.append(conflict)
         except OSError as exc:
-            log("ERROR", Tags.SETTINGS, f"scan fallido para {game.name}: {exc}")  # type: ignore[attr-defined]
+            log("ERROR", Tags.SETTINGS, f"scan failed for {game.name}: {exc}")  # type: ignore[attr-defined]
 
-    emitter.boot_message("Finalizando…", 92)
+    emitter.boot_message("boot.finalizing", 92)
     for conflict in conflicts:
         emitter.emit("config_conflict", conflict)
 
