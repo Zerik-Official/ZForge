@@ -9,15 +9,16 @@ services. Called by the pywebview bridge in core/api.py.
 from __future__ import annotations
 
 # Project imports
+from desktop.constants import SUPPORTED_LANGUAGES
 from desktop.core import game_config
 from desktop.core import settings_schema as schema_service
+from desktop.core.errors import ErrorCode, handle_api_errors, make_error_string_envelope
 from desktop.models import server as server_catalog
 from desktop.storage import config as config_store
 from desktop.storage import db as db_store
-from desktop.utils import display
-from desktop.utils.logger import log, Tags
 from desktop.utils import audio as audio_utils
-from desktop.constants import SUPPORTED_LANGUAGES
+from desktop.utils import display
+from desktop.utils.logger import Tags, log
 
 def get_settings() -> dict[str, object]:
     """Return the current application settings."""
@@ -101,24 +102,26 @@ def save_game_settings(game_id: str, payload: dict[str, object]) -> dict[str, ob
     return {"ok": True, "error": None}
 
 
+@handle_api_errors
 def scan_game_config(game_id: str) -> dict[str, object]:
     """Scan a game's client files and return the detected settings."""
     log("DEBUG", Tags.API, f"scan_game_config() -> {game_id}")
     game = db_store.get_game(game_id)
     if game is None:
-        return {"ok": False, "error": "Game not found"}
+        return make_error_string_envelope(ErrorCode.GAME_NOT_FOUND)
     return game_config.scan_game_config(game.exe_path)
 
 
+@handle_api_errors
 def apply_game_settings(game_id: str) -> dict[str, object]:
     """Write the saved settings into the game's configuration files."""
     log("DEBUG", Tags.API, f"apply_game_settings() -> {game_id}")
     game = db_store.get_game(game_id)
     if game is None:
-        return {"ok": False, "error": "Game not found"}
+        return make_error_string_envelope(ErrorCode.GAME_NOT_FOUND)
     settings = db_store.get_game_settings(game_id)
     if settings is None:
-        return {"ok": False, "error": "No saved settings for this game"}
+        return make_error_string_envelope(ErrorCode.NO_SAVED_SETTINGS)
     try:
         game_config.apply_game_settings(settings, game.exe_path)
     except OSError as exc:
@@ -126,12 +129,13 @@ def apply_game_settings(game_id: str) -> dict[str, object]:
     return {"ok": True, "error": None}
 
 
+@handle_api_errors
 def pull_game_settings(game_id: str) -> dict[str, object]:
     """Overwrite the saved settings with what the game files currently hold."""
     log("DEBUG", Tags.API, f"pull_game_settings() -> {game_id}")
     game = db_store.get_game(game_id)
     if game is None:
-        return {"ok": False, "error": "Game not found"}
+        return make_error_string_envelope(ErrorCode.GAME_NOT_FOUND)
     try:
         db_store.save_game_settings(game_id, game_config.scan_game_config(game.exe_path))
     except OSError as exc:
@@ -144,11 +148,12 @@ def list_servers() -> list[dict[str, object]]:
     return server_catalog.list_servers()
 
 
+@handle_api_errors
 def save_custom_server(payload: dict[str, object]) -> dict[str, object]:
     """Persist a brand-new custom realmlist globally."""
     realmlist = str(payload.get("realmlist") or "").strip()
     if not realmlist:
-        return {"ok": False, "error": "Realmlist vacío"}
+        return make_error_string_envelope(ErrorCode.REALMLIST_EMPTY)
     name = str(payload.get("name") or realmlist).strip()
     realm = str(payload.get("realm") or "").strip()
     db_store.add_custom_server(realmlist, name, [realm] if realm else [])
@@ -166,6 +171,7 @@ def add_custom_realm(realmlist: str, realm: str) -> dict[str, object]:
     return {"ok": True, "error": None}
 
 
+@handle_api_errors
 def get_settings_schema(version_id: str) -> dict[str, object]:
     """
     Return the settings schema for a given game version.
@@ -179,7 +185,9 @@ def get_settings_schema(version_id: str) -> dict[str, object]:
     log("DEBUG", Tags.API, f"get_settings_schema() -> {version_id}")
     schema = schema_service.load_schema(version_id)
     if schema is None:
-        return {"ok": False, "error": f"Schema not found for {version_id}"}
+        return make_error_string_envelope(
+            ErrorCode.SCHEMA_NOT_FOUND, {"versionId": version_id}
+        )
     return schema
 
 
