@@ -26,6 +26,7 @@ class AppSettings:
     discord_enabled: bool = False
     discord_auto_update: bool = True
     sdk_last_error: str | None = None
+    sdk_ever_installed: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         """Serialise the settings to a JSON-friendly dictionary."""
@@ -54,4 +55,5 @@ class AppSettings:
             discord_enabled=bool(data.get("discord_enabled", False)),
             discord_auto_update=bool(data.get("discord_auto_update", True)),
             sdk_last_error=data.get("sdk_last_error"),
+            sdk_ever_installed=bool(data.get("sdk_ever_installed", False)),
         )
