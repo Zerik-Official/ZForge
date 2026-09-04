@@ -7,6 +7,7 @@ export interface AppConfig {
   discord_enabled: boolean;
   discord_auto_update: boolean;
   sdk_last_error: string | null;
+  sdk_ever_installed?: boolean;
 }
 
 export interface GameSettings {
