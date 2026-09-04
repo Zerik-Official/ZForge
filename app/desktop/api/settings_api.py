@@ -54,6 +54,8 @@ def _apply_app_config_patch(current: object, payload: dict[str, object]) -> None
     if "sdk_last_error" in payload:
         raw_err = payload.get("sdk_last_error")
         current.sdk_last_error = str(raw_err) if isinstance(raw_err, str) and raw_err.strip() else None  # type: ignore[assignment]
+    if "sdk_ever_installed" in payload:
+        current.sdk_ever_installed = bool(payload.get("sdk_ever_installed"))  # type: ignore[assignment]
 
 
 def save_settings(payload: dict[str, object]) -> dict[str, object]:
