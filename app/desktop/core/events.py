@@ -7,7 +7,8 @@ All frontend notifications go through this module.
 Usage:
     from desktop.core.events import emitter
 
-    emitter.boot_message("Loading database…", 30)
+    emitter.boot_message("boot.initializingCore", 30)
+    emitter.boot_message("boot.scanningGame", 42, {"name": "WotLK"})
     emitter.boot_done()
     emitter.emit("download_progress", {"percent": 72, "speed": 14.3})
 
@@ -71,12 +72,42 @@ class EventEmitter:
         )
         log("DEBUG", Tags.BRIDGE, f"emit({event}) → {serialised[:80]}")
 
-    def boot_message(self, message: str, percent: int | float) -> None:
+    def boot_message(
+        self,
+        key: str,
+        percent: int | float,
+        params: dict[str, Any] | None = None,
+    ) -> None:
         """
         Send a boot progress update to the splash screen.
 
+        The frontend translates ``key`` via ``t(key, params)``. The backend
+        never sends human-readable strings.
+
         Args:
-            message: Human-readable status string displayed in the splash.
+            key: Translation key (e.g. "boot.initializingCore").
+            percent: Completion percentage (0–100).
+            params: Optional interpolation variables for the translation.
+        """
+        pct = max(0, min(100, int(percent)))
+        payload: dict[str, Any] = {
+            "key": key,
+            "percent": pct,
+            "params": params or {},
+        }
+        serialised: str = json.dumps(payload)
+        self._js(
+            f"if (typeof window.__zforge_boot_message === 'function') "
+            f"window.__zforge_boot_message({serialised});"
+        )
+        log("INFO", Tags.BRIDGE, f"boot_message({pct}%) — {key} {params or {}}")
+
+    def boot_message_legacy(self, message: str, percent: int | float) -> None:
+        """
+        Legacy shim that sends a raw string (deprecated).
+
+        Args:
+            message: Human-readable string (do not use for new code).
             percent: Completion percentage (0–100).
         """
         pct = max(0, min(100, int(percent)))
