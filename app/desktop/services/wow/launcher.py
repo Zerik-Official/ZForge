@@ -15,9 +15,10 @@ import sys
 from pathlib import Path
 
 # Project imports
+from desktop.core.errors import ErrorCode, make_error_string_envelope
 from desktop.models.game import Game
 from desktop.storage import db as db_store
-from desktop.utils.logger import log, Tags
+from desktop.utils.logger import Tags, log
 
 
 def _resolve_priority_token(priority: str) -> str | None:
@@ -51,7 +52,9 @@ def launch_wow(game: Game) -> dict[str, object]:
     exe: Path = Path(game.exe_path)
     if not exe.exists():
         log("ERROR", Tags.API, f"Executable not found for {game.name}: {exe}")
-        return {"ok": False, "error": f"Executable not found: {exe}"}
+        return make_error_string_envelope(
+            ErrorCode.EXECUTABLE_NOT_FOUND, {"path": str(exe)}
+        )
 
     settings: dict[str, object] = db_store.get_game_settings(game.id) or {}
     extra_args: list[str] = shlex.split(str(settings.get("launch_args", "") or ""))
