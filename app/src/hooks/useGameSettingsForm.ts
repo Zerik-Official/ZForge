@@ -5,6 +5,7 @@ import { serversApi } from "@/services/api/domains/servers.api";
 import type { Game } from "@/types/domains/game";
 import type { GameSettings } from "@/types/domains/settings";
 import type { ServerEntry } from "@/types/domains/server";
+import { getApiErrorMessage } from "@/utils/apiErrors";
 
 export function useGameSettingsForm(game: Game | null, open: boolean) {
   const locale = useLocale();
@@ -153,19 +154,31 @@ export function useGameSettingsForm(game: Game | null, open: boolean) {
       const realmlist = settings.realm_list.trim();
       const realmName = settings.realm_name.trim();
       if (saveGlobal && realmlist) {
-        await serversApi.saveCustomServer({ realmlist, name: realmlist, realm: realmName || undefined });
+        const serverResult = await serversApi.saveCustomServer({ realmlist, name: realmlist, realm: realmName || undefined });
+        if (!serverResult.ok) {
+          setError(getApiErrorMessage(serverResult));
+          return;
+        }
         setServers(await serversApi.listServers());
       } else if (realmlist && realmName) {
         const customMatch = matchedServers.find((server) => server.custom);
         if (customMatch && !customMatch.realms.includes(realmName)) {
-          await serversApi.addCustomRealm(realmlist, realmName);
+          const realmResult = await serversApi.addCustomRealm(realmlist, realmName);
+          if (!realmResult.ok) {
+            setError(getApiErrorMessage(realmResult));
+            return;
+          }
           setServers(await serversApi.listServers());
         }
       }
-      await settingsApi.saveGameSettings(game.id, settings);
+      const saveResult = await settingsApi.saveGameSettings(game.id, settings);
+      if (!saveResult.ok) {
+        setError(getApiErrorMessage(saveResult) ?? t("common.errors.saveGameSettings"));
+        return;
+      }
       if (apply) {
         const result = await settingsApi.applyGameSettings(game.id);
-        if (!result.ok) setError(result.error ?? t("common.errors.applyGameSettings"));
+        if (!result.ok) setError(getApiErrorMessage(result) ?? t("common.errors.applyGameSettings"));
       }
     } catch {
       setError(t("common.errors.saveGameSettings"));

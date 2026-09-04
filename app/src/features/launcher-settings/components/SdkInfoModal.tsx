@@ -3,6 +3,7 @@ import { Modal, ModalHeader } from "@/components/ui/Modal";
 import { TooltipSimple } from "@/components/ui/Tooltip";
 import { t, useLocale } from "@/locales/i18n";
 import { api } from "@/services/api";
+import { getApiErrorMessage } from "@/utils/apiErrors";
 
 const APACHE_LICENSE_INFO = {
   permissions: ["commercialUse", "modification", "distribution", "patentUse", "privateUse"],
@@ -53,7 +54,8 @@ export function SdkInfoModal({ open, onClose }: SdkInfoModalProps) {
           setLicense(res.content);
           setShowLicense(true);
         } else {
-          setLicenseError(res.error ?? "Failed to load license");
+          const apiResult = res as unknown as import("@/types/domains/api").ApiResult;
+          setLicenseError(getApiErrorMessage(apiResult) ?? res.error ?? "Failed to load license");
         }
       } catch (e) {
         setLicenseError(String(e));

@@ -5,6 +5,7 @@ import { t, useLocale } from "@/locales/i18n";
 import { api } from "@/services/api";
 import type { SdkDownloadProgress, SdkStatus } from "@/types/domains/sdk";
 import type { AppConfig } from "@/types/domains/settings";
+import { getApiErrorMessage } from "@/utils/apiErrors";
 import { formatBytes, formatEta, formatSpeed } from "@/utils/formatters";
 import { SdkInfoModal } from "../components/SdkInfoModal";
 
@@ -75,7 +76,7 @@ export function RichPresenceTab() {
     try {
       const result = await api.installSdk();
       if (!result.ok) {
-        setError((result.error as string) ?? "Download failed");
+        setError(getApiErrorMessage(result as import("@/types/domains/api").ApiResult) ?? "Download failed");
       }
     } catch (e) {
       setError(String(e));
