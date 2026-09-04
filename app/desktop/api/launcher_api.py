@@ -12,10 +12,11 @@ from datetime import datetime
 
 # Project imports
 from desktop.core import game_config
+from desktop.core.errors import ErrorCode, handle_api_errors, make_error_string_envelope
 from desktop.models.game import Game
 from desktop.services.wow import launcher as wow_launcher
 from desktop.storage import db as db_store
-from desktop.utils.logger import log, Tags
+from desktop.utils.logger import Tags, log
 
 
 def list_games() -> list[dict[str, object]]:
@@ -77,6 +78,7 @@ def remove_game(game_id: str) -> dict[str, object]:
     return {"ok": True, "error": None}
 
 
+@handle_api_errors
 def reorder_games(ordered_ids: list[str]) -> dict[str, object]:
     """
     Persist a new order for the dock.
@@ -88,12 +90,13 @@ def reorder_games(ordered_ids: list[str]) -> dict[str, object]:
         Success envelope.
     """
     if not isinstance(ordered_ids, list):
-        return {"ok": False, "error": "ordered_ids must be a list"}
+        return make_error_string_envelope(ErrorCode.ORDERED_IDS_INVALID)
     db_store.reorder_games([str(gid) for gid in ordered_ids])
     log("INFO", Tags.API, f"reorder_games() -> {ordered_ids}")
     return {"ok": True, "error": None}
 
 
+@handle_api_errors
 def launch_game(game_id: str) -> dict[str, object]:
     """
     Start the WoW client for the selected game.
@@ -107,5 +110,5 @@ def launch_game(game_id: str) -> dict[str, object]:
     log("DEBUG", Tags.API, f"launch_game() called — id={game_id}")
     game: Game | None = db_store.get_game(game_id)
     if game is None:
-        return {"ok": False, "error": "Game not found"}
+        return make_error_string_envelope(ErrorCode.GAME_NOT_FOUND)
     return wow_launcher.launch_wow(game)
