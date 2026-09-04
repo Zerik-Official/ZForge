@@ -4,9 +4,15 @@ SDK API — thin bridge for Rich Presence SDK management.
 
 from __future__ import annotations
 
-from desktop.services.sdk import manager as sdk_manager
-from desktop.utils.logger import Tags, log
+import urllib.error
+import urllib.request
 
+# Project imports
+from desktop.constants import SDK_LICENSE_URL
+from desktop.core.errors import ErrorCode, make_error_string_envelope
+from desktop.services.sdk import manager as sdk_manager
+from desktop.utils.browser import open_url
+from desktop.utils.logger import Tags, log
 
 def get_sdk_status() -> dict[str, object]:
     """Return the current SDK installation status."""
@@ -41,16 +47,13 @@ def get_sdk_license() -> dict[str, object]:
     Returns:
         Dictionary with ``ok``, ``content`` and ``error``.
     """
-    import urllib.error
-    import urllib.request
-
-    url = "https://raw.githubusercontent.com/Zerik-Official/WoWControlSDK/main/LICENSE"
-    req = urllib.request.Request(url, headers={"User-Agent": "ZForge"})
+    req = urllib.request.Request(SDK_LICENSE_URL, headers={"User-Agent": "ZForge"})
     try:
         with urllib.request.urlopen(req, timeout=12) as resp:
             text = resp.read().decode("utf-8", errors="ignore")
         if not text.strip():
-            return {"ok": False, "content": None, "error": "LICENSE vacío"}
+            err = make_error_string_envelope(ErrorCode.LICENSE_EMPTY)
+            return {"ok": False, "content": None, "error": err["error"], "code": err["code"], "i18n_key": err["i18n_key"]}
         return {"ok": True, "content": text, "error": None}
     except (urllib.error.URLError, urllib.error.HTTPError, OSError, TimeoutError) as exc:
         log("WARNING", Tags.API, f"get_sdk_license failed: {exc}")
@@ -66,8 +69,7 @@ def open_external_url(url: str) -> dict[str, object]:
 
     Returns:
         Result dictionary.
-    """
-    from desktop.utils.browser import open_url
+    """    
 
     log("INFO", Tags.API, f"open_external_url() -> {url}")
     return open_url(url)
