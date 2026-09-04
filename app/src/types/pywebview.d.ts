@@ -49,7 +49,10 @@ declare global {
         open_external_url(url: string): Promise<ApiResult>;
       };
     };
-    __zforge_boot_message?: (message: string, percent: number) => void;
+    __zforge_boot_message?: {
+      (payload: { key: string; percent: number; params?: Record<string, string | number> }): void;
+      (message: string, percent: number, params?: Record<string, string | number>): void;
+    };
     __zforge_boot_done?: () => void;
     __zforge_config_conflict?: (conflict: ConfigConflict) => void;
     __zforge_sdk_download_progress?: (payload: { percent: number; downloaded: number; total: number; speed: number; eta: number; version: string }) => void;
