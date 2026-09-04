@@ -4,6 +4,20 @@ import { TooltipSimple } from "@/components/ui/Tooltip";
 import { t, useLocale } from "@/locales/i18n";
 import { api } from "@/services/api";
 
+const APACHE_LICENSE_INFO = {
+  permissions: ["commercialUse", "modification", "distribution", "patentUse", "privateUse"],
+  limitations: ["trademarkUse", "liability", "warranty"],
+  conditions: ["licenseAndCopyrightNotice", "stateChanges"],
+} as const;
+
+type LicenseColumn = keyof typeof APACHE_LICENSE_INFO;
+
+const LICENSE_COLUMN_META: Record<LicenseColumn, { titleKey: string; icon: string; color: string }> = {
+  permissions: { titleKey: "license.permissionsTitle", icon: "fa-solid fa-check", color: "text-(--success)" },
+  limitations: { titleKey: "license.limitationsTitle", icon: "fa-solid fa-xmark", color: "text-(--danger)" },
+  conditions: { titleKey: "license.conditionsTitle", icon: "fa-solid fa-circle-info", color: "text-(--info)" },
+};
+
 /**
  * Props for the {@link SdkInfoModal} component.
  */
@@ -23,6 +37,7 @@ export function SdkInfoModal({ open, onClose }: SdkInfoModalProps) {
   const [licenseLoading, setLicenseLoading] = useState(false);
   const [licenseError, setLicenseError] = useState<string | null>(null);
   const [showLicense, setShowLicense] = useState(false);
+  const [showRawLicense, setShowRawLicense] = useState(false);
 
   async function handleOpenLicense() {
     if (license && showLicense) {
@@ -63,28 +78,12 @@ export function SdkInfoModal({ open, onClose }: SdkInfoModalProps) {
       <ModalHeader icon="fa-solid fa-cube" title={t("launcher.settings.richPresence.info.title")} onClose={onClose} />
 
       <div className="flex max-h-[65vh] flex-col gap-5 overflow-y-auto px-6 py-5">
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col items-center gap-2 text-center">
           <h3 className="text-[13px] font-semibold text-(--text)">{t("launcher.settings.richPresence.info.whatTitle")}</h3>
           <p className="text-[12px] leading-relaxed text-(--muted)">{t("launcher.settings.richPresence.info.whatDescription")}</p>
         </div>
 
-        <div className="flex flex-col gap-2">
-          <h3 className="text-[13px] font-semibold text-(--text)">{t("launcher.settings.richPresence.info.howTitle")}</h3>
-          <p className="text-[12px] leading-relaxed text-(--muted)">{t("launcher.settings.richPresence.info.howDescription")}</p>
-          <ul className="flex flex-col gap-1.5 rounded-lg border border-(--border-strong) bg-(--bg-input) p-3 text-[12px] text-(--muted)">
-            <li className="flex items-start gap-2">
-              <i className="fa-solid fa-code mt-0.5 text-[11px] text-(--primary)" /> Lua execution, unit queries, group/raid, world state, player info
-            </li>
-            <li className="flex items-start gap-2">
-              <i className="fa-solid fa-network-wired mt-0.5 text-[11px] text-(--primary)" /> Named pipe <span className="font-mono text-[11px] text-(--text-soft)">\\.\pipe\WowGameCommand</span> · JSON-RPC 2.0 · +40 methods
-            </li>
-            <li className="flex items-start gap-2">
-              <i className="fa-brands fa-windows mt-0.5 text-[11px] text-(--primary)" /> WoW 3.3.5a (12340) · Windows 10+
-            </li>
-          </ul>
-        </div>
-
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col items-center gap-2 text-center">
           <h3 className="text-[13px] font-semibold text-(--text)">{t("launcher.settings.richPresence.info.forWhatTitle")}</h3>
           <p className="text-[12px] leading-relaxed text-(--muted)">{t("launcher.settings.richPresence.info.forWhatDescription")}</p>
         </div>
@@ -139,9 +138,44 @@ export function SdkInfoModal({ open, onClose }: SdkInfoModalProps) {
             ) : licenseError ? (
               <span className="text-[12px] text-(--danger)">{licenseError}</span>
             ) : (
-              <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-(--bg-elevated) p-3 text-[11px] leading-relaxed text-(--text-soft)">
-                {license}
-              </pre>
+              <>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  {(Object.keys(APACHE_LICENSE_INFO) as LicenseColumn[]).map((column) => {
+                    const meta = LICENSE_COLUMN_META[column];
+                    return (
+                      <div key={column} className="flex flex-col gap-2">
+                        <span className="text-[10.5px] font-semibold uppercase tracking-wide text-(--muted)">
+                          {t(`launcher.settings.richPresence.info.${meta.titleKey}`)}
+                        </span>
+                        <ul className="flex flex-col gap-1.5">
+                          {APACHE_LICENSE_INFO[column].map((item) => (
+                            <li key={item} className="flex items-start gap-2 text-[11.5px] text-(--text-soft)">
+                              <i className={`${meta.icon} mt-0.5 text-[10px] ${meta.color}`} />
+                              {t(`launcher.settings.richPresence.info.license.items.${item}`)}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <button
+                  className="flex items-center gap-1.5 self-start text-[11px] font-medium text-(--muted) hover:text-(--text-soft) cursor-pointer"
+                  onClick={() => setShowRawLicense(!showRawLicense)}
+                >
+                  <i className={`fa-solid fa-chevron-${showRawLicense ? "up" : "down"} text-[9px]`} />
+                  {showRawLicense
+                    ? t("launcher.settings.richPresence.info.license.hideRaw")
+                    : t("launcher.settings.richPresence.info.license.showRaw")}
+                </button>
+
+                {showRawLicense ? (
+                  <pre className="max-h-64 overflow-auto whitespace-pre-wrap wrap-break-word rounded-lg bg-(--bg-elevated) p-3 text-[11px] leading-relaxed text-(--text-soft)">
+                    {license}
+                  </pre>
+                ) : null}
+              </>
             )}
           </div>
         ) : null}
