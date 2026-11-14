@@ -4,10 +4,11 @@ use std::io::ErrorKind;
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
-use tokio::io::{AsyncBufReadExt, BufReader, Lines};
+use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader, Lines};
 use tokio::net::windows::named_pipe::NamedPipeClient;
 
-use crate::error::AppResult;
+use crate::error::{AppError, AppResult};
+use crate::services::sdk::auth::SessionToken;
 use crate::services::sdk::pipe::{self, EVENT_PIPE, PipeAccess};
 
 /// Glue screen reported by `client.screenChanged`.
@@ -79,6 +80,10 @@ pub enum SdkEvent {
     LoadingFinished,
     /// The loading screen closed without entering the world (SDK 1.2+).
     LoadingCancelled,
+    /// The event pipe accepted the session token (SDK 2.0+).
+    AuthAccepted,
+    /// The event pipe rejected the session token (SDK 2.0+).
+    AuthRejected(String),
     /// A subscribed WoW UI event; its arguments depend on the event.
     Game {
         /// WoW event name, for example `ZONE_CHANGED`.
@@ -119,6 +124,14 @@ impl SdkEvent {
             }
             "loading.finished" => Self::LoadingFinished,
             "loading.cancelled" => Self::LoadingCancelled,
+            "auth.ok" => Self::AuthAccepted,
+            "auth.failed" => Self::AuthRejected(
+                wire.args
+                    .get("error")
+                    .and_then(serde_json::Value::as_str)
+                    .unwrap_or_default()
+                    .to_owned(),
+            ),
             _ => Self::Game {
                 name: wire.event,
                 args: wire.args,
@@ -142,13 +155,32 @@ pub struct EventStream {
 }
 
 impl EventStream {
-    /// Connect to the event pipe, waiting up to `timeout` for the SDK to create it.
+    /// Connect to the event pipe, waiting up to `timeout` for the SDK to create
+    /// it, and send the session token when there is one.
+    ///
+    /// SDK 2.0+ creates a duplex pipe and expects `{"auth":"<token>"}` first.
+    /// Older SDKs create an outbound-only pipe: opening it for writing is denied,
+    /// so the stream falls back to read-only without a handshake.
     ///
     /// # Errors
     ///
-    /// Returns [`crate::error::AppError::SdkUnavailable`] when the pipe does not appear in time.
-    pub async fn connect(timeout: Duration) -> AppResult<Self> {
-        let client = pipe::open(EVENT_PIPE, PipeAccess::ReadOnly, timeout).await?;
+    /// Returns [`AppError::SdkUnavailable`] when the pipe does not appear in time.
+    pub async fn connect(timeout: Duration, token: Option<&SessionToken>) -> AppResult<Self> {
+        let client = match pipe::open(EVENT_PIPE, PipeAccess::ReadWrite, timeout).await {
+            Ok(mut client) => {
+                if let Some(token) = token {
+                    let mut handshake =
+                        serde_json::to_vec(&serde_json::json!({ "auth": token.as_str() }))?;
+                    handshake.push(b'\n');
+                    client.write_all(&handshake).await?;
+                }
+                client
+            }
+            Err(AppError::Io(error)) if error.kind() == ErrorKind::PermissionDenied => {
+                pipe::open(EVENT_PIPE, PipeAccess::ReadOnly, timeout).await?
+            }
+            Err(error) => return Err(error),
+        };
         Ok(Self {
             lines: BufReader::new(client).lines(),
         })
@@ -167,8 +199,17 @@ impl EventStream {
                 Err(error) if is_disconnect(&error) => return Ok(None),
                 Err(error) => return Err(error.into()),
             };
-            if let Some(event) = SdkEvent::parse(&line) {
-                return Ok(Some(event));
+            match SdkEvent::parse(&line) {
+                Some(SdkEvent::AuthAccepted) => {
+                    tracing::debug!("SDK event pipe accepted the session token");
+                    continue;
+                }
+                Some(SdkEvent::AuthRejected(reason)) => {
+                    tracing::warn!(reason, "SDK event pipe rejected the session token");
+                    return Err(AppError::SdkUnauthorized);
+                }
+                Some(event) => return Ok(Some(event)),
+                None => {}
             }
             tracing::debug!(line, "Ignoring malformed SDK event");
         }
@@ -227,6 +268,14 @@ mod tests {
         assert_eq!(
             SdkEvent::parse(r#"{"args":{"mapId":0},"event":"loading.cancelled"}"#),
             Some(SdkEvent::LoadingCancelled)
+        );
+        assert_eq!(
+            SdkEvent::parse(r#"{"args":{},"event":"auth.ok","time":1}"#),
+            Some(SdkEvent::AuthAccepted)
+        );
+        assert_eq!(
+            SdkEvent::parse(r#"{"args":{"error":"unauthorized"},"event":"auth.failed"}"#),
+            Some(SdkEvent::AuthRejected("unauthorized".to_owned()))
         );
     }
 }
