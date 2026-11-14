@@ -1,12 +1,12 @@
-import { bridge } from "../bridge";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
 export class WindowApi {
   minimizeWindow(): Promise<void> {
-    return bridge().minimize_window();
+    return getCurrentWindow().minimize();
   }
 
   closeWindow(): Promise<void> {
-    return bridge().close_window();
+    return getCurrentWindow().close();
   }
 }
 
