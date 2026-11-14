@@ -1,12 +1,14 @@
 //! Starting the World of Warcraft client.
 
 use std::fs;
+use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::process::{Child, Command};
+use std::process::{Child, Command, Stdio};
 
 use crate::domain::game::Game;
 use crate::domain::game_settings::{SettingValue, SettingsValues};
 use crate::error::{AppError, AppResult};
+use crate::services::sdk::auth::SessionToken;
 use crate::services::sdk::installation::Installation;
 
 /// Process priority requested in the launch settings.
@@ -169,13 +171,20 @@ fn parse_injector_pid(output: &str) -> Option<u32> {
 /// Start the game through `WowInjector.exe`, which injects the SDK and only
 /// resumes the game once the SDK pipes are ready. Blocks until the injector exits.
 ///
-/// The process priority option is not applied in this mode.
+/// The process priority option is not applied in this mode. With a session
+/// token (SDK 2.0+), the token is written to the injector's standard input so
+/// it never appears in a command line.
 ///
 /// # Errors
 ///
 /// Returns [`AppError::SdkInjectionFailed`] when the injector fails, or the
 /// errors of [`launch_direct`] for the executable and cache.
-pub fn launch_injected(game: &Game, options: &LaunchOptions, sdk: &Installation) -> AppResult<u32> {
+pub fn launch_injected(
+    game: &Game,
+    options: &LaunchOptions,
+    sdk: &Installation,
+    token: Option<&SessionToken>,
+) -> AppResult<u32> {
     let (exe, root) = prepare(game, options)?;
     let mut command = Command::new(sdk.injector_path());
     command
@@ -198,8 +207,21 @@ pub fn launch_injected(game: &Game, options: &LaunchOptions, sdk: &Installation)
     if options.priority != LaunchPriority::Normal {
         tracing::info!("Process priority is not applied when launching through the SDK");
     }
+    if token.is_some() {
+        command.arg("--token-stdin");
+    }
+    command
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
 
-    let output = command.output()?;
+    let mut child = command.spawn()?;
+    if let Some(mut stdin) = child.stdin.take()
+        && let Some(token) = token
+    {
+        stdin.write_all(format!("{}\n", token.as_str()).as_bytes())?;
+    }
+    let output = child.wait_with_output()?;
     let stdout = String::from_utf8_lossy(&output.stdout);
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);

@@ -48,7 +48,8 @@
         "sdk_unavailable": "The SDK did not respond. Is the game running?",
         "sdk_rpc": "The SDK rejected a request.",
         "sdk_injection_failed": "Could not start the game with the SDK.",
-        "game_already_running": "The game is already running."
+        "game_already_running": "The game is already running.",
+        "sdk_unauthorized": "The SDK rejected the launcher's session token."
       }
     },
     "configConflict": {
