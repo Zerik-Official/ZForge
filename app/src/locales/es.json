@@ -27,7 +27,25 @@
     "errors": {
       "loadGameSettings": "No se pudo cargar la configuración del juego.",
       "applyGameSettings": "No se pudo aplicar al juego.",
-      "saveGameSettings": "Error al guardar la configuración."
+      "saveGameSettings": "Error al guardar la configuración.",
+      "codes": {
+        "database": "Error de base de datos.",
+        "io": "No se pudo leer o escribir un archivo.",
+        "json": "Formato de datos no válido.",
+        "internal": "Error interno.",
+        "not_found": "El elemento ya no existe.",
+        "path_resolution": "No se encontró la carpeta de datos de la aplicación.",
+        "network": "Error de red. Revisa tu conexión.",
+        "archive": "El paquete descargado está dañado.",
+        "sdk_release_unavailable": "No se encontró ninguna versión descargable del SDK.",
+        "sdk_install_in_progress": "Ya hay una instalación del SDK en curso.",
+        "sdk_incomplete": "El paquete del SDK está incompleto.",
+        "sdk_corrupted": "El SDK fue eliminado o está dañado.",
+        "invalid_url": "Enlace no válido.",
+        "opener": "No se pudo abrir el enlace.",
+        "game_executable_missing": "No se encontró el ejecutable del juego.",
+        "unknown": "Error inesperado."
+      }
     },
     "configConflict": {
       "title": "Configuración de juego detectada",
@@ -252,5 +270,15 @@
         "volume": "Volumen"
       }
     }
+  },
+  "boot": {
+    "connecting": "Conectando con el backend…",
+    "checkingSdk": "Verificando SDK…",
+    "downloadingSdk": "Descargando SDK v{version}… {percent} %",
+    "loadingGames": "Cargando {count} juego(s)…",
+    "scanningGame": "Escaneando configuración de {name}…",
+    "finishing": "Finalizando…",
+    "ready": "Listo.",
+    "failed": "El arranque terminó con errores."
   }
 }
