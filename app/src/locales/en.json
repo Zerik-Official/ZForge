@@ -296,5 +296,48 @@
       "character_select": "Choosing character",
       "in_world": "Playing"
     }
+  },
+  "presence": {
+    "launching": "Starting World of Warcraft",
+    "running": "Playing World of Warcraft",
+    "login": "At the login screen",
+    "characterSelect": "Choosing a character",
+    "loading": "On a loading screen",
+    "character": "{name} · Level {level}",
+    "characterXp": "{name} · Level {level} ({xp}% XP)",
+    "solo": "Solo",
+    "party": "In a party",
+    "raid": "In a raid",
+    "statusGroup": "{status} · {group}",
+    "inCombat": "In combat",
+    "dead": "Dead",
+    "ghost": "Ghost",
+    "afk": "Away",
+    "raceClass": "{race} {class}",
+    "zoneSubZone": "{zone}, {subZone}",
+    "races": {
+      "1": "Human",
+      "2": "Orc",
+      "3": "Dwarf",
+      "4": "Night Elf",
+      "5": "Undead",
+      "6": "Tauren",
+      "7": "Gnome",
+      "8": "Troll",
+      "10": "Blood Elf",
+      "11": "Draenei"
+    },
+    "classes": {
+      "1": "Warrior",
+      "2": "Paladin",
+      "3": "Hunter",
+      "4": "Rogue",
+      "5": "Priest",
+      "6": "Death Knight",
+      "7": "Shaman",
+      "8": "Mage",
+      "9": "Warlock",
+      "11": "Druid"
+    }
   }
 }

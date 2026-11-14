@@ -13,7 +13,9 @@ pub mod storage;
 use tauri::{AppHandle, Emitter, Manager, Runtime};
 
 use crate::commands::boot::BootState;
+use crate::config::DISCORD_CLIENT_ID;
 use crate::paths::AppPaths;
+use crate::services::presence::PresenceService;
 use crate::services::sdk::installer::SdkInstaller;
 use crate::services::sdk::release::ReleaseClient;
 use crate::services::session::GameSession;
@@ -68,6 +70,7 @@ pub fn run() -> tauri::Result<()> {
             commands::servers::add_custom_realm,
             commands::session::get_session,
             commands::session::launch_game,
+            commands::presence::set_presence_strings,
             commands::settings::get_settings_schema,
             commands::settings::list_settings_versions,
             commands::settings::get_game_settings,
@@ -89,7 +92,12 @@ pub fn run() -> tauri::Result<()> {
                 tools = %paths.tools_dir().display(),
                 "ZForge host started"
             );
-            app.manage(AppConfigStore::new(paths.config_file()));
+            let config_store = AppConfigStore::new(paths.config_file());
+            let presence_enabled = config_store
+                .get()
+                .map(|config| config.discord_enabled)
+                .unwrap_or(false);
+            app.manage(config_store);
             app.manage(paths);
             app.manage(database);
             app.manage(schemas);
@@ -98,6 +106,11 @@ pub fn run() -> tauri::Result<()> {
             app.manage(BootState::default());
             let session = GameSession::new();
             forward_session_changes(app.handle(), &session);
+            app.manage(PresenceService::start(
+                DISCORD_CLIENT_ID,
+                presence_enabled,
+                session.subscribe(),
+            ));
             app.manage(session);
             Ok(())
         })

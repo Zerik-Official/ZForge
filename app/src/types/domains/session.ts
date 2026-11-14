@@ -14,6 +14,16 @@ export interface CharacterInfo {
   level: number;
   race_id: number;
   class_id: number;
+  xp: number;
+  max_xp: number;
+}
+
+export type GroupKind = "solo" | "party" | "raid";
+
+export interface GroupInfo {
+  kind: GroupKind;
+  /** Members including the player (only those the client has loaded). */
+  members: number;
 }
 
 export interface LocationInfo {
@@ -59,6 +69,7 @@ export interface SessionSnapshot {
   character: CharacterInfo | null;
   location: LocationInfo | null;
   status: PlayerStatus | null;
+  group: GroupInfo | null;
   sdk_connected: boolean;
   last_error: string | null;
 }
