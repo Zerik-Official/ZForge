@@ -3,7 +3,7 @@
 use std::io::ErrorKind;
 use std::time::Duration;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tokio::io::{AsyncBufReadExt, BufReader, Lines};
 use tokio::net::windows::named_pipe::NamedPipeClient;
 
@@ -46,17 +46,39 @@ impl ClientScreen {
     }
 }
 
+/// Background image of a loading screen, from `LoadingScreens.dbc` (SDK 1.2+).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LoadingBackground {
+    /// `LoadingScreens.dbc` row id.
+    pub id: i64,
+    /// Internal name, for example `Northrend`.
+    pub name: String,
+    /// `.blp` path, for example `Interface\Glues\LoadingScreens\LoadScreenNorthrend.blp`.
+    pub file: String,
+    /// Whether a `Wide` variant exists.
+    #[serde(default)]
+    pub has_wide_screen: bool,
+}
+
 /// An event received from the SDK.
 #[derive(Debug, Clone, PartialEq)]
 pub enum SdkEvent {
     /// The glue screen changed.
     ScreenChanged(ClientScreen),
-    /// A loading screen appeared.
-    LoadingStarted,
+    /// A loading screen appeared; map and background are only sent by SDK 1.2+.
+    LoadingStarted {
+        /// Map being loaded.
+        map_id: Option<i64>,
+        /// Background image, `None` when the generic one is used or unknown.
+        background: Option<LoadingBackground>,
+    },
     /// Loading progress between 0 and 1.
     LoadingProgress(f64),
     /// Loading finished and the world is entered.
     LoadingFinished,
+    /// The loading screen closed without entering the world (SDK 1.2+).
+    LoadingCancelled,
     /// A subscribed WoW UI event; its arguments depend on the event.
     Game {
         /// WoW event name, for example `ZONE_CHANGED`.
@@ -85,11 +107,18 @@ impl SdkEvent {
                     .and_then(serde_json::Value::as_i64)
                     .unwrap_or(0),
             )),
-            "loading.startup" => Self::LoadingStarted,
+            "loading.startup" => Self::LoadingStarted {
+                map_id: wire.args.get("mapId").and_then(serde_json::Value::as_i64),
+                background: wire
+                    .args
+                    .get("background")
+                    .and_then(|background| serde_json::from_value(background.clone()).ok()),
+            },
             "loading.progress" => {
                 Self::LoadingProgress(number("progress").unwrap_or(0.0).clamp(0.0, 1.0))
             }
             "loading.finished" => Self::LoadingFinished,
+            "loading.cancelled" => Self::LoadingCancelled,
             _ => Self::Game {
                 name: wire.event,
                 args: wire.args,
@@ -167,5 +196,37 @@ mod tests {
             Some(SdkEvent::Game { name, .. }) if name == "ZONE_CHANGED"
         ));
         assert_eq!(SdkEvent::parse("not json"), None);
+    }
+
+    #[test]
+    fn parses_loading_screens_with_and_without_background() {
+        let startup = r#"{"args":{"background":{"file":"Interface\\Glues\\LoadingScreens\\LoadScreenOutland.blp","hasWideScreen":true,"id":198,"name":"Outland"},"mapId":530},"event":"loading.startup","time":1}"#;
+        let Some(SdkEvent::LoadingStarted { map_id, background }) = SdkEvent::parse(startup) else {
+            unreachable!("startup must parse");
+        };
+        assert_eq!(map_id, Some(530));
+        assert_eq!(
+            background.map(|background| background.name),
+            Some("Outland".to_owned())
+        );
+
+        assert_eq!(
+            SdkEvent::parse(r#"{"args":{"background":null,"mapId":-1},"event":"loading.startup"}"#),
+            Some(SdkEvent::LoadingStarted {
+                map_id: Some(-1),
+                background: None
+            })
+        );
+        assert_eq!(
+            SdkEvent::parse(r#"{"args":{},"event":"loading.startup"}"#),
+            Some(SdkEvent::LoadingStarted {
+                map_id: None,
+                background: None
+            })
+        );
+        assert_eq!(
+            SdkEvent::parse(r#"{"args":{"mapId":0},"event":"loading.cancelled"}"#),
+            Some(SdkEvent::LoadingCancelled)
+        );
     }
 }
