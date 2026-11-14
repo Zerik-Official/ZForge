@@ -15,6 +15,7 @@ use crate::domain::game::Game;
 use crate::domain::{UnixMillis, now_millis};
 use crate::error::{AppError, AppResult};
 use crate::services::sdk::api::SdkApi;
+use crate::services::sdk::auth::SessionToken;
 use crate::services::sdk::events::{ClientScreen, EventStream, LoadingBackground, SdkEvent};
 use crate::services::sdk::rpc::RpcClient;
 
@@ -252,7 +253,9 @@ impl SessionSnapshot {
                 }
             }
             SdkEvent::Game { .. } if self.phase == SessionPhase::InWorld => FollowUp::Refresh,
-            SdkEvent::Game { .. } => FollowUp::None,
+            SdkEvent::Game { .. } | SdkEvent::AuthAccepted | SdkEvent::AuthRejected(_) => {
+                FollowUp::None
+            }
         }
     }
 }
@@ -361,8 +364,20 @@ impl GameSession {
         }
     }
 
+    /// Authenticate the following SDK requests with a session token (SDK 2.0+).
+    ///
+    /// # Errors
+    ///
+    /// Fails when the token lock is poisoned.
+    pub fn set_token(&self, token: Option<SessionToken>) -> AppResult<()> {
+        self.rpc.set_token(token)
+    }
+
     /// End the session, recording the error that stopped it, if any.
     pub fn finish(&self, error: Option<&AppError>) {
+        if let Err(lock_error) = self.rpc.set_token(None) {
+            tracing::warn!(%lock_error, "Could not clear the SDK session token");
+        }
         if let Some(error) = error {
             tracing::warn!(%error, "Game session ended with an error");
         } else {
@@ -392,7 +407,14 @@ impl GameSession {
 
     /// Follow a game launched with the SDK until the game closes the event pipe.
     pub async fn run_sdk(&self) {
-        let mut stream = match EventStream::connect(EVENT_PIPE_TIMEOUT).await {
+        let token = match self.rpc.token() {
+            Ok(token) => token,
+            Err(error) => {
+                self.finish(Some(&error));
+                return;
+            }
+        };
+        let mut stream = match EventStream::connect(EVENT_PIPE_TIMEOUT, token.as_ref()).await {
             Ok(stream) => stream,
             Err(error) => {
                 self.finish(Some(&error));
