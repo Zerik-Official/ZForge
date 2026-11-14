@@ -9,15 +9,30 @@ pub mod paths;
 pub mod services;
 pub mod storage;
 
-use tauri::Manager;
+use tauri::{AppHandle, Emitter, Manager, Runtime};
 
 use crate::commands::boot::BootState;
 use crate::paths::AppPaths;
 use crate::services::sdk::installer::SdkInstaller;
 use crate::services::sdk::release::ReleaseClient;
+use crate::services::session::GameSession;
 use crate::services::settings_schema::SchemaRegistry;
 use crate::storage::Database;
 use crate::storage::app_config::AppConfigStore;
+
+/// Emit every session change to the frontend.
+fn forward_session_changes<R: Runtime>(app: &AppHandle<R>, session: &GameSession) {
+    let app = app.clone();
+    let mut changes = session.subscribe();
+    tauri::async_runtime::spawn(async move {
+        while changes.changed().await.is_ok() {
+            let snapshot = changes.borrow_and_update().clone();
+            if let Err(error) = app.emit(events::SESSION_CHANGED, snapshot) {
+                tracing::debug!(%error, "Could not emit session change");
+            }
+        }
+    });
+}
 
 /// Build and run the Tauri application until the main window closes.
 ///
@@ -45,7 +60,6 @@ pub fn run() -> tauri::Result<()> {
             commands::assets::select_exe,
             commands::assets::select_custom_asset,
             commands::boot::run_boot,
-            commands::games::launch_game,
             commands::games::list_games,
             commands::games::add_game,
             commands::games::update_game,
@@ -59,6 +73,8 @@ pub fn run() -> tauri::Result<()> {
             commands::servers::list_servers,
             commands::servers::save_custom_server,
             commands::servers::add_custom_realm,
+            commands::session::get_session,
+            commands::session::launch_game,
             commands::settings::get_settings_schema,
             commands::settings::list_settings_versions,
             commands::settings::get_game_settings,
@@ -81,6 +97,9 @@ pub fn run() -> tauri::Result<()> {
             app.manage(ReleaseClient::new()?);
             app.manage(SdkInstaller::default());
             app.manage(BootState::default());
+            let session = GameSession::new();
+            forward_session_changes(app.handle(), &session);
+            app.manage(session);
             Ok(())
         })
         .run(tauri::generate_context!())
