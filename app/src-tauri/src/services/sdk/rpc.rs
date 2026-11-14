@@ -128,6 +128,9 @@ impl RpcClient {
                 message: "timed out waiting for the response".to_owned(),
             })??;
 
+        if raw.iter().all(u8::is_ascii_whitespace) {
+            return Err(AppError::SdkUnavailable);
+        }
         let response: Response<R> = serde_json::from_slice(&raw)?;
         if let Some(error) = response.error {
             if error.code == UNAUTHORIZED {
