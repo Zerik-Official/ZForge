@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { t, useLocale } from "@/locales/i18n";
 import { TooltipSimple } from "@/components/ui/Tooltip";
-import type { Game } from "@/types/pywebview";
+import type { Game } from "@/types/domains/game";
 import { toDisplaySrc } from "@/utils/asset";
 
 interface GameCardProps {
