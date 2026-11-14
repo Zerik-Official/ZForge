@@ -97,6 +97,10 @@ pub enum AppError {
     #[error("SDK injection failed: {0}")]
     SdkInjectionFailed(String),
 
+    /// The SDK rejected the session token.
+    #[error("the SDK rejected the session token")]
+    SdkUnauthorized,
+
     /// A game session is already running.
     #[error("a game session is already running")]
     GameAlreadyRunning,
@@ -124,6 +128,7 @@ impl AppError {
             Self::SdkRpc { .. } => "sdk_rpc",
             Self::SdkInjectionFailed(_) => "sdk_injection_failed",
             Self::GameAlreadyRunning => "game_already_running",
+            Self::SdkUnauthorized => "sdk_unauthorized",
         }
     }
 }
