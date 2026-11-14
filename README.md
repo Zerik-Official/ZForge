@@ -13,13 +13,21 @@ Features:
 
 ## Stack
 
-Desktop host:
-- Python
-- pywebview
-- Pypresence
+Desktop host (`app/src-tauri`):
+- Rust
+- Tauri 2
+- SQLite (rusqlite)
 
-Frontend:
+Frontend (`app/src`):
 - React
 - TypeScript
 - Tailwind CSS
-- Vite
+- Vite, run with Bun
+
+## Development
+
+```bash
+cd app
+bun install
+bun run tauri dev
+```
