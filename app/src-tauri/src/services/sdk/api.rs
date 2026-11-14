@@ -33,6 +33,10 @@ pub struct PlayerState {
     pub health: u64,
     /// Maximum health.
     pub max_health: u64,
+    /// Current experience.
+    pub xp: u64,
+    /// Experience needed for the next level.
+    pub max_xp: u64,
     /// In combat.
     pub in_combat: bool,
     /// Dead.
@@ -79,6 +83,19 @@ pub struct UnitInfo {
     pub exists: bool,
     /// Unit name.
     pub name: String,
+}
+
+/// `group.get` (subset).
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct GroupState {
+    /// Whether the player is in a group.
+    pub valid: bool,
+    /// `party`, `raid` or `none`.
+    #[serde(rename = "type")]
+    pub kind: String,
+    /// Other members currently known to the client (the player is not included).
+    pub member_count: u32,
 }
 
 #[derive(Debug, Serialize)]
@@ -139,6 +156,15 @@ impl<'a> SdkApi<'a> {
         self.rpc
             .call_with("unit.get", Some(UnitParams { token }))
             .await
+    }
+
+    /// The player's party or raid.
+    ///
+    /// # Errors
+    ///
+    /// Fails when the SDK is unreachable or reports an error.
+    pub async fn group(&self) -> AppResult<GroupState> {
+        self.rpc.call("group.get").await
     }
 
     /// Stream these WoW UI events through the event pipe.
