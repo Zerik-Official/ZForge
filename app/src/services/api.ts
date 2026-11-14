@@ -20,6 +20,7 @@ export { serversApi } from "./api/domains/servers.api";
 export { sdkApi } from "./api/domains/sdk.api";
 export { bootApi } from "./api/domains/boot.api";
 export { sessionApi } from "./api/domains/session.api";
+export { presenceApi } from "./api/domains/presence.api";
 
 export const api = {
   minimizeWindow: () => windowApi.minimizeWindow(),
