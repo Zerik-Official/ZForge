@@ -105,6 +105,7 @@ impl Database {
                     game.sort_order,
                 ],
             )?;
+            tracing::debug!(game_id = %game.id, "Game inserted");
             Ok(game)
         })
     }
