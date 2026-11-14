@@ -48,10 +48,16 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
   const [schema, setSchema] = useState<SettingsSchema | null>(null);
   const [schemaLoading, setSchemaLoading] = useState(false);
 
+  const requestedGameId = open && game ? game.id : null;
+  const [schemaGameId, setSchemaGameId] = useState<string | null>(null);
+  if (requestedGameId !== schemaGameId) {
+    setSchemaGameId(requestedGameId);
+    if (requestedGameId) setSchemaLoading(true);
+  }
+
   useEffect(() => {
     if (!open || !game) return;
     let cancelled = false;
-    setSchemaLoading(true);
     const versionId = getSchemaIdForGame(game);
     settingsApi
       .getSettingsSchema(versionId)
