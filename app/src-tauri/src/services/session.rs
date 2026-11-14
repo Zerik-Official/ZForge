@@ -9,7 +9,7 @@ use std::time::Duration;
 
 use serde::Serialize;
 use tokio::sync::watch;
-use tokio::time::{MissedTickBehavior, interval};
+use tokio::time::{Instant, MissedTickBehavior, interval};
 
 use crate::domain::game::Game;
 use crate::domain::{UnixMillis, now_millis};
@@ -21,8 +21,19 @@ use crate::services::sdk::rpc::RpcClient;
 /// Time allowed for the SDK to open its event pipe after launch.
 const EVENT_PIPE_TIMEOUT: Duration = Duration::from_secs(90);
 
-/// State refresh period while in the world.
-const POLL_PERIOD: Duration = Duration::from_secs(5);
+/// Tick of the background checks.
+const TICK: Duration = Duration::from_secs(1);
+
+/// State refresh period while in the world, in ticks.
+const REFRESH_EVERY_TICKS: u32 = 5;
+
+/// A `loading.startup` this soon after returning to login or character
+/// selection is the SDK misreporting the logout, not a loading screen.
+const GLUE_GRACE: Duration = Duration::from_secs(2);
+
+/// A loading screen without progress for this long was abandoned by the SDK
+/// (it drops such loadings after 5 s without emitting any event).
+const LOADING_STALL: Duration = Duration::from_secs(6);
 
 /// WoW UI events that trigger an immediate state refresh.
 const WATCHED_EVENTS: &[&str] = &[
@@ -193,6 +204,63 @@ impl SessionSnapshot {
     }
 }
 
+/// Works around SDK loading events that do not match a real loading screen.
+///
+/// The SDK emits `loading.startup` when leaving the world for the character
+/// list, then silently drops it after 5 s without a `loading.finished`.
+#[derive(Debug, Default)]
+struct LoadingGuard {
+    last_glue_screen: Option<Instant>,
+    loading_started: Option<Instant>,
+    progress_events: u32,
+}
+
+impl LoadingGuard {
+    /// Whether the event should be applied to the session.
+    fn accept(&mut self, event: &SdkEvent, now: Instant) -> bool {
+        match event {
+            SdkEvent::ScreenChanged(ClientScreen::Login | ClientScreen::CharacterSelect) => {
+                self.last_glue_screen = Some(now);
+                self.loading_started = None;
+                true
+            }
+            SdkEvent::LoadingStarted => {
+                let after_logout = self
+                    .last_glue_screen
+                    .is_some_and(|changed| now.duration_since(changed) < GLUE_GRACE);
+                if after_logout {
+                    tracing::debug!("Ignoring loading start reported right after a screen change");
+                    return false;
+                }
+                self.loading_started = Some(now);
+                self.progress_events = 0;
+                true
+            }
+            SdkEvent::LoadingProgress(_) => {
+                self.progress_events += 1;
+                true
+            }
+            SdkEvent::LoadingFinished | SdkEvent::ScreenChanged(ClientScreen::World) => {
+                self.loading_started = None;
+                true
+            }
+            _ => true,
+        }
+    }
+
+    /// Whether the current loading never progressed and was likely abandoned.
+    fn take_stalled(&mut self, now: Instant) -> bool {
+        let stalled = self.progress_events <= 1
+            && self
+                .loading_started
+                .is_some_and(|started| now.duration_since(started) >= LOADING_STALL);
+        if stalled {
+            self.loading_started = None;
+        }
+        stalled
+    }
+}
+
 /// Owner of the session state.
 #[derive(Debug)]
 pub struct GameSession {
@@ -307,12 +375,17 @@ impl GameSession {
         }
         self.sync_screen(&api).await;
 
-        let mut poll = interval(POLL_PERIOD);
-        poll.set_missed_tick_behavior(MissedTickBehavior::Skip);
+        let mut guard = LoadingGuard::default();
+        let mut ticks: u32 = 0;
+        let mut tick = interval(TICK);
+        tick.set_missed_tick_behavior(MissedTickBehavior::Skip);
         loop {
             tokio::select! {
                 event = stream.next() => match event {
                     Ok(Some(event)) => {
+                        if !guard.accept(&event, Instant::now()) {
+                            continue;
+                        }
                         let mut refresh = false;
                         self.update(|snapshot| refresh = snapshot.apply(&event));
                         if refresh {
@@ -325,8 +398,13 @@ impl GameSession {
                         break;
                     }
                 },
-                _ = poll.tick() => {
-                    if self.state.borrow().phase == SessionPhase::InWorld {
+                _ = tick.tick() => {
+                    ticks = ticks.wrapping_add(1);
+                    let phase = self.state.borrow().phase;
+                    if phase == SessionPhase::Loading && guard.take_stalled(Instant::now()) {
+                        tracing::debug!("Loading never progressed; reading the current screen");
+                        self.sync_screen(&api).await;
+                    } else if phase == SessionPhase::InWorld && ticks.is_multiple_of(REFRESH_EVERY_TICKS) {
                         self.refresh(&api).await;
                     }
                 }
@@ -453,6 +531,38 @@ mod tests {
             args: serde_json::Value::Null,
         };
         assert!(snapshot.apply(&zone_change));
+    }
+
+    #[test]
+    fn ignores_the_loading_start_reported_on_logout() {
+        let start = Instant::now();
+        let mut guard = LoadingGuard::default();
+        assert!(guard.accept(
+            &SdkEvent::ScreenChanged(ClientScreen::CharacterSelect),
+            start
+        ));
+        assert!(!guard.accept(
+            &SdkEvent::LoadingStarted,
+            start + Duration::from_millis(300)
+        ));
+
+        let later = start + Duration::from_secs(20);
+        assert!(guard.accept(&SdkEvent::LoadingStarted, later));
+        assert!(guard.accept(&SdkEvent::LoadingProgress(0.0), later));
+        assert!(!guard.take_stalled(later + Duration::from_secs(3)));
+        assert!(guard.take_stalled(later + LOADING_STALL));
+        assert!(!guard.take_stalled(later + LOADING_STALL));
+    }
+
+    #[test]
+    fn real_loadings_with_progress_are_not_stalled() {
+        let start = Instant::now();
+        let mut guard = LoadingGuard::default();
+        guard.accept(&SdkEvent::LoadingStarted, start);
+        for _ in 0..5 {
+            guard.accept(&SdkEvent::LoadingProgress(0.5), start);
+        }
+        assert!(!guard.take_stalled(start + Duration::from_secs(30)));
     }
 
     #[test]
