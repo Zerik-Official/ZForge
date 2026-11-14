@@ -5,6 +5,7 @@ pub mod config;
 pub mod domain;
 pub mod error;
 pub mod events;
+pub mod logging;
 pub mod paths;
 pub mod services;
 pub mod storage;
@@ -42,15 +43,7 @@ fn forward_session_changes<R: Runtime>(app: &AppHandle<R>, session: &GameSession
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() -> tauri::Result<()> {
     tauri::Builder::default()
-        .plugin(
-            tauri_plugin_log::Builder::default()
-                .level(if cfg!(debug_assertions) {
-                    log::LevelFilter::Debug
-                } else {
-                    log::LevelFilter::Info
-                })
-                .build(),
-        )
+        .plugin(logging::plugin())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
