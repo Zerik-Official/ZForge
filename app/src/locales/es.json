@@ -296,5 +296,48 @@
       "character_select": "Eligiendo personaje",
       "in_world": "Jugando"
     }
+  },
+  "presence": {
+    "launching": "Iniciando World of Warcraft",
+    "running": "Jugando a World of Warcraft",
+    "login": "En la pantalla de inicio de sesión",
+    "characterSelect": "Eligiendo personaje",
+    "loading": "En una pantalla de carga",
+    "character": "{name} · Nivel {level}",
+    "characterXp": "{name} · Nivel {level} ({xp}% de XP)",
+    "solo": "En solitario",
+    "party": "En grupo",
+    "raid": "En banda",
+    "statusGroup": "{status} · {group}",
+    "inCombat": "En combate",
+    "dead": "Muerto",
+    "ghost": "Fantasma",
+    "afk": "Ausente",
+    "raceClass": "{race}, {class}",
+    "zoneSubZone": "{zone}, {subZone}",
+    "races": {
+      "1": "Humano",
+      "2": "Orco",
+      "3": "Enano",
+      "4": "Elfo de la noche",
+      "5": "No-muerto",
+      "6": "Tauren",
+      "7": "Gnomo",
+      "8": "Trol",
+      "10": "Elfo de sangre",
+      "11": "Draenei"
+    },
+    "classes": {
+      "1": "Guerrero",
+      "2": "Paladín",
+      "3": "Cazador",
+      "4": "Pícaro",
+      "5": "Sacerdote",
+      "6": "Caballero de la Muerte",
+      "7": "Chamán",
+      "8": "Mago",
+      "9": "Brujo",
+      "11": "Druida"
+    }
   }
 }
