@@ -6,3 +6,9 @@ export interface ServerEntry {
   website: string;
   custom: boolean;
 }
+
+export interface CustomServerInput {
+  realmlist: string;
+  name?: string;
+  realm?: string;
+}
