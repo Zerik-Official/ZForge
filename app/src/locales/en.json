@@ -27,7 +27,25 @@
     "errors": {
       "loadGameSettings": "Failed to load game settings.",
       "applyGameSettings": "Failed to apply to game.",
-      "saveGameSettings": "Failed to save settings."
+      "saveGameSettings": "Failed to save settings.",
+      "codes": {
+        "database": "Database error.",
+        "io": "Could not read or write a file.",
+        "json": "Invalid data format.",
+        "internal": "Internal error.",
+        "not_found": "The requested item no longer exists.",
+        "path_resolution": "Could not locate the application data folder.",
+        "network": "Network error. Check your connection.",
+        "archive": "The downloaded package is damaged.",
+        "sdk_release_unavailable": "No downloadable SDK version was found.",
+        "sdk_install_in_progress": "An SDK installation is already in progress.",
+        "sdk_incomplete": "The SDK package is incomplete.",
+        "sdk_corrupted": "The SDK was removed or is corrupted.",
+        "invalid_url": "Invalid link.",
+        "opener": "Could not open the link.",
+        "game_executable_missing": "The game executable was not found.",
+        "unknown": "Unexpected error."
+      }
     },
     "configConflict": {
       "title": "Game configuration detected",
@@ -252,5 +270,15 @@
         "volume": "Volume"
       }
     }
+  },
+  "boot": {
+    "connecting": "Connecting to backend…",
+    "checkingSdk": "Checking SDK…",
+    "downloadingSdk": "Downloading SDK v{version}… {percent} %",
+    "loadingGames": "Loading {count} game(s)…",
+    "scanningGame": "Scanning {name} configuration…",
+    "finishing": "Finishing…",
+    "ready": "Ready.",
+    "failed": "Startup finished with errors."
   }
 }
