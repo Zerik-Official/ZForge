@@ -6,6 +6,7 @@ import type { Game } from "@/types/domains/game";
 import { GameSettingsModal } from "@/features/game-settings/GameSettingsModal";
 import { t, useLocale } from "@/locales/i18n";
 import { TooltipSimple } from "@/components/ui/Tooltip";
+import { useSession } from "@/hooks/useSession";
 import { EmptyState } from "./EmptyState";
 import { HomeDock } from "./HomeDock";
 
@@ -19,7 +20,8 @@ export function HomeStage({ onGoGames }: HomeStageProps) {
   const activeId = useGamesStore((state) => state.activeId);
   const setActive = useGamesStore((state) => state.setActive);
   const reorderDock = useGamesStore((state) => state.reorderDock);
-  const [launching, setLaunching] = useState(false);
+  const session = useSession();
+  const [requesting, setRequesting] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   if (games.length === 0) {
@@ -28,15 +30,19 @@ export function HomeStage({ onGoGames }: HomeStageProps) {
 
   const active: Game = games.find((game) => game.id === activeId) ?? games[0];
 
+  const sessionActive = session !== null && session.phase !== "idle";
+  const launching = requesting || sessionActive;
+
   async function handlePlay() {
     if (launching) return;
-    setLaunching(true);
+    setRequesting(true);
     try {
       await api.launchGame(active.id);
     } catch (error) {
       console.error("Could not launch the game", error);
+    } finally {
+      setRequesting(false);
     }
-    window.setTimeout(() => setLaunching(false), 4000);
   }
 
   const dock = games.filter((game) => game.show_on_main);
@@ -69,7 +75,7 @@ export function HomeStage({ onGoGames }: HomeStageProps) {
           ) : (
             <i className="fa-solid fa-play text-[12px] cursor-pointer" />
           )}
-          {launching ? t("common.playing") : t("common.play")}
+          {sessionActive ? t(`session.phase.${session.phase}`) : launching ? t("common.playing") : t("common.play")}
         </button>
         <TooltipSimple content={t("common.gameSettings")} side="top" align="center">
           <button
