@@ -82,7 +82,13 @@ pub fn run() -> tauri::Result<()> {
             let paths = AppPaths::resolve(app.handle())?;
             let database = Database::open(&paths.database_file())?;
             let schemas = SchemaRegistry::load()?;
-            tracing::info!(data_dir = %paths.root().display(), "ZForge host started");
+            tracing::info!(
+                data_dir = %paths.root().display(),
+                config = %paths.config_file().display(),
+                database = %paths.database_file().display(),
+                tools = %paths.tools_dir().display(),
+                "ZForge host started"
+            );
             app.manage(AppConfigStore::new(paths.config_file()));
             app.manage(paths);
             app.manage(database);
