@@ -1,9 +1,11 @@
 //! JSON-RPC 2.0 client for the SDK command pipe.
 //!
 //! The SDK serves one request per pipe connection: it reads the request,
-//! writes the response and disconnects. Requests must fit in 4 KiB.
+//! writes the response and disconnects. Requests must fit in 4 KiB. Since
+//! SDK 2.0 every request carries the session token in `auth`.
 
 use std::io::ErrorKind;
+use std::sync::Mutex;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
 
@@ -13,12 +15,14 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::time::timeout;
 
 use crate::error::{AppError, AppResult};
+use crate::services::sdk::auth::SessionToken;
 use crate::services::sdk::pipe::{self, COMMAND_PIPE, PipeAccess};
 
 const MAX_REQUEST_BYTES: usize = 4095;
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(2);
 const RESPONSE_TIMEOUT: Duration = Duration::from_secs(35);
 const READ_CHUNK: usize = 8192;
+const UNAUTHORIZED: i64 = -32001;
 
 #[derive(Debug, Serialize)]
 struct Request<'a, P: Serialize> {
@@ -27,10 +31,14 @@ struct Request<'a, P: Serialize> {
     method: &'a str,
     #[serde(skip_serializing_if = "Option::is_none")]
     params: Option<P>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    auth: Option<&'a str>,
 }
 
 #[derive(Debug, Deserialize)]
 struct RpcErrorBody {
+    #[serde(default)]
+    code: i64,
     #[serde(default)]
     message: String,
 }
@@ -46,9 +54,36 @@ struct Response<R> {
 #[derive(Debug, Default)]
 pub struct RpcClient {
     next_id: AtomicU64,
+    token: Mutex<Option<SessionToken>>,
 }
 
 impl RpcClient {
+    /// Use a session token for the following requests, or none for SDK < 2.0.
+    ///
+    /// # Errors
+    ///
+    /// Fails when the token lock is poisoned.
+    pub fn set_token(&self, token: Option<SessionToken>) -> AppResult<()> {
+        *self
+            .token
+            .lock()
+            .map_err(|_| AppError::LockPoisoned("sdk session token"))? = token;
+        Ok(())
+    }
+
+    /// The current session token.
+    ///
+    /// # Errors
+    ///
+    /// Fails when the token lock is poisoned.
+    pub fn token(&self) -> AppResult<Option<SessionToken>> {
+        Ok(self
+            .token
+            .lock()
+            .map_err(|_| AppError::LockPoisoned("sdk session token"))?
+            .clone())
+    }
+
     /// Call a method without parameters.
     ///
     /// # Errors
@@ -69,11 +104,13 @@ impl RpcClient {
         method: &str,
         params: Option<P>,
     ) -> AppResult<R> {
+        let token = self.token()?;
         let request = serde_json::to_vec(&Request {
             jsonrpc: "2.0",
             id: self.next_id.fetch_add(1, Ordering::Relaxed) + 1,
             method,
             params,
+            auth: token.as_ref().map(SessionToken::as_str),
         })?;
         if request.len() > MAX_REQUEST_BYTES {
             return Err(AppError::SdkRpc {
@@ -93,6 +130,9 @@ impl RpcClient {
 
         let response: Response<R> = serde_json::from_slice(&raw)?;
         if let Some(error) = response.error {
+            if error.code == UNAUTHORIZED {
+                return Err(AppError::SdkUnauthorized);
+            }
             return Err(AppError::SdkRpc {
                 method: method.to_owned(),
                 message: error.message,
@@ -149,11 +189,31 @@ mod tests {
             id: 1,
             method: "client.ping",
             params: None,
+            auth: None,
         };
         assert_eq!(
             serde_json::to_string(&request)?,
             r#"{"jsonrpc":"2.0","id":1,"method":"client.ping"}"#
         );
+        Ok(())
+    }
+
+    #[test]
+    fn sends_the_token_and_maps_unauthorized() -> Result<(), serde_json::Error> {
+        let request = Request::<()> {
+            jsonrpc: "2.0",
+            id: 2,
+            method: "player.getState",
+            params: None,
+            auth: Some("ab12"),
+        };
+        assert_eq!(
+            serde_json::to_string(&request)?,
+            r#"{"jsonrpc":"2.0","id":2,"method":"player.getState","auth":"ab12"}"#
+        );
+        let denied: Response<u32> =
+            serde_json::from_str(r#"{"id":2,"error":{"code":-32001,"message":"Unauthorized"}}"#)?;
+        assert_eq!(denied.error.map(|error| error.code), Some(UNAUTHORIZED));
         Ok(())
     }
 }
