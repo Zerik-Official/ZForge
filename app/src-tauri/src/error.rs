@@ -79,6 +79,27 @@ pub enum AppError {
     /// The game executable does not exist.
     #[error("game executable not found: {0}")]
     GameExecutableMissing(String),
+
+    /// The SDK pipes are not available (game not running or SDK not injected).
+    #[error("the SDK is not reachable")]
+    SdkUnavailable,
+
+    /// The SDK answered a JSON-RPC request with an error.
+    #[error("SDK call {method} failed: {message}")]
+    SdkRpc {
+        /// JSON-RPC method that failed.
+        method: String,
+        /// Error message returned by the SDK.
+        message: String,
+    },
+
+    /// `WowInjector.exe` could not start the game.
+    #[error("SDK injection failed: {0}")]
+    SdkInjectionFailed(String),
+
+    /// A game session is already running.
+    #[error("a game session is already running")]
+    GameAlreadyRunning,
 }
 
 impl AppError {
@@ -99,6 +120,10 @@ impl AppError {
             Self::InvalidUrl(_) => "invalid_url",
             Self::Opener(_) => "opener",
             Self::GameExecutableMissing(_) => "game_executable_missing",
+            Self::SdkUnavailable => "sdk_unavailable",
+            Self::SdkRpc { .. } => "sdk_rpc",
+            Self::SdkInjectionFailed(_) => "sdk_injection_failed",
+            Self::GameAlreadyRunning => "game_already_running",
         }
     }
 }
