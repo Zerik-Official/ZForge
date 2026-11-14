@@ -98,6 +98,14 @@ impl SdkEvent {
     }
 }
 
+/// `ERROR_PIPE_NOT_CONNECTED`: the game closed its end of the pipe.
+const ERROR_PIPE_NOT_CONNECTED: i32 = 233;
+
+/// Whether a read error only means the game closed the pipe (it exited).
+fn is_disconnect(error: &std::io::Error) -> bool {
+    error.kind() == ErrorKind::BrokenPipe || error.raw_os_error() == Some(ERROR_PIPE_NOT_CONNECTED)
+}
+
 /// An open connection to the event pipe.
 #[derive(Debug)]
 pub struct EventStream {
@@ -127,7 +135,7 @@ impl EventStream {
             let line = match self.lines.next_line().await {
                 Ok(Some(line)) => line,
                 Ok(None) => return Ok(None),
-                Err(error) if error.kind() == ErrorKind::BrokenPipe => return Ok(None),
+                Err(error) if is_disconnect(&error) => return Ok(None),
                 Err(error) => return Err(error.into()),
             };
             if let Some(event) = SdkEvent::parse(&line) {
