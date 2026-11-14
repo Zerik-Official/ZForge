@@ -14,6 +14,7 @@ export interface SdkStatus {
   latest_version: string | null;
   latest_url: string | null;
   update_available: boolean;
+  installing: boolean;
 }
 
 export interface SdkDownloadProgress {
@@ -23,6 +24,11 @@ export interface SdkDownloadProgress {
   speed: number;
   eta: number;
   version: string;
+}
+
+export interface InstalledSdk {
+  version: string;
+  path: string;
 }
 
 export interface SdkLatestInfo {
