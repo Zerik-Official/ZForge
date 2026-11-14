@@ -1,26 +1,25 @@
-import { bridge } from "../bridge";
-import type { SdkStatus, SdkLatestInfo } from "@/types/domains/sdk";
-import type { ApiResult } from "@/types/domains/api";
+import { call } from "../bridge";
+import type { InstalledSdk, SdkLatestInfo, SdkStatus } from "@/types/domains/sdk";
 
 export class SdkApi {
   getSdkStatus(): Promise<SdkStatus> {
-    return bridge().get_sdk_status();
+    return call("get_sdk_status");
   }
 
-  installSdk(): Promise<ApiResult & { version?: string; path?: string }> {
-    return bridge().install_sdk();
+  installSdk(): Promise<InstalledSdk> {
+    return call("install_sdk");
   }
 
   checkSdkUpdate(): Promise<SdkLatestInfo | null> {
-    return bridge().check_sdk_update();
+    return call("check_sdk_update");
   }
 
-  getSdkLicense(): Promise<{ ok: boolean; content: string | null; error: string | null }> {
-    return bridge().get_sdk_license();
+  getSdkLicense(): Promise<string> {
+    return call("get_sdk_license");
   }
 
-  openExternalUrl(url: string): Promise<ApiResult> {
-    return bridge().open_external_url(url);
+  openExternalUrl(url: string): Promise<void> {
+    return call("open_external_url", { url });
   }
 }
 
