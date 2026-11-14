@@ -5,6 +5,7 @@ import { assetsApi } from "./api/domains/assets.api";
 import { serversApi } from "./api/domains/servers.api";
 import { sdkApi } from "./api/domains/sdk.api";
 import { bootApi } from "./api/domains/boot.api";
+import { sessionApi } from "./api/domains/session.api";
 import type { AppConfig, GameSettings } from "@/types/domains/settings";
 import type { Game, GameDraft } from "@/types/domains/game";
 import type { CustomAssetKind } from "@/types/domains/assets";
@@ -18,12 +19,14 @@ export { assetsApi } from "./api/domains/assets.api";
 export { serversApi } from "./api/domains/servers.api";
 export { sdkApi } from "./api/domains/sdk.api";
 export { bootApi } from "./api/domains/boot.api";
+export { sessionApi } from "./api/domains/session.api";
 
 export const api = {
   minimizeWindow: () => windowApi.minimizeWindow(),
   closeWindow: () => windowApi.closeWindow(),
   runBoot: () => bootApi.runBoot(),
-  launchGame: (gameId: string) => gamesApi.launchGame(gameId),
+  launchGame: (gameId: string) => sessionApi.launchGame(gameId),
+  getSession: () => sessionApi.getSession(),
   listGames: () => gamesApi.listGames(),
   addGame: (draft: GameDraft) => gamesApi.addGame(draft),
   updateGame: (game: Game) => gamesApi.updateGame(game),
