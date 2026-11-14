@@ -2,9 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { TooltipSimple } from "@/components/ui/Tooltip";
 import { t, useLocale } from "@/locales/i18n";
-import { api } from "@/services/api";
+import { api, errorCode } from "@/services/api";
+import { onSdkDownloadProgress, subscribe } from "@/services/api/events";
 import type { SdkDownloadProgress, SdkStatus } from "@/types/domains/sdk";
-import type { AppConfig } from "@/types/domains/settings";
 import { formatBytes, formatEta, formatSpeed } from "@/utils/formatters";
 import { SdkInfoModal } from "../components/SdkInfoModal";
 
@@ -23,7 +23,6 @@ export function RichPresenceTab() {
   const [downloading, setDownloading] = useState(false);
   const [progress, setProgress] = useState<SdkDownloadProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
   const [showInfo, setShowInfo] = useState(false);
 
   const refreshStatus = useCallback(async () => {
@@ -32,16 +31,7 @@ export function RichPresenceTab() {
       setStatus(s);
       setError(null);
     } catch (e) {
-      setError(String(e));
-    }
-  }, []);
-
-  const refreshConfig = useCallback(async () => {
-    try {
-      const cfg = (await api.getAppConfig()) as AppConfig;
-      setAppConfig(cfg);
-    } catch {
-      setAppConfig(null);
+      setError(t(`common.errors.codes.${errorCode(e)}`));
     }
   }, []);
 
@@ -49,23 +39,21 @@ export function RichPresenceTab() {
     let cancelled = false;
     void (async () => {
       setLoading(true);
-      await Promise.all([refreshStatus(), refreshConfig()]);
+      await refreshStatus();
       if (!cancelled) setLoading(false);
     })();
     return () => {
       cancelled = true;
     };
-  }, [refreshStatus, refreshConfig]);
+  }, [refreshStatus]);
 
   useEffect(() => {
-    function handleProgress(payload: SdkDownloadProgress) {
-      setProgress(payload);
-      setDownloading(true);
-    }
-    window.__zforge_sdk_download_progress = handleProgress;
-    return () => {
-      delete window.__zforge_sdk_download_progress;
-    };
+    return subscribe(
+      onSdkDownloadProgress((payload) => {
+        setProgress(payload);
+        setDownloading(true);
+      }),
+    );
   }, []);
 
   async function handleInstall() {
@@ -73,37 +61,23 @@ export function RichPresenceTab() {
     setProgress({ percent: 0, downloaded: 0, total: 0, speed: 0, eta: 0, version: status?.latest_version ?? "" });
     setError(null);
     try {
-      const result = await api.installSdk();
-      if (!result.ok) {
-        setError((result.error as string) ?? "Download failed");
-      }
+      await api.installSdk();
     } catch (e) {
-      setError(String(e));
+      setError(t(`common.errors.codes.${errorCode(e)}`));
     } finally {
       setDownloading(false);
       setProgress(null);
       await refreshStatus();
-      await refreshConfig();
     }
   }
 
   async function handleToggleDiscord(value: boolean) {
-    const base: AppConfig =
-      appConfig ??
-      ({ theme: "dark", last_active_game: null, language: null, discord_enabled: false, discord_auto_update: true, sdk_last_error: null } as AppConfig);
-    const next: AppConfig = { ...base, discord_enabled: value };
-    await api.saveAppConfig(next);
-    setAppConfig(next);
+    await api.saveAppConfig({ discord_enabled: value });
     setStatus((prev) => (prev ? { ...prev, discord_enabled: value } : prev));
   }
 
   async function handleToggleAutoUpdate(value: boolean) {
-    const base: AppConfig =
-      appConfig ??
-      ({ theme: "dark", last_active_game: null, language: null, discord_enabled: false, discord_auto_update: true, sdk_last_error: null } as AppConfig);
-    const next: AppConfig = { ...base, discord_auto_update: value };
-    await api.saveAppConfig(next);
-    setAppConfig(next);
+    await api.saveAppConfig({ discord_auto_update: value });
     setStatus((prev) => (prev ? { ...prev, discord_auto_update: value } : prev));
   }
 
@@ -132,7 +106,11 @@ export function RichPresenceTab() {
       {showErrorBanner ? (
         <div className="flex items-center gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3">
           <i className="fa-solid fa-triangle-exclamation text-[13px] text-amber-500" />
-          <span className="text-[12px] font-semibold text-amber-500">{t("launcher.settings.richPresence.corruptionError")}</span>
+          <span className="text-[12px] font-semibold text-amber-500">
+            {showErrorBanner === "sdk_corrupted"
+              ? t("launcher.settings.richPresence.corruptionError")
+              : t(`common.errors.codes.${showErrorBanner}`)}
+          </span>
         </div>
       ) : null}
 
