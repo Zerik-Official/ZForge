@@ -6,59 +6,61 @@ import type { Game } from "@/types/domains/game";
 import type { GameSettings } from "@/types/domains/settings";
 import type { ServerEntry } from "@/types/domains/server";
 
-export function useGameSettingsForm(game: Game | null, open: boolean) {
-  const locale = useLocale();
+const DEFAULT_GAME_SETTINGS: GameSettings = {
+  launch_args: "",
+  launch_priority: "normal",
+  clear_cache_on_launch: false,
+  realm_list: "",
+  realm_name: "",
+  refresh_rate: 60,
+  resolution: "1920x1080",
+  windowed: false,
+  window_resize_lock: false,
+  window_maximized: false,
+  vsync: true,
+  multisample: 1,
+  farclip: 1277,
+  environment_detail: 1.5,
+  base_mip: 0,
+  shadow_level: 1,
+  ground_effect_density: 0,
+  texture_filtering_mode: 1,
+  ground_effect_dist: 140,
+  weather_density: 2,
+  ext_shadow_quality: 0,
+  component_texture_level: 0,
+  particle_density: 1.0,
+  specular: false,
+  ffx_death: true,
+  ffx_glow: true,
+  projected_textures: false,
+  sound_enable_all_sound: true,
+  sound_enable_sfx: true,
+  sound_enable_error_speech: true,
+  sound_enable_emote_sounds: true,
+  sound_enable_pet_sounds: true,
+  sound_enable_music: true,
+  sound_zone_music_no_delay: false,
+  sound_enable_ambience: true,
+  sound_enable_sound_when_game_is_in_bg: false,
+  sound_enable_reverb: true,
+  sound_enable_software_hrtf: false,
+  sound_enable_dsp_effects: true,
+  sound_listener_at_character: true,
+  sound_output_quality: 2,
+  sound_output_driver_index: 0,
+  sound_num_channels: 64,
+  sound_enable_hardware: false,
+  sound_master_volume: 1.0,
+  sound_sfx_volume: 1.0,
+  sound_music_volume: 1.0,
+  sound_ambience_volume: 1.0,
+};
 
-  const [settings, setSettings] = useState<GameSettings>({
-    launch_args: "",
-    launch_priority: "normal",
-    clear_cache_on_launch: false,
-    realm_list: "",
-    realm_name: "",
-    refresh_rate: 60,
-    resolution: "1920x1080",
-    windowed: false,
-    window_resize_lock: false,
-    window_maximized: false,
-    vsync: true,
-    multisample: 1,
-    farclip: 1277,
-    environment_detail: 1.5,
-    base_mip: 0,
-    shadow_level: 1,
-    ground_effect_density: 0,
-    texture_filtering_mode: 1,
-    ground_effect_dist: 140,
-    weather_density: 2,
-    ext_shadow_quality: 0,
-    component_texture_level: 0,
-    particle_density: 1.0,
-    specular: false,
-    ffx_death: true,
-    ffx_glow: true,
-    projected_textures: false,
-    sound_enable_all_sound: true,
-    sound_enable_sfx: true,
-    sound_enable_error_speech: true,
-    sound_enable_emote_sounds: true,
-    sound_enable_pet_sounds: true,
-    sound_enable_music: true,
-    sound_zone_music_no_delay: false,
-    sound_enable_ambience: true,
-    sound_enable_sound_when_game_is_in_bg: false,
-    sound_enable_reverb: true,
-    sound_enable_software_hrtf: false,
-    sound_enable_dsp_effects: true,
-    sound_listener_at_character: true,
-    sound_output_quality: 2,
-    sound_output_driver_index: 0,
-    sound_num_channels: 64,
-    sound_enable_hardware: false,
-    sound_master_volume: 1.0,
-    sound_sfx_volume: 1.0,
-    sound_music_volume: 1.0,
-    sound_ambience_volume: 1.0,
-  });
+export function useGameSettingsForm(game: Game | null, open: boolean) {
+  useLocale();
+
+  const [settings, setSettings] = useState<GameSettings>(DEFAULT_GAME_SETTINGS);
   const [display, setDisplay] = useState<{ width: number; height: number }>({ width: 1920, height: 1080 });
   const [servers, setServers] = useState<ServerEntry[]>([]);
   const [audioDevices, setAudioDevices] = useState<{ index: number; name: string }[]>([]);
@@ -67,16 +69,24 @@ export function useGameSettingsForm(game: Game | null, open: boolean) {
   const [error, setError] = useState<string | null>(null);
   const [pendingSave, setPendingSave] = useState<{ apply: boolean } | null>(null);
 
+  const requestedGameId = open && game ? game.id : null;
+  const [loadedGameId, setLoadedGameId] = useState<string | null>(null);
+  if (requestedGameId !== loadedGameId) {
+    setLoadedGameId(requestedGameId);
+    if (requestedGameId) {
+      setLoading(true);
+      setError(null);
+    }
+  }
+
   useEffect(() => {
     if (!open || !game) return;
     let cancelled = false;
-    setLoading(true);
-    setError(null);
     (async () => {
       try {
         const saved = await settingsApi.getGameSettings(game.id);
         if (saved && Object.keys(saved).length > 0) {
-          if (!cancelled) setSettings({ ...settings, ...saved } as GameSettings);
+          if (!cancelled) setSettings({ ...DEFAULT_GAME_SETTINGS, ...saved } as GameSettings);
         } else {
           const scanned = await settingsApi.scanGameConfig(game.id);
           await settingsApi.saveGameSettings(game.id, scanned);
@@ -103,19 +113,15 @@ export function useGameSettingsForm(game: Game | null, open: boolean) {
     };
   }, [open, game]);
 
-  const realmlistOptions = useMemo(
-    () =>
-      servers.flatMap((server) =>
-        server.realmlists.map((realmlist) => ({
-          value: realmlist,
-          label: server.name,
-          sublabel: realmlist,
-          thumb: server.logo ?? undefined,
-          badge: server.custom ? t("common.custom") : undefined,
-          meta: { realms: server.realms },
-        }))
-      ),
-    [servers, locale]
+  const realmlistOptions = servers.flatMap((server) =>
+    server.realmlists.map((realmlist) => ({
+      value: realmlist,
+      label: server.name,
+      sublabel: realmlist,
+      thumb: server.logo ?? undefined,
+      badge: server.custom ? t("common.custom") : undefined,
+      meta: { realms: server.realms },
+    }))
   );
 
   const matchedServers = useMemo(
@@ -132,14 +138,10 @@ export function useGameSettingsForm(game: Game | null, open: boolean) {
     return Array.from(seen).map((realm) => ({ value: realm, label: realm }));
   }, [matchedServers]);
 
-  const audioDeviceOptions = useMemo(
-    () =>
-      audioDevices.map((d) => ({
-        value: String(d.index),
-        label: d.index === 0 || d.name === "Predeterminado" || d.name === "Default" ? t("common.defaultDevice") : d.name,
-      })),
-    [audioDevices, locale]
-  );
+  const audioDeviceOptions = audioDevices.map((d) => ({
+    value: String(d.index),
+    label: d.index === 0 || d.name === "Predeterminado" || d.name === "Default" ? t("common.defaultDevice") : d.name,
+  }));
 
   function update<K extends keyof GameSettings>(key: K, value: GameSettings[K]) {
     setSettings((prev: GameSettings) => ({ ...prev, [key]: value }));
@@ -164,8 +166,11 @@ export function useGameSettingsForm(game: Game | null, open: boolean) {
       }
       await settingsApi.saveGameSettings(game.id, settings);
       if (apply) {
-        const result = await settingsApi.applyGameSettings(game.id);
-        if (!result.ok) setError(result.error ?? t("common.errors.applyGameSettings"));
+        try {
+          await settingsApi.applyGameSettings(game.id);
+        } catch {
+          setError(t("common.errors.applyGameSettings"));
+        }
       }
     } catch {
       setError(t("common.errors.saveGameSettings"));
