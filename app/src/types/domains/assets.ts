@@ -5,3 +5,4 @@ export interface AssetManifest {
   available_icons: string[];
   available_boxes: string[];
 }
+export type CustomAssetKind = "icos" | "logos" | "scenes";
