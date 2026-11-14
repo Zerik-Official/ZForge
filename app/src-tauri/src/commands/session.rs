@@ -8,6 +8,7 @@ use crate::error::{AppError, AppResult};
 use crate::paths::AppPaths;
 use crate::services::game_settings::SettingsContext;
 use crate::services::launcher::{self, LaunchOptions};
+use crate::services::sdk::auth::{self, SessionToken};
 use crate::services::sdk::installation;
 use crate::services::session::{GameSession, LaunchMode, SessionSnapshot};
 use crate::services::settings_schema::SchemaRegistry;
@@ -57,11 +58,20 @@ pub async fn launch_game<R: Runtime>(
 
     match sdk {
         Some(sdk) => {
+            let token = if auth::version_requires_auth(&sdk.version) {
+                Some(SessionToken::generate()?)
+            } else {
+                None
+            };
             session.begin(&game, LaunchMode::Sdk)?;
+            if let Err(error) = session.set_token(token.clone()) {
+                session.finish(Some(&error));
+                return Err(error);
+            }
             tauri::async_runtime::spawn(async move {
                 let session = app.state::<GameSession>();
                 let launched = tauri::async_runtime::spawn_blocking(move || {
-                    launcher::launch_injected(&game, &options, &sdk)
+                    launcher::launch_injected(&game, &options, &sdk, token.as_ref())
                 })
                 .await
                 .map_err(|error| AppError::BackgroundTask(error.to_string()))
