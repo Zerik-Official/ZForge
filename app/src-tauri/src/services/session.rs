@@ -15,7 +15,7 @@ use crate::domain::game::Game;
 use crate::domain::{UnixMillis, now_millis};
 use crate::error::{AppError, AppResult};
 use crate::services::sdk::api::SdkApi;
-use crate::services::sdk::events::{ClientScreen, EventStream, SdkEvent};
+use crate::services::sdk::events::{ClientScreen, EventStream, LoadingBackground, SdkEvent};
 use crate::services::sdk::rpc::RpcClient;
 
 /// Time allowed for the SDK to open its event pipe after launch.
@@ -27,12 +27,9 @@ const TICK: Duration = Duration::from_secs(1);
 /// State refresh period while in the world, in ticks.
 const REFRESH_EVERY_TICKS: u32 = 5;
 
-/// A `loading.startup` this soon after returning to login or character
-/// selection is the SDK misreporting the logout, not a loading screen.
-const GLUE_GRACE: Duration = Duration::from_secs(2);
-
-/// A loading screen without progress for this long was abandoned by the SDK
-/// (it drops such loadings after 5 s without emitting any event).
+/// A loading screen without progress for this long was abandoned. SDK
+/// versions before 1.2 report a loading on logout and drop it after 5 s
+/// without emitting `loading.cancelled`.
 const LOADING_STALL: Duration = Duration::from_secs(6);
 
 /// WoW UI events that trigger an immediate state refresh.
@@ -128,6 +125,26 @@ pub struct PlayerStatus {
     pub dnd: bool,
 }
 
+/// The loading screen being shown.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct LoadingScreenInfo {
+    /// Map being loaded (SDK 1.2+).
+    pub map_id: Option<i64>,
+    /// Background image; `None` for the generic image or older SDKs.
+    pub background: Option<LoadingBackground>,
+}
+
+/// What the session loop must do after applying an event.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum FollowUp {
+    /// Nothing.
+    None,
+    /// Read the character, location and flags.
+    Refresh,
+    /// Ask the SDK which screen is shown.
+    SyncScreen,
+}
+
 /// Everything known about the current session.
 #[derive(Debug, Clone, Default, PartialEq, Serialize)]
 pub struct SessionSnapshot {
@@ -143,6 +160,8 @@ pub struct SessionSnapshot {
     pub started_at: Option<UnixMillis>,
     /// Loading progress (0–1) while a loading screen is shown.
     pub loading_progress: Option<f64>,
+    /// Loading screen details while it is shown.
+    pub loading_screen: Option<LoadingScreenInfo>,
     /// Character, once in the world.
     pub character: Option<CharacterInfo>,
     /// Location, once in the world.
@@ -167,84 +186,96 @@ impl SessionSnapshot {
         self.status = None;
     }
 
-    /// Apply an SDK event; returns whether the world state should be refreshed.
-    fn apply(&mut self, event: &SdkEvent) -> bool {
-        match event {
-            SdkEvent::ScreenChanged(ClientScreen::Login) => {
-                self.phase = SessionPhase::Login;
-                self.loading_progress = None;
+    fn clear_loading(&mut self) {
+        self.loading_progress = None;
+        self.loading_screen = None;
+    }
+
+    /// Show a screen reported by the SDK, ending any loading screen.
+    fn enter_screen(&mut self, screen: ClientScreen) -> FollowUp {
+        match screen {
+            ClientScreen::Login | ClientScreen::CharacterSelect => {
+                self.phase = if screen == ClientScreen::Login {
+                    SessionPhase::Login
+                } else {
+                    SessionPhase::CharacterSelect
+                };
+                self.clear_loading();
                 self.clear_world();
-                false
+                FollowUp::None
             }
-            SdkEvent::ScreenChanged(ClientScreen::CharacterSelect) => {
-                self.phase = SessionPhase::CharacterSelect;
-                self.loading_progress = None;
-                self.clear_world();
-                false
-            }
-            SdkEvent::ScreenChanged(ClientScreen::World) | SdkEvent::LoadingFinished => {
+            ClientScreen::World => {
                 self.phase = SessionPhase::InWorld;
-                self.loading_progress = None;
-                true
+                self.clear_loading();
+                FollowUp::Refresh
             }
-            SdkEvent::ScreenChanged(ClientScreen::Unknown) => false,
-            SdkEvent::LoadingStarted => {
+            ClientScreen::Unknown => FollowUp::None,
+        }
+    }
+
+    /// Apply an SDK event.
+    ///
+    /// While a loading screen is shown, changes to the login or character
+    /// screens are ignored: the SDK reports them late, often after
+    /// `loading.startup`, and every loading ends with `loading.finished` or
+    /// `loading.cancelled`.
+    fn apply(&mut self, event: &SdkEvent) -> FollowUp {
+        match event {
+            SdkEvent::ScreenChanged(ClientScreen::Login | ClientScreen::CharacterSelect)
+                if self.phase == SessionPhase::Loading =>
+            {
+                FollowUp::None
+            }
+            SdkEvent::ScreenChanged(screen) => self.enter_screen(*screen),
+            SdkEvent::LoadingFinished => self.enter_screen(ClientScreen::World),
+            SdkEvent::LoadingStarted { map_id, background } => {
                 self.phase = SessionPhase::Loading;
                 self.loading_progress = Some(0.0);
-                false
+                self.loading_screen = Some(LoadingScreenInfo {
+                    map_id: *map_id,
+                    background: background.clone(),
+                });
+                FollowUp::None
             }
             SdkEvent::LoadingProgress(progress) => {
                 if self.phase == SessionPhase::Loading {
                     self.loading_progress = Some((progress * 100.0).round() / 100.0);
                 }
-                false
+                FollowUp::None
             }
-            SdkEvent::Game { .. } => self.phase == SessionPhase::InWorld,
+            SdkEvent::LoadingCancelled => {
+                if self.phase == SessionPhase::Loading {
+                    self.clear_loading();
+                    FollowUp::SyncScreen
+                } else {
+                    FollowUp::None
+                }
+            }
+            SdkEvent::Game { .. } if self.phase == SessionPhase::InWorld => FollowUp::Refresh,
+            SdkEvent::Game { .. } => FollowUp::None,
         }
     }
 }
 
-/// Works around SDK loading events that do not match a real loading screen.
-///
-/// The SDK emits `loading.startup` when leaving the world for the character
-/// list, then silently drops it after 5 s without a `loading.finished`.
+/// Detects loading screens abandoned without `loading.cancelled` (SDK < 1.2).
 #[derive(Debug, Default)]
-struct LoadingGuard {
-    last_glue_screen: Option<Instant>,
+struct StallDetector {
     loading_started: Option<Instant>,
     progress_events: u32,
 }
 
-impl LoadingGuard {
-    /// Whether the event should be applied to the session.
-    fn accept(&mut self, event: &SdkEvent, now: Instant) -> bool {
+impl StallDetector {
+    fn observe(&mut self, event: &SdkEvent, now: Instant) {
         match event {
-            SdkEvent::ScreenChanged(ClientScreen::Login | ClientScreen::CharacterSelect) => {
-                self.last_glue_screen = Some(now);
-                self.loading_started = None;
-                true
-            }
-            SdkEvent::LoadingStarted => {
-                let after_logout = self
-                    .last_glue_screen
-                    .is_some_and(|changed| now.duration_since(changed) < GLUE_GRACE);
-                if after_logout {
-                    tracing::debug!("Ignoring loading start reported right after a screen change");
-                    return false;
-                }
+            SdkEvent::LoadingStarted { .. } => {
                 self.loading_started = Some(now);
                 self.progress_events = 0;
-                true
             }
-            SdkEvent::LoadingProgress(_) => {
-                self.progress_events += 1;
-                true
-            }
-            SdkEvent::LoadingFinished | SdkEvent::ScreenChanged(ClientScreen::World) => {
-                self.loading_started = None;
-                true
-            }
-            _ => true,
+            SdkEvent::LoadingProgress(_) => self.progress_events += 1,
+            SdkEvent::LoadingFinished
+            | SdkEvent::LoadingCancelled
+            | SdkEvent::ScreenChanged(ClientScreen::World) => self.loading_started = None,
+            _ => {}
         }
     }
 
@@ -375,7 +406,7 @@ impl GameSession {
         }
         self.sync_screen(&api).await;
 
-        let mut guard = LoadingGuard::default();
+        let mut stalls = StallDetector::default();
         let mut ticks: u32 = 0;
         let mut tick = interval(TICK);
         tick.set_missed_tick_behavior(MissedTickBehavior::Skip);
@@ -383,14 +414,10 @@ impl GameSession {
             tokio::select! {
                 event = stream.next() => match event {
                     Ok(Some(event)) => {
-                        if !guard.accept(&event, Instant::now()) {
-                            continue;
-                        }
-                        let mut refresh = false;
-                        self.update(|snapshot| refresh = snapshot.apply(&event));
-                        if refresh {
-                            self.refresh(&api).await;
-                        }
+                        stalls.observe(&event, Instant::now());
+                        let mut follow_up = FollowUp::None;
+                        self.update(|snapshot| follow_up = snapshot.apply(&event));
+                        self.follow_up(&api, follow_up).await;
                     }
                     Ok(None) => break,
                     Err(error) => {
@@ -401,7 +428,7 @@ impl GameSession {
                 _ = tick.tick() => {
                     ticks = ticks.wrapping_add(1);
                     let phase = self.state.borrow().phase;
-                    if phase == SessionPhase::Loading && guard.take_stalled(Instant::now()) {
+                    if phase == SessionPhase::Loading && stalls.take_stalled(Instant::now()) {
                         tracing::debug!("Loading never progressed; reading the current screen");
                         self.sync_screen(&api).await;
                     } else if phase == SessionPhase::InWorld && ticks.is_multiple_of(REFRESH_EVERY_TICKS) {
@@ -413,17 +440,23 @@ impl GameSession {
         self.finish(None);
     }
 
-    /// Set the phase from the current glue screen (the event stream only reports changes).
+    async fn follow_up(&self, api: &SdkApi<'_>, follow_up: FollowUp) {
+        match follow_up {
+            FollowUp::None => {}
+            FollowUp::Refresh => self.refresh(api).await,
+            FollowUp::SyncScreen => self.sync_screen(api).await,
+        }
+    }
+
+    /// Set the phase from the screen the SDK reports now, ending any loading
+    /// screen (the event stream only reports changes).
     async fn sync_screen(&self, api: &SdkApi<'_>) {
         match api.screen().await {
             Ok(screen) => {
-                let event = SdkEvent::ScreenChanged(ClientScreen::from_name(
-                    &screen.screen,
-                    screen.in_world,
-                ));
-                let mut refresh = false;
-                self.update(|snapshot| refresh = snapshot.apply(&event));
-                if refresh {
+                let screen = ClientScreen::from_name(&screen.screen, screen.in_world);
+                let mut follow_up = FollowUp::None;
+                self.update(|snapshot| follow_up = snapshot.enter_screen(screen));
+                if follow_up == FollowUp::Refresh {
                     self.refresh(api).await;
                 }
             }
@@ -509,60 +542,106 @@ mod tests {
         }
     }
 
+    fn started(map_id: i64) -> SdkEvent {
+        SdkEvent::LoadingStarted {
+            map_id: Some(map_id),
+            background: Some(LoadingBackground {
+                id: 198,
+                name: "Outland".to_owned(),
+                file: r"Interface\Glues\LoadingScreens\LoadScreenOutland.blp".to_owned(),
+                has_wide_screen: true,
+            }),
+        }
+    }
+
     #[test]
     fn follows_screen_and_loading_events() {
         let mut snapshot = SessionSnapshot {
             phase: SessionPhase::Launching,
             ..SessionSnapshot::default()
         };
-        assert!(!snapshot.apply(&SdkEvent::ScreenChanged(ClientScreen::Login)));
+        assert_eq!(
+            snapshot.apply(&SdkEvent::ScreenChanged(ClientScreen::Login)),
+            FollowUp::None
+        );
         assert_eq!(snapshot.phase, SessionPhase::Login);
 
-        snapshot.apply(&SdkEvent::LoadingStarted);
+        snapshot.apply(&started(530));
         snapshot.apply(&SdkEvent::LoadingProgress(0.456));
         assert_eq!(snapshot.loading_progress, Some(0.46));
+        assert_eq!(
+            snapshot
+                .loading_screen
+                .as_ref()
+                .and_then(|screen| screen.map_id),
+            Some(530)
+        );
 
-        assert!(snapshot.apply(&SdkEvent::LoadingFinished));
+        assert_eq!(
+            snapshot.apply(&SdkEvent::LoadingFinished),
+            FollowUp::Refresh
+        );
         assert_eq!(snapshot.phase, SessionPhase::InWorld);
         assert_eq!(snapshot.loading_progress, None);
+        assert_eq!(snapshot.loading_screen, None);
 
         let zone_change = SdkEvent::Game {
             name: "ZONE_CHANGED".to_owned(),
             args: serde_json::Value::Null,
         };
-        assert!(snapshot.apply(&zone_change));
+        assert_eq!(snapshot.apply(&zone_change), FollowUp::Refresh);
     }
 
     #[test]
-    fn ignores_the_loading_start_reported_on_logout() {
-        let start = Instant::now();
-        let mut guard = LoadingGuard::default();
-        assert!(guard.accept(
-            &SdkEvent::ScreenChanged(ClientScreen::CharacterSelect),
-            start
-        ));
-        assert!(!guard.accept(
-            &SdkEvent::LoadingStarted,
-            start + Duration::from_millis(300)
-        ));
-
-        let later = start + Duration::from_secs(20);
-        assert!(guard.accept(&SdkEvent::LoadingStarted, later));
-        assert!(guard.accept(&SdkEvent::LoadingProgress(0.0), later));
-        assert!(!guard.take_stalled(later + Duration::from_secs(3)));
-        assert!(guard.take_stalled(later + LOADING_STALL));
-        assert!(!guard.take_stalled(later + LOADING_STALL));
+    fn keeps_loading_when_the_screen_change_arrives_late() {
+        let mut snapshot = SessionSnapshot {
+            phase: SessionPhase::InWorld,
+            ..SessionSnapshot::default()
+        };
+        snapshot.apply(&started(1));
+        snapshot.apply(&SdkEvent::ScreenChanged(ClientScreen::CharacterSelect));
+        assert_eq!(snapshot.phase, SessionPhase::Loading);
+        snapshot.apply(&SdkEvent::ScreenChanged(ClientScreen::World));
+        assert_eq!(snapshot.phase, SessionPhase::InWorld);
     }
 
     #[test]
-    fn real_loadings_with_progress_are_not_stalled() {
+    fn cancelled_loadings_resync_the_screen() {
+        let mut snapshot = SessionSnapshot::default();
+        snapshot.apply(&started(0));
+        assert_eq!(
+            snapshot.apply(&SdkEvent::LoadingCancelled),
+            FollowUp::SyncScreen
+        );
+        assert_eq!(snapshot.loading_screen, None);
+        assert_eq!(
+            snapshot.enter_screen(ClientScreen::CharacterSelect),
+            FollowUp::None
+        );
+        assert_eq!(snapshot.phase, SessionPhase::CharacterSelect);
+    }
+
+    #[test]
+    fn detects_loadings_abandoned_by_old_sdks() {
         let start = Instant::now();
-        let mut guard = LoadingGuard::default();
-        guard.accept(&SdkEvent::LoadingStarted, start);
+        let mut stalls = StallDetector::default();
+        stalls.observe(
+            &SdkEvent::LoadingStarted {
+                map_id: None,
+                background: None,
+            },
+            start,
+        );
+        stalls.observe(&SdkEvent::LoadingProgress(0.0), start);
+        assert!(!stalls.take_stalled(start + Duration::from_secs(3)));
+        assert!(stalls.take_stalled(start + LOADING_STALL));
+        assert!(!stalls.take_stalled(start + LOADING_STALL));
+
+        stalls.observe(&started(0), start);
         for _ in 0..5 {
-            guard.accept(&SdkEvent::LoadingProgress(0.5), start);
+            stalls.observe(&SdkEvent::LoadingProgress(0.5), start);
         }
-        assert!(!guard.take_stalled(start + Duration::from_secs(30)));
+        assert!(!stalls.take_stalled(start + Duration::from_secs(30)));
     }
 
     #[test]
