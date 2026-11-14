@@ -1,17 +1,17 @@
-import { bridge } from "../bridge";
-import type { ApiResult, ServerEntry } from "@/types/pywebview";
+import { call } from "../bridge";
+import type { CustomServerInput, ServerEntry } from "@/types/domains/server";
 
 export class ServersApi {
   listServers(): Promise<ServerEntry[]> {
-    return bridge().list_servers();
+    return call("list_servers");
   }
 
-  saveCustomServer(payload: { realmlist: string; name?: string; realm?: string }): Promise<ApiResult> {
-    return bridge().save_custom_server(payload);
+  saveCustomServer(server: CustomServerInput): Promise<void> {
+    return call("save_custom_server", { server });
   }
 
-  addCustomRealm(realmlist: string, realm: string): Promise<ApiResult> {
-    return bridge().add_custom_realm(realmlist, realm);
+  addCustomRealm(realmlist: string, realm: string): Promise<void> {
+    return call("add_custom_realm", { realmlist, realm });
   }
 }
 

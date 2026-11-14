@@ -1,11 +1,11 @@
 import type { StateCreator } from "zustand";
 import { gamesApi } from "@/services/api/domains/games.api";
-import type { Game, GameInput } from "@/types/domains/game";
+import type { Game, GameDraft } from "@/types/domains/game";
 
 export interface GamesSlice {
   games: Game[];
   activeId: string | null;
-  addGame: (payload: GameInput) => Promise<Game>;
+  addGame: (payload: GameDraft) => Promise<Game>;
   updateGame: (game: Game) => Promise<Game>;
   removeGame: (id: string) => Promise<void>;
   reorderDock: (orderedIds: string[]) => Promise<void>;

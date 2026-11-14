@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { api } from "@/services/api";
 import { useGamesStore } from "@/store/gamesStore";
 import { toDisplaySrc } from "@/utils/asset";
@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/Checkbox";
 import { Modal, ModalHeader, ModalFooter } from "@/components/ui/Modal";
 import { t, useLocale } from "@/locales/i18n";
 import { TooltipSimple } from "@/components/ui/Tooltip";
-import type { Game, GameInput } from "@/types/pywebview";
+import type { Game, GameDraft } from "@/types/domains/game";
 
 /**
  * Properties for the {@link AddGameModal} component.
@@ -58,34 +58,37 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
   const [form, setForm] = useState<GameFormState>(initialFormState);
   const [busy, setBusy] = useState(false);
 
-  /** Initialise or reset the form state whenever the modal opens. */
-  useEffect(() => {
-    if (!open) return;
-    const defaults = assets?.expansions[initial?.expansion ?? "wotlk"];
-    if (initial) {
-      setForm({
-        name: initial.name,
-        expansion: initial.expansion,
-        exePath: initial.exe_path,
-        bgVideo: initial.bg_video,
-        icon: initial.icon,
-        poster: initial.poster,
-        box: initial.box || defaults?.box || "",
-        showOnMain: initial.show_on_main,
-      });
-    } else {
-      setForm({
-        name: defaults?.name ?? "",
-        expansion: "wotlk",
-        exePath: "",
-        bgVideo: defaults?.video ?? "",
-        icon: defaults?.icon ?? "",
-        poster: defaults?.poster ?? "",
-        box: defaults?.box ?? "",
-        showOnMain: true,
-      });
+  /** Initialise or reset the form state whenever the modal opens or its source data changes. */
+  const [formSource, setFormSource] = useState({ open: false, initial, assets });
+  if (formSource.open !== open || formSource.initial !== initial || formSource.assets !== assets) {
+    setFormSource({ open, initial, assets });
+    if (open) {
+      const defaults = assets?.expansions[initial?.expansion ?? "wotlk"];
+      if (initial) {
+        setForm({
+          name: initial.name,
+          expansion: initial.expansion,
+          exePath: initial.exe_path,
+          bgVideo: initial.bg_video,
+          icon: initial.icon,
+          poster: initial.poster,
+          box: initial.box || defaults?.box || "",
+          showOnMain: initial.show_on_main,
+        });
+      } else {
+        setForm({
+          name: defaults?.name ?? "",
+          expansion: "wotlk",
+          exePath: "",
+          bgVideo: defaults?.video ?? "",
+          icon: defaults?.icon ?? "",
+          poster: defaults?.poster ?? "",
+          box: defaults?.box ?? "",
+          showOnMain: true,
+        });
+      }
     }
-  }, [open, initial, assets]);
+  }
 
   /** Re-adjust default media when the expansion changes. */
   function handleExpansionChange(value: string) {
@@ -123,7 +126,7 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
   async function handleSave() {
     if (!form.name.trim() || !form.exePath.trim()) return;
     setBusy(true);
-    const payload: GameInput = {
+    const payload: GameDraft = {
       name: form.name.trim(),
       expansion: form.expansion,
       exe_path: form.exePath,

@@ -2,11 +2,10 @@ import { useState } from "react";
 import { api } from "@/services/api";
 import { useGamesStore } from "@/store/gamesStore";
 import { toDisplaySrc } from "@/utils/asset";
-import type { Game } from "@/types/pywebview";
+import type { Game } from "@/types/domains/game";
 import { GameSettingsModal } from "@/features/game-settings/GameSettingsModal";
 import { t, useLocale } from "@/locales/i18n";
 import { TooltipSimple } from "@/components/ui/Tooltip";
-import { getApiErrorMessage } from "@/utils/apiErrors";
 import { EmptyState } from "./EmptyState";
 import { HomeDock } from "./HomeDock";
 
@@ -33,14 +32,11 @@ export function HomeStage({ onGoGames }: HomeStageProps) {
     if (launching) return;
     setLaunching(true);
     try {
-      const result = await api.launchGame(active.id);
-      if (!result.ok) {
-        const msg = getApiErrorMessage(result as import("@/types/domains/api").ApiResult);
-        if (msg) window.alert(msg);
-      }
-    } finally {
-      window.setTimeout(() => setLaunching(false), 4000);
+      await api.launchGame(active.id);
+    } catch (error) {
+      console.error("Could not launch the game", error);
     }
+    window.setTimeout(() => setLaunching(false), 4000);
   }
 
   const dock = games.filter((game) => game.show_on_main);

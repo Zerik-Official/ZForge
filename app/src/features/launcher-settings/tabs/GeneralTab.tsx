@@ -26,7 +26,7 @@ export function GeneralTab() {
     let cancelled = false;
     void (async () => {
       try {
-        const cfg = (await api.getAppConfig()) as AppConfig;
+        const cfg = await api.getAppConfig();
         if (!cancelled) {
           setConfig(cfg);
           if (cfg.language && SUPPORTED_LOCALES.includes(cfg.language as Locale)) {
@@ -49,12 +49,8 @@ export function GeneralTab() {
     if (!SUPPORTED_LOCALES.includes(value as Locale)) return;
     const locale = value as Locale;
     setSaving(true);
-    const base: AppConfig =
-      config ?? ({ theme: "dark", last_active_game: null, language: null, discord_enabled: false, discord_auto_update: true, sdk_last_error: null } as AppConfig);
-    const next: AppConfig = { ...base, language: locale };
     try {
-      await api.saveAppConfig(next);
-      setConfig(next);
+      setConfig(await api.saveAppConfig({ language: locale }));
       setLocale(locale);
     } finally {
       setSaving(false);

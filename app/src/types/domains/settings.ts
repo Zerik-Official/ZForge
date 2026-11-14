@@ -61,6 +61,16 @@ export interface GameSettings {
   sound_ambience_volume: number;
 }
 
+export interface DisplayResolution {
+  width: number;
+  height: number;
+}
+
+export interface AudioDevice {
+  index: number;
+  name: string;
+}
+
 export interface ConfigConflict {
   game_id: string;
   name: string;

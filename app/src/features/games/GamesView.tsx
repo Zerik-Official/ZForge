@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useGamesStore } from "@/store/gamesStore";
-import type { Game } from "@/types/pywebview";
+import type { Game } from "@/types/domains/game";
 import { GameCard } from "./GameCard";
 import { AddGameModal } from "./AddGameModal";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";

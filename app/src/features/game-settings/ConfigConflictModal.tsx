@@ -1,5 +1,5 @@
 import { t, useLocale } from "@/locales/i18n";
-import type { ConfigConflict } from "@/types/pywebview";
+import type { ConfigConflict } from "@/types/domains/settings";
 import type { ConflictChoice } from "@/hooks/useConfigConflict";
 
 interface ConfigConflictModalProps {

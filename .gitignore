@@ -68,6 +68,12 @@ Thumbs.db
 desktop.ini
 
 # =========================
+# RUST
+# =========================
+# Machine-specific cargo settings (for example, a custom target-dir)
+app/src-tauri/.cargo/
+
+# =========================
 # IDE
 # =========================
 .vscode/

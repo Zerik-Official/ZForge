@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { gamesApi } from "@/services/api/domains/games.api";
 import { assetsApi } from "@/services/api/domains/assets.api";
 import { settingsApi } from "@/services/api/domains/settings.api";
-import type { Game, GameInput } from "@/types/domains/game";
+import type { Game, GameDraft } from "@/types/domains/game";
 import type { AppConfig } from "@/types/domains/settings";
 import type { AssetManifest } from "@/types/domains/assets";
 
@@ -23,7 +23,7 @@ interface GamesState {
   config: AppConfig | null;
   hydrated: boolean;
   hydrate: () => Promise<void>;
-  addGame: (payload: GameInput) => Promise<Game>;
+  addGame: (payload: GameDraft) => Promise<Game>;
   updateGame: (game: Game) => Promise<Game>;
   removeGame: (id: string) => Promise<void>;
   setActive: (id: string) => Promise<void>;

@@ -8,9 +8,10 @@ export interface Game {
   poster: string;
   box: string;
   show_on_main: boolean;
-  created_at: string;
+  /** Creation time in Unix milliseconds. */
+  created_at: number;
   sort_order: number;
 }
 
-export type GameInput = Omit<Game, "id" | "created_at" | "sort_order" | "box"> &
-  Partial<Pick<Game, "sort_order" | "box">>;
+/** Editable game fields; identity and ordering are owned by the backend. */
+export type GameDraft = Omit<Game, "id" | "created_at" | "sort_order" | "box"> & Partial<Pick<Game, "box">>;

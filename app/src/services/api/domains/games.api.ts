@@ -1,37 +1,42 @@
-import { bridge } from "../bridge";
-import type { ApiResult, Game, GameInput } from "@/types/pywebview";
+import { call } from "../bridge";
+import type { Game, GameDraft } from "@/types/domains/game";
+
+function toDraft(game: Game | GameDraft): GameDraft {
+  return {
+    name: game.name,
+    expansion: game.expansion,
+    exe_path: game.exe_path,
+    bg_video: game.bg_video,
+    icon: game.icon,
+    poster: game.poster,
+    box: game.box ?? "",
+    show_on_main: game.show_on_main,
+  };
+}
 
 export class GamesApi {
   listGames(): Promise<Game[]> {
-    return bridge().list_games();
+    return call("list_games");
   }
 
-  addGame(payload: GameInput): Promise<Game> {
-    return bridge().add_game(payload);
+  addGame(draft: GameDraft): Promise<Game> {
+    return call("add_game", { draft: toDraft(draft) });
   }
 
-  updateGame(payload: Game): Promise<Game> {
-    return bridge().update_game(payload);
+  updateGame(game: Game): Promise<Game> {
+    return call("update_game", { gameId: game.id, draft: toDraft(game) });
   }
 
-  removeGame(id: string): Promise<ApiResult> {
-    return bridge().remove_game(id);
+  removeGame(gameId: string): Promise<void> {
+    return call("remove_game", { gameId });
   }
 
-  reorderGames(orderedIds: string[]): Promise<ApiResult> {
-    return bridge().reorder_games(orderedIds);
+  reorderGames(orderedIds: string[]): Promise<void> {
+    return call("reorder_games", { orderedIds });
   }
 
-  launchGame(gameId: string): Promise<ApiResult> {
-    return bridge().launch_game(gameId);
-  }
-
-  installClient(): Promise<ApiResult> {
-    return bridge().install_client();
-  }
-
-  repairClient(): Promise<ApiResult> {
-    return bridge().repair_client();
+  launchGame(gameId: string): Promise<void> {
+    return call("launch_game", { gameId });
   }
 }
 

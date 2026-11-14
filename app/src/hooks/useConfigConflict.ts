@@ -1,20 +1,20 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { api } from "@/services/api";
-import type { ConfigConflict } from "@/types/pywebview";
+import type { ConfigConflict } from "@/types/domains/settings";
 
 export type ConflictChoice = "apply" | "pull";
 
 /**
- * Hook to manage configuration conflicts between the game and the database.
- * It maintains a queue of conflicts and provides methods to push new conflicts
- * and resolve them based on user choice.
+ * Queue of configuration conflicts between the game files and the launcher
+ * database, resolved one at a time by the user.
  */
 export function useConfigConflict() {
   const queueRef = useRef<ConfigConflict[]>([]);
   const [conflicts, setConflicts] = useState<ConfigConflict[]>([]);
 
-  const push = useCallback((conflict: ConfigConflict) => {
-    queueRef.current = [...queueRef.current, conflict];
+  const push = useCallback((incoming: ConfigConflict[]) => {
+    if (incoming.length === 0) return;
+    queueRef.current = [...queueRef.current, ...incoming];
     setConflicts(queueRef.current);
   }, []);
 
@@ -24,19 +24,16 @@ export function useConfigConflict() {
     const [first, ...rest] = current;
     queueRef.current = rest;
     setConflicts(rest);
-    if (choice === "apply") {
-      await api.applyGameSettings(first.game_id);
-    } else {
-      await api.pullGameSettings(first.game_id);
+    try {
+      if (choice === "apply") {
+        await api.applyGameSettings(first.game_id);
+      } else {
+        await api.pullGameSettings(first.game_id);
+      }
+    } catch (error) {
+      console.error("Could not resolve settings conflict", error);
     }
   }, []);
 
-  useEffect(() => {
-    window.__zforge_config_conflict = push;
-    return () => {
-      delete window.__zforge_config_conflict;
-    };
-  }, [push]);
-
-  return { conflicts, resolve };
+  return { conflicts, push, resolve };
 }

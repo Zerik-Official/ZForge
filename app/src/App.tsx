@@ -4,18 +4,15 @@ import { SplashScreen } from "@/components/layout/SplashScreen";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { LauncherShell } from "@/features/launcher/LauncherShell";
 import { ConfigConflictModal } from "@/features/game-settings/ConfigConflictModal";
-import { useBridge } from "@/hooks/useBridge";
-import { useBootEvents } from "@/hooks/useBootEvents";
+import { useBoot } from "@/hooks/useBoot";
 import { useConfigConflict } from "@/hooks/useConfigConflict";
 import { useGamesStore } from "@/store/gamesStore";
 import { api } from "@/services/api";
 import { setLocale, type Locale } from "@/locales/i18n";
-import type { AppConfig } from "@/types/domains/settings";
 
 export default function App() {
-  const { ready: bridgeReady } = useBridge();
-  const { step, done: bootDone } = useBootEvents();
-  const { conflicts, resolve } = useConfigConflict();
+  const { conflicts, push: pushConflicts, resolve } = useConfigConflict();
+  const { step, done: bootDone } = useBoot(pushConflicts);
   const hydrate = useGamesStore((state) => state.hydrate);
 
   /** True once the splash fade-out transition ends. */
@@ -24,23 +21,18 @@ export default function App() {
   /** Language gate — null until we know if the user has chosen one. */
   const [languageChecked, setLanguageChecked] = useState(false);
   const [needsLanguage, setNeedsLanguage] = useState(false);
-  const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
 
   /**
-   * Resolve language as soon as the bridge is ready.
+   * Resolve the language on startup.
    * If no language is stored, show the selector and defer hydration.
    */
   useEffect(() => {
-    if (!bridgeReady) return;
-
     let cancelled = false;
 
     void (async () => {
       try {
-        const config = (await api.getAppConfig()) as AppConfig;
+        const config = await api.getAppConfig();
         if (cancelled) return;
-
-        setAppConfig(config);
 
         const lang = config.language as Locale | null;
         if (lang === "en" || lang === "es") {
@@ -59,38 +51,28 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [bridgeReady]);
+  }, []);
 
   /** Load persisted games/assets/config once language is resolved. */
   useEffect(() => {
-    if (!bridgeReady || !languageChecked || needsLanguage) return;
+    if (!languageChecked || needsLanguage) return;
     void hydrate();
-  }, [bridgeReady, languageChecked, needsLanguage, hydrate]);
+  }, [languageChecked, needsLanguage, hydrate]);
 
   const handleSelectLanguage = useCallback(
     async (locale: Locale) => {
       setLocale(locale);
-      
-      const base: AppConfig =
-        appConfig ??
-        ({ theme: "dark", last_active_game: null, language: null, discord_enabled: false, discord_auto_update: true, sdk_last_error: null } as AppConfig);
-      const next: AppConfig = { ...base, language: locale };
-
       try {
-        await api.saveAppConfig(next);
-        setAppConfig(next);
-      } catch {
-
-        setAppConfig(next);
+        await api.saveAppConfig({ language: locale });
+      } catch (error) {
+        console.error("Could not save the language", error);
       }
-
       setNeedsLanguage(false);
-
     },
-    [appConfig],
+    [],
   );
 
-  const showLanguageSelector = bridgeReady && languageChecked && needsLanguage;
+  const showLanguageSelector = languageChecked && needsLanguage;
 
   return (
     <div
@@ -106,7 +88,6 @@ export default function App() {
     >
       {!splashGone && !showLanguageSelector && (
         <SplashScreen
-          bridgeReady={bridgeReady}
           step={step}
           bootDone={bootDone}
           onDone={() => setSplashGone(true)}
@@ -114,7 +95,7 @@ export default function App() {
       )}
 
       {showLanguageSelector && <LanguageSelector onSelect={handleSelectLanguage} />}
-      <TitleBar bridgeReady={bridgeReady} />
+      <TitleBar />
 
       <main
         style={{

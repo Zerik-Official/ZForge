@@ -1,12 +1,10 @@
-import { useEffect, useState, useRef } from "react";
-import type { BootStep } from "@/hooks/useBootEvents";
+import { useEffect, useState } from "react";
+import type { BootStep } from "@/hooks/useBoot";
 
 /**
  * Properties for the {@link SplashScreen} component.
  */
 interface SplashScreenProps {
-  /** Whether the pywebview bridge connection is established and ready. */
-  bridgeReady: boolean;
   /** Latest boot lifecycle step containing the status message and completion percentage. */
   step: BootStep;
   /** Flag indicating whether the backend has signaled completion of the boot sequence. */
@@ -20,37 +18,21 @@ interface SplashScreenProps {
  * 
  * Lifecycle:
  * 1. Renders immediately with the logo animating in and a loading spinner.
- * 2. Once the bridge is ready, progress updates and text steps update dynamically.
+ * 2. Progress and status messages update as the backend reports boot steps.
  * 3. When `bootDone` is true, the bar hits 100% and triggers a smooth fade-out.
  *
  * @example
  * ```tsx
- * <SplashScreen * bootDone="{isBootDone}" bridgeReady="{bridgeReady}" onDone="{()" step="{bootStep}"> setShowSplash(false)} 
- * />
+ * <SplashScreen step={bootStep} bootDone={bootDone} onDone={() => setShowSplash(false)} />
  * ```
  */
 export function SplashScreen({
-  bridgeReady,
   step,
   bootDone,
   onDone,
 }: SplashScreenProps) {
   /** Controls the CSS opacity fade-out state. */
   const [hiding, setHiding] = useState(false);
-
-  /** Tracks the message key so React remounts the element on every new message, re-triggering entry animations. */
-  const msgKeyRef = useRef(0);
-  const [msgKey, setMsgKey] = useState(0);
-
-  const prevMsg = useRef(step.message);
-  if (step.message !== prevMsg.current) {
-    prevMsg.current = step.message;
-    msgKeyRef.current += 1;
-  }
-
-  useEffect(() => {
-    setMsgKey(msgKeyRef.current);
-  }, [step.message]);
 
   useEffect(() => {
     if (!bootDone) return;
@@ -79,17 +61,18 @@ export function SplashScreen({
           draggable={false}
         />
 
-        {/* Spinner — hidden once the bridge is ready and messages start */}
+        {/* Spinner — hidden once the backend reports its first step */}
         <div
           className={`w-6 h-6 border-2 border-(--border-strong) border-t-(--primary) rounded-full animate-spin transition-opacity duration-300 ${
-            bridgeReady ? "opacity-0 pointer-events-none" : "opacity-100"
+            step.percent > 0 ? "opacity-0 pointer-events-none" : "opacity-100"
           }`}
         />
 
         {/* Messages */}
         <div className="h-6 flex items-center justify-center">
+          {/* Keyed by message so every new message remounts and replays the entry animation. */}
           <p
-            key={msgKey}
+            key={step.message}
             className="text-[13px] text-(--text-soft) animate-[fadeIn_0.2s_ease_both]"
           >
             {step.message}

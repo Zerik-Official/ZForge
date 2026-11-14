@@ -1,5 +1,6 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useId,
@@ -26,10 +27,11 @@ interface TooltipProviderProps {
 
 interface TooltipContextValue {
   open: boolean;
-  setOpen: (open: boolean) => void;
-  triggerRef: React.RefObject<HTMLElement | null>;
+  scheduleOpen: () => void;
+  scheduleClose: () => void;
+  setTriggerNode: (node: HTMLElement | null) => void;
+  getTriggerNode: () => HTMLElement | null;
   contentId: string;
-  delayDuration: number;
 }
 
 interface TooltipProps {
@@ -42,7 +44,6 @@ interface TooltipProps {
 
 interface TooltipTriggerProps extends HTMLAttributes<HTMLElement> {
   children: ReactElement;
-  asChild?: boolean;
 }
 
 interface TooltipContentProps extends ComponentPropsWithoutRef<"div"> {
@@ -64,6 +65,11 @@ function useTooltipContext(): TooltipContextValue {
   const ctx = useContext(TooltipContext);
   if (!ctx) throw new Error("Tooltip components must be used within <Tooltip>");
   return ctx;
+}
+
+function assignRef<T>(ref: React.Ref<T> | undefined, node: T): void {
+  if (typeof ref === "function") ref(node);
+  else if (ref) (ref as React.RefObject<T>).current = node;
 }
 
 /**
@@ -118,14 +124,41 @@ export function Tooltip({ children, open, defaultOpen = false, onOpenChange, del
     onOpenChange?.(next);
   }
 
+  const openTimeout = useRef<number | null>(null);
+  const closeTimeout = useRef<number | null>(null);
+
+  const clearTimers = useCallback(() => {
+    if (openTimeout.current) window.clearTimeout(openTimeout.current);
+    if (closeTimeout.current) window.clearTimeout(closeTimeout.current);
+  }, []);
+
+  useEffect(() => clearTimers, [clearTimers]);
+
+  function scheduleOpen() {
+    clearTimers();
+    openTimeout.current = window.setTimeout(() => setOpen(true), currentOpen ? 0 : effectiveDelay);
+  }
+
+  function scheduleClose() {
+    clearTimers();
+    closeTimeout.current = window.setTimeout(() => setOpen(false), 80);
+  }
+
+  const setTriggerNode = useCallback((node: HTMLElement | null) => {
+    triggerRef.current = node;
+  }, []);
+
+  const getTriggerNode = useCallback(() => triggerRef.current, []);
+
   return (
     <TooltipContext.Provider
       value={{
         open: currentOpen,
-        setOpen,
-        triggerRef: triggerRef as React.RefObject<HTMLElement | null>,
+        scheduleOpen,
+        scheduleClose,
+        setTriggerNode,
+        getTriggerNode,
         contentId,
-        delayDuration: effectiveDelay,
       }}
     >
       {children}
@@ -149,77 +182,56 @@ export function Tooltip({ children, open, defaultOpen = false, onOpenChange, del
  * </Tooltip>
  * ```
  */
-export const TooltipTrigger = forwardRef<HTMLElement, TooltipTriggerProps>(
-  ({ children, asChild: _asChild, onMouseEnter, onMouseLeave, onFocus, onBlur, ...props }, forwardedRef) => {
-    const { open, setOpen, triggerRef, contentId, delayDuration } = useTooltipContext();
-    const openTimeout = useRef<number | null>(null);
-    const closeTimeout = useRef<number | null>(null);
+export function TooltipTrigger({ children, onMouseEnter, onMouseLeave, onFocus, onBlur, ...props }: TooltipTriggerProps) {
+  const { open, scheduleOpen, scheduleClose, setTriggerNode, contentId } = useTooltipContext();
+  const childRefTarget = isValidElement(children)
+    ? (children.props as { ref?: React.Ref<HTMLElement> }).ref
+    : undefined;
 
-    function clearTimers() {
-      if (openTimeout.current) window.clearTimeout(openTimeout.current);
-      if (closeTimeout.current) window.clearTimeout(closeTimeout.current);
-    }
+  const attachTriggerNode = useCallback(
+    (node: HTMLElement | null) => {
+      setTriggerNode(node);
+      assignRef(childRefTarget, node);
+    },
+    [setTriggerNode, childRefTarget],
+  );
 
-    function handleEnter() {
-      clearTimers();
-      openTimeout.current = window.setTimeout(() => setOpen(true), open ? 0 : delayDuration);
-    }
+  if (!isValidElement(children)) return null;
 
-    function handleLeave() {
-      clearTimers();
-      closeTimeout.current = window.setTimeout(() => setOpen(false), 80);
-    }
+  const child = children as ReactElement<Record<string, unknown>>;
+  const childProps = child.props as {
+    onMouseEnter?: (e: React.MouseEvent<HTMLElement>) => void;
+    onMouseLeave?: (e: React.MouseEvent<HTMLElement>) => void;
+    onFocus?: (e: React.FocusEvent<HTMLElement>) => void;
+    onBlur?: (e: React.FocusEvent<HTMLElement>) => void;
+  };
 
-    useEffect(() => () => clearTimers(), []);
-
-    if (!isValidElement(children)) return null;
-
-    const child = children as ReactElement<Record<string, unknown>>;
-
-    return cloneElement(child as ReactElement<Record<string, unknown>>, {
-      ref: (node: HTMLElement | null) => {
-        (triggerRef as React.RefObject<HTMLElement | null>).current = node;
-        const childRef = (child as unknown as { ref?: unknown }).ref;
-        if (typeof childRef === "function") {
-          (childRef as unknown as (n: HTMLElement | null) => void)(node);
-        } else if (
-          childRef &&
-          typeof childRef === "object" &&
-          "current" in (childRef as object)
-        ) {
-          (childRef as React.RefObject<HTMLElement | null>).current = node;
-        }
-        if (typeof forwardedRef === "function") forwardedRef(node);
-        else if (forwardedRef && typeof forwardedRef === "object" && "current" in forwardedRef) {
-          (forwardedRef as React.RefObject<HTMLElement | null>).current = node;
-        }
-      },
-      "aria-describedby": open ? contentId : undefined,
-      onMouseEnter: (e: React.MouseEvent<HTMLElement>) => {
-        (child.props as { onMouseEnter?: (e: React.MouseEvent<HTMLElement>) => void }).onMouseEnter?.(e);
-        onMouseEnter?.(e as unknown as React.MouseEvent<HTMLElement>);
-        handleEnter();
-      },
-      onMouseLeave: (e: React.MouseEvent<HTMLElement>) => {
-        (child.props as { onMouseLeave?: (e: React.MouseEvent<HTMLElement>) => void }).onMouseLeave?.(e);
-        onMouseLeave?.(e as unknown as React.MouseEvent<HTMLElement>);
-        handleLeave();
-      },
-      onFocus: (e: React.FocusEvent<HTMLElement>) => {
-        (child.props as { onFocus?: (e: React.FocusEvent<HTMLElement>) => void }).onFocus?.(e);
-        onFocus?.(e as unknown as React.FocusEvent<HTMLElement>);
-        handleEnter();
-      },
-      onBlur: (e: React.FocusEvent<HTMLElement>) => {
-        (child.props as { onBlur?: (e: React.FocusEvent<HTMLElement>) => void }).onBlur?.(e);
-        onBlur?.(e as unknown as React.FocusEvent<HTMLElement>);
-        handleLeave();
-      },
-      ...props,
-    } as Record<string, unknown>);
-  },
-);
-TooltipTrigger.displayName = "TooltipTrigger";
+  return cloneElement(child, {
+    ref: attachTriggerNode,
+    "aria-describedby": open ? contentId : undefined,
+    onMouseEnter: (e: React.MouseEvent<HTMLElement>) => {
+      childProps.onMouseEnter?.(e);
+      onMouseEnter?.(e);
+      scheduleOpen();
+    },
+    onMouseLeave: (e: React.MouseEvent<HTMLElement>) => {
+      childProps.onMouseLeave?.(e);
+      onMouseLeave?.(e);
+      scheduleClose();
+    },
+    onFocus: (e: React.FocusEvent<HTMLElement>) => {
+      childProps.onFocus?.(e);
+      onFocus?.(e);
+      scheduleOpen();
+    },
+    onBlur: (e: React.FocusEvent<HTMLElement>) => {
+      childProps.onBlur?.(e);
+      onBlur?.(e);
+      scheduleClose();
+    },
+    ...props,
+  } as Record<string, unknown>);
+}
 
 /**
  * Floating content rendered in a portal, positioned relative to the trigger.
@@ -255,17 +267,14 @@ export const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>(
     },
     forwardedRef,
   ) => {
-    const { open, triggerRef, contentId } = useTooltipContext();
+    const { open, getTriggerNode, contentId } = useTooltipContext();
     const innerRef = useRef<HTMLDivElement | null>(null);
     const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => setMounted(true), []);
 
     useEffect(() => {
       if (!open) return;
       function update() {
-        const trigger = triggerRef.current;
+        const trigger = getTriggerNode();
         const content = innerRef.current;
         if (!trigger || !content) return;
         const t = trigger.getBoundingClientRect();
@@ -304,9 +313,9 @@ export const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>(
         window.removeEventListener("scroll", update, true);
         window.removeEventListener("resize", update);
       };
-    }, [open, side, sideOffset, align, alignOffset, triggerRef]);
+    }, [open, side, sideOffset, align, alignOffset, getTriggerNode]);
 
-    if (!mounted || !open) return null;
+    if (!open) return null;
 
     const arrowSide: Record<TooltipSide, string> = {
       top: "bottom-[-4px]",
