@@ -90,6 +90,31 @@ pub struct CharacterInfo {
     pub race_id: u32,
     /// Class id.
     pub class_id: u32,
+    /// Current experience.
+    pub xp: u64,
+    /// Experience needed for the next level; `0` at the level cap.
+    pub max_xp: u64,
+}
+
+/// Kind of group the player is in.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum GroupKind {
+    /// Playing alone.
+    Solo,
+    /// In a party.
+    Party,
+    /// In a raid.
+    Raid,
+}
+
+/// The player's group.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+pub struct GroupInfo {
+    /// Kind of group.
+    pub kind: GroupKind,
+    /// Members including the player (only those the client has loaded).
+    pub members: u32,
 }
 
 /// Where the character is.
@@ -169,6 +194,8 @@ pub struct SessionSnapshot {
     pub location: Option<LocationInfo>,
     /// Character flags, once in the world.
     pub status: Option<PlayerStatus>,
+    /// Group, once in the world.
+    pub group: Option<GroupInfo>,
     /// The SDK event pipe is connected.
     pub sdk_connected: bool,
     /// Error code of the last session that failed to start.
@@ -185,6 +212,7 @@ impl SessionSnapshot {
         self.character = None;
         self.location = None;
         self.status = None;
+        self.group = None;
     }
 
     fn clear_loading(&mut self) {
@@ -491,6 +519,7 @@ impl GameSession {
         let player = api.player_state().await;
         let world = api.world_state().await;
         let unit = api.unit("player").await;
+        let group = api.group().await;
         self.update(|snapshot| {
             if snapshot.phase != SessionPhase::InWorld {
                 return;
@@ -521,6 +550,8 @@ impl GameSession {
                     level: player.level,
                     race_id: player.race,
                     class_id: player.class,
+                    xp: player.xp,
+                    max_xp: player.max_xp,
                 });
             }
             if let Ok(world) = &world
@@ -534,8 +565,23 @@ impl GameSession {
                     sub_zone: world.sub_zone_name.clone(),
                 });
             }
+            if let Ok(group) = &group {
+                let kind = match (group.valid, group.kind.as_str()) {
+                    (true, "raid") => GroupKind::Raid,
+                    (true, "party") => GroupKind::Party,
+                    _ => GroupKind::Solo,
+                };
+                snapshot.group = Some(GroupInfo {
+                    kind,
+                    members: if kind == GroupKind::Solo {
+                        1
+                    } else {
+                        group.member_count + 1
+                    },
+                });
+            }
         });
-        for error in [player.err(), world.err(), unit.err()]
+        for error in [player.err(), world.err(), unit.err(), group.err()]
             .into_iter()
             .flatten()
         {
