@@ -1,0 +1,50 @@
+export type SessionPhase =
+  | "idle"
+  | "launching"
+  | "running"
+  | "loading"
+  | "login"
+  | "character_select"
+  | "in_world";
+
+export type LaunchMode = "direct" | "sdk";
+
+export interface CharacterInfo {
+  name: string;
+  level: number;
+  race_id: number;
+  class_id: number;
+}
+
+export interface LocationInfo {
+  map_id: number;
+  zone_id: number;
+  zone: string;
+  sub_zone: string;
+}
+
+export interface PlayerStatus {
+  in_combat: boolean;
+  dead: boolean;
+  ghost: boolean;
+  mounted: boolean;
+  flying: boolean;
+  swimming: boolean;
+  afk: boolean;
+  dnd: boolean;
+}
+
+/** Everything the backend knows about the running game (`session://changed`). */
+export interface SessionSnapshot {
+  phase: SessionPhase;
+  mode: LaunchMode | null;
+  game_id: string | null;
+  expansion: string | null;
+  started_at: number | null;
+  loading_progress: number | null;
+  character: CharacterInfo | null;
+  location: LocationInfo | null;
+  status: PlayerStatus | null;
+  sdk_connected: boolean;
+  last_error: string | null;
+}
