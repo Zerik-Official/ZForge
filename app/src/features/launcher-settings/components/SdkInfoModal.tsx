@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Modal, ModalHeader } from "@/components/ui/Modal";
 import { TooltipSimple } from "@/components/ui/Tooltip";
 import { t, useLocale } from "@/locales/i18n";
-import { api } from "@/services/api";
+import { api, errorCode } from "@/services/api";
 
 const APACHE_LICENSE_INFO = {
   permissions: ["commercialUse", "modification", "distribution", "patentUse", "privateUse"],
@@ -48,15 +48,10 @@ export function SdkInfoModal({ open, onClose }: SdkInfoModalProps) {
       setLicenseLoading(true);
       setLicenseError(null);
       try {
-        const res = await api.getSdkLicense();
-        if (res.ok && res.content) {
-          setLicense(res.content);
-          setShowLicense(true);
-        } else {
-          setLicenseError(res.error ?? "Failed to load license");
-        }
+        setLicense(await api.getSdkLicense());
+        setShowLicense(true);
       } catch (e) {
-        setLicenseError(String(e));
+        setLicenseError(t(`common.errors.codes.${errorCode(e)}`));
       } finally {
         setLicenseLoading(false);
       }
