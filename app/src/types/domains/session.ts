@@ -34,6 +34,19 @@ export interface PlayerStatus {
   dnd: boolean;
 }
 
+/** Loading screen image from `LoadingScreens.dbc` (SDK 1.2+). */
+export interface LoadingBackground {
+  id: number;
+  name: string;
+  file: string;
+  hasWideScreen: boolean;
+}
+
+export interface LoadingScreenInfo {
+  map_id: number | null;
+  background: LoadingBackground | null;
+}
+
 /** Everything the backend knows about the running game (`session://changed`). */
 export interface SessionSnapshot {
   phase: SessionPhase;
@@ -42,6 +55,7 @@ export interface SessionSnapshot {
   expansion: string | null;
   started_at: number | null;
   loading_progress: number | null;
+  loading_screen: LoadingScreenInfo | null;
   character: CharacterInfo | null;
   location: LocationInfo | null;
   status: PlayerStatus | null;
