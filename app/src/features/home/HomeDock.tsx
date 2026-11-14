@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toDisplaySrc } from "@/utils/asset";
-import type { Game } from "@/types/pywebview";
+import type { Game } from "@/types/domains/game";
 
 interface HomeDockProps {
   dock: Game[];
