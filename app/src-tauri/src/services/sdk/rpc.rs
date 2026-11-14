@@ -13,7 +13,7 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::time::timeout;
 
 use crate::error::{AppError, AppResult};
-use crate::services::sdk::pipe::{self, COMMAND_PIPE};
+use crate::services::sdk::pipe::{self, COMMAND_PIPE, PipeAccess};
 
 const MAX_REQUEST_BYTES: usize = 4095;
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(2);
@@ -82,7 +82,7 @@ impl RpcClient {
             });
         }
 
-        let mut client = pipe::open(COMMAND_PIPE, CONNECT_TIMEOUT).await?;
+        let mut client = pipe::open(COMMAND_PIPE, PipeAccess::ReadWrite, CONNECT_TIMEOUT).await?;
         client.write_all(&request).await?;
         let raw = timeout(RESPONSE_TIMEOUT, read_message(&mut client))
             .await
