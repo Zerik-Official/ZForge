@@ -1,11 +1,13 @@
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import type { BootProgress } from "@/types/domains/boot";
 import type { SdkDownloadProgress } from "@/types/domains/sdk";
+import type { SessionSnapshot } from "@/types/domains/session";
 
 /** Event names emitted by the backend (see `src-tauri/src/events.rs`). */
 const EVENTS = {
   bootProgress: "boot://progress",
   sdkDownloadProgress: "sdk://download-progress",
+  sessionChanged: "session://changed",
 } as const;
 
 export function onBootProgress(handler: (step: BootProgress) => void): Promise<UnlistenFn> {
@@ -14,6 +16,10 @@ export function onBootProgress(handler: (step: BootProgress) => void): Promise<U
 
 export function onSdkDownloadProgress(handler: (progress: SdkDownloadProgress) => void): Promise<UnlistenFn> {
   return listen<SdkDownloadProgress>(EVENTS.sdkDownloadProgress, (event) => handler(event.payload));
+}
+
+export function onSessionChanged(handler: (session: SessionSnapshot) => void): Promise<UnlistenFn> {
+  return listen<SessionSnapshot>(EVENTS.sessionChanged, (event) => handler(event.payload));
 }
 
 /**
