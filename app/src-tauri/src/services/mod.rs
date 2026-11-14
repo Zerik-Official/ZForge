@@ -5,6 +5,7 @@ pub mod game_config;
 pub mod game_settings;
 pub mod games;
 pub mod launcher;
+pub mod presence;
 pub mod sdk;
 pub mod servers;
 pub mod session;
