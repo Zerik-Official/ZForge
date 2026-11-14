@@ -2,7 +2,7 @@ import { useState } from "react";
 import { api } from "@/services/api";
 import { useGamesStore } from "@/store/gamesStore";
 import { toDisplaySrc } from "@/utils/asset";
-import type { Game } from "@/types/pywebview";
+import type { Game } from "@/types/domains/game";
 import { GameSettingsModal } from "@/features/game-settings/GameSettingsModal";
 import { t, useLocale } from "@/locales/i18n";
 import { TooltipSimple } from "@/components/ui/Tooltip";
@@ -31,7 +31,11 @@ export function HomeStage({ onGoGames }: HomeStageProps) {
   async function handlePlay() {
     if (launching) return;
     setLaunching(true);
-    await api.launchGame(active.id);
+    try {
+      await api.launchGame(active.id);
+    } catch (error) {
+      console.error("Could not launch the game", error);
+    }
     window.setTimeout(() => setLaunching(false), 4000);
   }
 
