@@ -200,7 +200,7 @@ mod tests {
 
     #[test]
     fn parses_loading_screens_with_and_without_background() {
-        let startup = r#"{"args":{"background":{"file":"Interface\Glues\LoadingScreens\LoadScreenOutland.blp","hasWideScreen":true,"id":198,"name":"Outland"},"mapId":530},"event":"loading.startup","time":1}"#;
+        let startup = r#"{"args":{"background":{"file":"Interface\\Glues\\LoadingScreens\\LoadScreenOutland.blp","hasWideScreen":true,"id":198,"name":"Outland"},"mapId":530},"event":"loading.startup","time":1}"#;
         let Some(SdkEvent::LoadingStarted { map_id, background }) = SdkEvent::parse(startup) else {
             unreachable!("startup must parse");
         };
