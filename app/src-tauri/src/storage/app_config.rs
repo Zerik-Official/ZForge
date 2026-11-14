@@ -62,11 +62,17 @@ impl AppConfigStore {
 pub fn load(path: &Path) -> AppResult<AppConfig> {
     let contents = match fs::read_to_string(path) {
         Ok(contents) => contents,
-        Err(error) if error.kind() == ErrorKind::NotFound => return Ok(AppConfig::default()),
+        Err(error) if error.kind() == ErrorKind::NotFound => {
+            tracing::info!(path = %path.display(), "Config file not found; using defaults");
+            return Ok(AppConfig::default());
+        }
         Err(error) => return Err(error.into()),
     };
     match serde_json::from_str(&contents) {
-        Ok(config) => Ok(config),
+        Ok(config) => {
+            tracing::debug!(path = %path.display(), "Config loaded");
+            Ok(config)
+        }
         Err(error) => {
             tracing::warn!(%error, path = %path.display(), "Invalid config file; using defaults");
             Ok(AppConfig::default())
@@ -86,6 +92,7 @@ pub fn save(path: &Path, config: &AppConfig) -> AppResult<()> {
     let temporary = path.with_extension("json.tmp");
     fs::write(&temporary, serde_json::to_vec_pretty(config)?)?;
     fs::rename(&temporary, path)?;
+    tracing::debug!(path = %path.display(), "Config saved");
     Ok(())
 }
 
