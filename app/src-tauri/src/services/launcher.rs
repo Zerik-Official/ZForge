@@ -2,11 +2,12 @@
 
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::process::{Child, Command};
 
 use crate::domain::game::Game;
 use crate::domain::game_settings::{SettingValue, SettingsValues};
 use crate::error::{AppError, AppResult};
+use crate::services::sdk::installation::Installation;
 
 /// Process priority requested in the launch settings.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -109,13 +110,8 @@ fn clear_cache(game_root: &Path) -> AppResult<()> {
     Ok(())
 }
 
-/// Start the game executable with its launch options.
-///
-/// # Errors
-///
-/// Returns [`AppError::GameExecutableMissing`] when the executable does not
-/// exist, or fails when the cache cannot be cleared or the process cannot start.
-pub fn launch(game: &Game, options: &LaunchOptions) -> AppResult<u32> {
+/// Validate the executable and clear the cache when requested.
+fn prepare(game: &Game, options: &LaunchOptions) -> AppResult<(PathBuf, PathBuf)> {
     let exe = PathBuf::from(&game.exe_path);
     if !exe.is_file() {
         return Err(AppError::GameExecutableMissing(game.exe_path.clone()));
@@ -124,7 +120,17 @@ pub fn launch(game: &Game, options: &LaunchOptions) -> AppResult<u32> {
     if options.clear_cache {
         clear_cache(&root)?;
     }
+    Ok((exe, root))
+}
 
+/// Start the game executable directly with its launch options.
+///
+/// # Errors
+///
+/// Returns [`AppError::GameExecutableMissing`] when the executable does not
+/// exist, or fails when the cache cannot be cleared or the process cannot start.
+pub fn launch_direct(game: &Game, options: &LaunchOptions) -> AppResult<Child> {
+    let (exe, root) = prepare(game, options)?;
     let mut command = Command::new(&exe);
     command.args(&options.arguments).current_dir(&root);
     #[cfg(windows)]
@@ -134,12 +140,98 @@ pub fn launch(game: &Game, options: &LaunchOptions) -> AppResult<u32> {
     }
     let child = command.spawn()?;
     tracing::info!(game_id = %game.id, pid = child.id(), "Game launched");
-    Ok(child.id())
+    Ok(child)
+}
+
+/// Join arguments into one command line, quoting those with whitespace.
+fn join_arguments(arguments: &[String]) -> String {
+    arguments
+        .iter()
+        .map(|argument| {
+            if argument.is_empty() || argument.chars().any(char::is_whitespace) {
+                format!("\"{argument}\"")
+            } else {
+                argument.clone()
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+/// Read the game process id from the injector output (`[injector] pid=1234 tid=…`).
+fn parse_injector_pid(output: &str) -> Option<u32> {
+    output.lines().find_map(|line| {
+        let rest = line.split("pid=").nth(1)?;
+        rest.split_whitespace().next()?.parse().ok()
+    })
+}
+
+/// Start the game through `WowInjector.exe`, which injects the SDK and only
+/// resumes the game once the SDK pipes are ready. Blocks until the injector exits.
+///
+/// The process priority option is not applied in this mode.
+///
+/// # Errors
+///
+/// Returns [`AppError::SdkInjectionFailed`] when the injector fails, or the
+/// errors of [`launch_direct`] for the executable and cache.
+pub fn launch_injected(game: &Game, options: &LaunchOptions, sdk: &Installation) -> AppResult<u32> {
+    let (exe, root) = prepare(game, options)?;
+    let mut command = Command::new(sdk.injector_path());
+    command
+        .arg("--wow")
+        .arg(&exe)
+        .arg("--dll")
+        .arg(sdk.dll_path())
+        .current_dir(&root);
+    if !options.arguments.is_empty() {
+        command
+            .arg("--wow-args")
+            .arg(join_arguments(&options.arguments));
+    }
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        command.creation_flags(CREATE_NO_WINDOW);
+    }
+    if options.priority != LaunchPriority::Normal {
+        tracing::info!("Process priority is not applied when launching through the SDK");
+    }
+
+    let output = command.output()?;
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(AppError::SdkInjectionFailed(
+            stderr
+                .lines()
+                .last()
+                .unwrap_or("injector exited with an error")
+                .to_owned(),
+        ));
+    }
+    let pid = parse_injector_pid(&stdout).ok_or_else(|| {
+        AppError::SdkInjectionFailed("the injector did not report the game process".to_owned())
+    })?;
+    tracing::info!(game_id = %game.id, pid, "Game launched with the SDK");
+    Ok(pid)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn reads_injector_output() {
+        let output = "[injector] starting C:/WoW/Wow.exe (suspended)\n[injector] pid=4242 tid=17\n[injector] done\n";
+        assert_eq!(parse_injector_pid(output), Some(4242));
+        assert_eq!(parse_injector_pid("[injector] done"), None);
+        assert_eq!(
+            join_arguments(&["-console".to_owned(), "a b".to_owned()]),
+            r#"-console "a b""#
+        );
+    }
 
     #[test]
     fn splits_quoted_arguments() {

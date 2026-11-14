@@ -54,6 +54,7 @@ impl Database {
             )?;
             Ok(())
         })?;
+        tracing::debug!(game_id, keys = values.len(), "Game settings saved");
         Ok(StoredGameSettings {
             game_id: game_id.to_owned(),
             values: values.clone(),

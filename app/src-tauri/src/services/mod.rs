@@ -7,6 +7,7 @@ pub mod games;
 pub mod launcher;
 pub mod sdk;
 pub mod servers;
+pub mod session;
 pub mod settings_schema;
 pub mod system;
 pub mod wtf;

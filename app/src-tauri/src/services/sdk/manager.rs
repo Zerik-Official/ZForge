@@ -151,7 +151,11 @@ impl SdkContext<'_> {
     }
 
     /// Startup health check: flag a missing or corrupted SDK, repair it and
-    /// apply updates when Rich Presence and auto-update are enabled.
+    /// apply updates.
+    ///
+    /// Updates and repairs only need auto-update enabled, because the SDK is
+    /// also used to launch the game. A first installation still happens only
+    /// when Rich Presence is enabled.
     ///
     /// Returns the installation performed, if any.
     ///
@@ -176,8 +180,11 @@ impl SdkContext<'_> {
                 sdk_last_error: Some(last_error),
                 ..AppConfigPatch::default()
             })?;
-            if !config.discord_enabled {
-                tracing::info!("SDK repair skipped: Rich Presence is disabled");
+            let repair = config.sdk_ever_installed && config.discord_auto_update;
+            if !repair && !config.discord_enabled {
+                tracing::info!(
+                    "SDK install skipped: not installed before and Rich Presence is disabled"
+                );
                 return Ok(None);
             }
             return self.install_recording_errors(on_progress).await;
@@ -189,7 +196,8 @@ impl SdkContext<'_> {
                 ..AppConfigPatch::default()
             })?;
         }
-        if !config.discord_enabled || !config.discord_auto_update {
+        if !config.discord_auto_update {
+            tracing::info!("SDK update check skipped: auto-update is disabled");
             return Ok(None);
         }
         let latest = match self.releases.latest().await {

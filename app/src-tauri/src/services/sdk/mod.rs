@@ -1,12 +1,18 @@
-//! WoWControlSDK installation management.
+//! WoWControlSDK: installation management and the runtime client.
 //!
 //! The SDK is downloaded from its GitHub releases into
-//! `<app_data_dir>/tools/WoWControlSDK-v<version>/`.
+//! `<app_data_dir>/tools/WoWControlSDK-v<version>/`. Once injected into the
+//! game, it is reached through the command pipe ([`rpc`], [`api`]) and the
+//! event pipe ([`events`]).
 
+pub mod api;
+pub mod events;
 pub mod installation;
 pub mod installer;
 pub mod manager;
+mod pipe;
 pub mod release;
+pub mod rpc;
 pub mod version;
 
 /// GitHub repository that publishes SDK releases.

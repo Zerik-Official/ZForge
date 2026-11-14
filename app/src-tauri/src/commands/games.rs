@@ -3,9 +3,8 @@
 use tauri::{AppHandle, Runtime, State};
 
 use crate::domain::game::{Game, GameDraft};
-use crate::error::{AppError, AppResult};
+use crate::error::AppResult;
 use crate::services::game_settings::SettingsContext;
-use crate::services::launcher::{self, LaunchOptions};
 use crate::services::settings_schema::SchemaRegistry;
 use crate::services::{games, system};
 use crate::storage::Database;
@@ -51,32 +50,6 @@ pub async fn update_game(
 #[tauri::command]
 pub async fn remove_game(database: State<'_, Database>, game_id: String) -> AppResult<()> {
     games::remove(&database, &game_id)
-}
-
-/// Start the game client with its launch settings.
-#[tauri::command]
-pub async fn launch_game<R: Runtime>(
-    app: AppHandle<R>,
-    database: State<'_, Database>,
-    schemas: State<'_, SchemaRegistry>,
-    game_id: String,
-) -> AppResult<()> {
-    let game = database
-        .get_game(&game_id)?
-        .ok_or_else(|| AppError::NotFound {
-            entity: "game",
-            id: game_id.clone(),
-        })?;
-    let dynamic = system::dynamic_defaults(&app);
-    let settings = SettingsContext {
-        database: &database,
-        schemas: &schemas,
-        dynamic: &dynamic,
-    }
-    .get(&game_id)?
-    .unwrap_or_default();
-    launcher::launch(&game, &LaunchOptions::from_settings(&settings))?;
-    Ok(())
 }
 
 /// Persist a new dock order.

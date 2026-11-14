@@ -44,7 +44,11 @@
         "invalid_url": "Invalid link.",
         "opener": "Could not open the link.",
         "game_executable_missing": "The game executable was not found.",
-        "unknown": "Unexpected error."
+        "unknown": "Unexpected error.",
+        "sdk_unavailable": "The SDK did not respond. Is the game running?",
+        "sdk_rpc": "The SDK rejected a request.",
+        "sdk_injection_failed": "Could not start the game with the SDK.",
+        "game_already_running": "The game is already running."
       }
     },
     "configConflict": {
@@ -280,5 +284,16 @@
     "finishing": "Finishing…",
     "ready": "Ready.",
     "failed": "Startup finished with errors."
+  },
+  "session": {
+    "phase": {
+      "idle": "Play",
+      "launching": "Starting…",
+      "running": "Playing",
+      "loading": "Loading…",
+      "login": "At login",
+      "character_select": "Choosing character",
+      "in_world": "Playing"
+    }
   }
 }

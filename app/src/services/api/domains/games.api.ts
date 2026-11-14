@@ -35,9 +35,6 @@ export class GamesApi {
     return call("reorder_games", { orderedIds });
   }
 
-  launchGame(gameId: string): Promise<void> {
-    return call("launch_game", { gameId });
-  }
 }
 
 export const gamesApi = new GamesApi();
