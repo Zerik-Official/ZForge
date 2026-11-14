@@ -8,7 +8,7 @@ use tokio::io::{AsyncBufReadExt, BufReader, Lines};
 use tokio::net::windows::named_pipe::NamedPipeClient;
 
 use crate::error::AppResult;
-use crate::services::sdk::pipe::{self, EVENT_PIPE};
+use crate::services::sdk::pipe::{self, EVENT_PIPE, PipeAccess};
 
 /// Glue screen reported by `client.screenChanged`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -111,7 +111,7 @@ impl EventStream {
     ///
     /// Returns [`crate::error::AppError::SdkUnavailable`] when the pipe does not appear in time.
     pub async fn connect(timeout: Duration) -> AppResult<Self> {
-        let client = pipe::open(EVENT_PIPE, timeout).await?;
+        let client = pipe::open(EVENT_PIPE, PipeAccess::ReadOnly, timeout).await?;
         Ok(Self {
             lines: BufReader::new(client).lines(),
         })
