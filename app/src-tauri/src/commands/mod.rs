@@ -9,5 +9,6 @@ pub mod boot;
 pub mod games;
 pub mod sdk;
 pub mod servers;
+pub mod session;
 pub mod settings;
 pub mod system;
