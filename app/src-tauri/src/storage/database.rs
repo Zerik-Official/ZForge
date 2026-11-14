@@ -29,7 +29,9 @@ impl Database {
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent)?;
         }
-        Self::initialize(Connection::open(path)?)
+        let database = Self::initialize(Connection::open(path)?)?;
+        tracing::info!(path = %path.display(), "Database opened");
+        Ok(database)
     }
 
     /// Open a private in-memory database with the current schema.
