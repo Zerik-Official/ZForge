@@ -77,7 +77,10 @@ pub async fn launch_game<R: Runtime>(
                 .map_err(|error| AppError::BackgroundTask(error.to_string()))
                 .and_then(|result| result);
                 match launched {
-                    Ok(_) => session.run_sdk().await,
+                    Ok(pid) => {
+                        session.set_game_pid(Some(pid));
+                        session.run_sdk().await;
+                    }
                     Err(error) => session.finish(Some(&error)),
                 }
             });

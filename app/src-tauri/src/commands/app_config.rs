@@ -4,6 +4,7 @@ use tauri::State;
 
 use crate::domain::app_config::{AppConfig, AppConfigPatch};
 use crate::error::AppResult;
+use crate::services::notifications::NotificationService;
 use crate::services::presence::PresenceService;
 use crate::storage::app_config::AppConfigStore;
 
@@ -18,9 +19,11 @@ pub async fn get_app_config(store: State<'_, AppConfigStore>) -> AppResult<AppCo
 pub async fn save_app_config(
     store: State<'_, AppConfigStore>,
     presence: State<'_, PresenceService>,
+    notifications: State<'_, NotificationService>,
     patch: AppConfigPatch,
 ) -> AppResult<AppConfig> {
     let config = store.update(patch)?;
     presence.set_enabled(config.discord_enabled);
+    notifications.set_settings(config.notifications);
     Ok(config)
 }

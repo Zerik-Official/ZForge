@@ -1,3 +1,5 @@
+import type { NotificationSettings } from "./notifications";
+
 export type AppLanguage = "en" | "es";
 
 export interface AppConfig {
@@ -8,6 +10,7 @@ export interface AppConfig {
   discord_auto_update: boolean;
   sdk_last_error: string | null;
   sdk_ever_installed?: boolean;
+  notifications: NotificationSettings;
 }
 
 export interface GameSettings {

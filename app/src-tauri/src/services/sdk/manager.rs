@@ -181,10 +181,8 @@ impl SdkContext<'_> {
                 ..AppConfigPatch::default()
             })?;
             let repair = config.sdk_ever_installed && config.discord_auto_update;
-            if !repair && !config.discord_enabled {
-                tracing::info!(
-                    "SDK install skipped: not installed before and Rich Presence is disabled"
-                );
+            if !repair && !config.discord_enabled && !config.notifications.enabled {
+                tracing::info!("SDK install skipped: not installed before and no feature needs it");
                 return Ok(None);
             }
             return self.install_recording_errors(on_progress).await;

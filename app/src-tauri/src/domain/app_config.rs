@@ -34,6 +34,51 @@ pub struct AppConfig {
     pub sdk_last_error: Option<String>,
     /// Whether the SDK was installed at least once.
     pub sdk_ever_installed: bool,
+    /// Windows notifications about the game (SDK 2.1+).
+    pub notifications: NotificationSettings,
+}
+
+/// Which Windows notifications the launcher shows while a game runs (SDK 2.1+).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct NotificationSettings {
+    /// Master switch.
+    pub enabled: bool,
+    /// Only notify when the game is not the foreground window.
+    pub only_when_unfocused: bool,
+    /// Friends connecting and disconnecting.
+    pub friends: bool,
+    /// Whispers.
+    pub whispers: bool,
+    /// Group invitations, with Accept and Decline.
+    pub group_invites: bool,
+    /// Summons, with Accept and Decline.
+    pub summons: bool,
+    /// Dungeon Finder groups, with Enter and Leave queue.
+    pub dungeon_finder: bool,
+    /// Trade requests, with Accept and Decline.
+    pub trades: bool,
+    /// Duel requests, with Accept and Decline.
+    pub duels: bool,
+    /// Battlegrounds and arenas ready, with Enter and Leave queue.
+    pub battlegrounds: bool,
+}
+
+impl Default for NotificationSettings {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            only_when_unfocused: true,
+            friends: true,
+            whispers: true,
+            group_invites: true,
+            summons: true,
+            dungeon_finder: true,
+            trades: true,
+            duels: true,
+            battlegrounds: true,
+        }
+    }
 }
 
 /// A partial update of [`AppConfig`] sent by the frontend.
@@ -60,6 +105,8 @@ pub struct AppConfigPatch {
     pub sdk_last_error: Option<Option<String>>,
     /// New "SDK installed at least once" flag.
     pub sdk_ever_installed: Option<bool>,
+    /// New notification settings.
+    pub notifications: Option<NotificationSettings>,
 }
 
 /// Mark a field as present (including an explicit `null`).
@@ -104,6 +151,9 @@ impl AppConfig {
         if let Some(sdk_ever_installed) = patch.sdk_ever_installed {
             self.sdk_ever_installed = sdk_ever_installed;
         }
+        if let Some(notifications) = patch.notifications {
+            self.notifications = notifications;
+        }
     }
 }
 
@@ -125,6 +175,7 @@ impl Default for AppConfig {
             discord_auto_update: true,
             sdk_last_error: None,
             sdk_ever_installed: false,
+            notifications: NotificationSettings::default(),
         }
     }
 }

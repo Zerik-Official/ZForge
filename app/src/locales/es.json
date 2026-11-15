@@ -83,7 +83,8 @@
     "settings": {
       "tabs": {
         "general": "General",
-        "richPresence": "Rich Presence"
+        "richPresence": "Rich Presence",
+        "notifications": "Notificaciones"
       },
       "general": {
         "title": "Ajustes generales",
@@ -159,6 +160,53 @@
               "licenseAndCopyrightNotice": "Aviso de licencia y copyright",
               "stateChanges": "Indicar cambios realizados"
             }
+          }
+        }
+      },
+      "notifications": {
+        "title": "Notificaciones de Windows",
+        "description": "Recibe una notificación de Windows cuando pase algo en el juego mientras haces otra cosa. Las invitaciones, invocaciones, grupos del Buscador de mazmorras, comercios, duelos y campos de batalla se pueden responder desde la propia notificación.",
+        "sdkRequired": {
+          "title": "Requiere WoWControlSDK {version}",
+          "description": "Las notificaciones usan eventos añadidos en WoWControlSDK {version}. Instala o actualiza el SDK en la pestaña Rich Presence y lanza el juego desde ZForge."
+        },
+        "enable": "Mostrar notificaciones de Windows",
+        "enableDescription": "Solo mientras haya un juego lanzado desde ZForge con el SDK.",
+        "onlyWhenUnfocused": "Solo cuando el juego está en segundo plano",
+        "onlyWhenUnfocusedDescription": "No avisar mientras la ventana del juego está en primer plano.",
+        "kindsTitle": "Avisarme de",
+        "kinds": {
+          "friends": {
+            "label": "Amigos",
+            "description": "Un amigo se conecta o se desconecta."
+          },
+          "whispers": {
+            "label": "Susurros",
+            "description": "Alguien te susurra."
+          },
+          "group_invites": {
+            "label": "Invitaciones a grupo",
+            "description": "Acepta o rechaza desde la notificación."
+          },
+          "summons": {
+            "label": "Invocaciones",
+            "description": "Acepta o rechaza una invocación desde la notificación."
+          },
+          "dungeon_finder": {
+            "label": "Buscador de mazmorras",
+            "description": "Entra en la mazmorra o abandona la cola desde la notificación."
+          },
+          "trades": {
+            "label": "Comercios",
+            "description": "Acepta o rechaza una solicitud de comercio desde la notificación."
+          },
+          "duels": {
+            "label": "Duelos",
+            "description": "Acepta o rechaza un duelo desde la notificación."
+          },
+          "battlegrounds": {
+            "label": "Campos de batalla y arenas",
+            "description": "Entra o abandona la cola cuando la partida está lista."
           }
         }
       }
@@ -343,6 +391,63 @@
       "8": "Mago",
       "9": "Brujo",
       "11": "Druida"
+    }
+  },
+  "notifications": {
+    "friendOnline": {
+      "title": "{name} se ha conectado",
+      "body": "Nivel {level} {class} · {zone}"
+    },
+    "friendOffline": {
+      "title": "{name} se ha desconectado",
+      "body": ""
+    },
+    "whisper": {
+      "title": "{name} te susurra",
+      "body": "{text}"
+    },
+    "invite": {
+      "title": "Invitación a grupo",
+      "body": "{name} te invita a su grupo"
+    },
+    "summon": {
+      "title": "Invocación",
+      "body": "{name} quiere invocarte a {zone}"
+    },
+    "proposal": {
+      "title": "Tu grupo está listo",
+      "body": "{dungeon} · {role}"
+    },
+    "trade": {
+      "title": "Solicitud de comercio",
+      "body": "{name} quiere comerciar contigo"
+    },
+    "tradeOpened": {
+      "title": "Comercio con {name}",
+      "body": "Abre el juego para revisar los objetos"
+    },
+    "duel": {
+      "title": "Duelo",
+      "body": "{name} te reta a un duelo"
+    },
+    "battleground": {
+      "title": "{map} está listo",
+      "body": "Entra en el campo de batalla antes de que caduque la invitación"
+    },
+    "arena": {
+      "title": "Arena {size}c{size} lista",
+      "body": "{map}"
+    },
+    "roles": {
+      "TANK": "Tanque",
+      "HEALER": "Sanador",
+      "DAMAGER": "Daño"
+    },
+    "buttons": {
+      "accept": "Aceptar",
+      "decline": "Rechazar",
+      "enter": "Entrar",
+      "leaveQueue": "Abandonar cola"
     }
   }
 }

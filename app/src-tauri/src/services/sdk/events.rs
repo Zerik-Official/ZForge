@@ -10,6 +10,7 @@ use tokio::net::windows::named_pipe::NamedPipeClient;
 use crate::error::{AppError, AppResult};
 use crate::services::sdk::auth::SessionToken;
 use crate::services::sdk::pipe::{self, EVENT_PIPE, PipeAccess};
+use crate::services::sdk::social::SocialEvent;
 
 /// Glue screen reported by `client.screenChanged`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -84,6 +85,8 @@ pub enum SdkEvent {
     AuthAccepted,
     /// The event pipe rejected the session token (SDK 2.0+).
     AuthRejected(String),
+    /// A social, trade, duel or queue event (SDK 2.1+).
+    Social(SocialEvent),
     /// A subscribed WoW UI event; its arguments depend on the event.
     Game {
         /// WoW event name, for example `ZONE_CHANGED`.
@@ -132,9 +135,12 @@ impl SdkEvent {
                     .unwrap_or_default()
                     .to_owned(),
             ),
-            _ => Self::Game {
-                name: wire.event,
-                args: wire.args,
+            name => match SocialEvent::parse(name, &wire.args) {
+                Some(social) => Self::Social(social),
+                None => Self::Game {
+                    name: wire.event,
+                    args: wire.args,
+                },
             },
         })
     }

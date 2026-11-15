@@ -7,6 +7,7 @@ pub mod app_config;
 pub mod assets;
 pub mod boot;
 pub mod games;
+pub mod notifications;
 pub mod presence;
 pub mod sdk;
 pub mod servers;
