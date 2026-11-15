@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { t, useLocale } from "@/locales/i18n";
 import { GeneralTab } from "./tabs/GeneralTab";
+import { NotificationsTab } from "./tabs/NotificationsTab";
 import { RichPresenceTab } from "./tabs/RichPresenceTab";
 
 /**
  * Available tabs in the launcher settings view.
  */
-export type LauncherSettingsTab = "general" | "richPresence";
+export type LauncherSettingsTab = "general" | "richPresence" | "notifications";
 
 /**
  * Properties for the {@link LauncherSettingsView} component.
@@ -51,10 +52,23 @@ export function LauncherSettingsView({ initialTab = "general" }: LauncherSetting
           <i className="fa-brands fa-discord text-[13px]" />
           {t("launcher.settings.tabs.richPresence")}
         </button>
+        <button
+          className={`flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-colors cursor-pointer ${
+            activeTab === "notifications"
+              ? "bg-(--accent-dim) text-(--accent)"
+              : "text-(--muted) hover:bg-(--bg-hover) hover:text-(--text-soft)"
+          }`}
+          onClick={() => setActiveTab("notifications")}
+        >
+          <i className="fa-solid fa-bell text-[13px]" />
+          {t("launcher.settings.tabs.notifications")}
+        </button>
       </aside>
 
       <section className="flex min-w-0 flex-1 flex-col overflow-y-auto">
-        {activeTab === "general" ? <GeneralTab /> : <RichPresenceTab />}
+        {activeTab === "general" ? <GeneralTab /> : null}
+        {activeTab === "richPresence" ? <RichPresenceTab /> : null}
+        {activeTab === "notifications" ? <NotificationsTab /> : null}
       </section>
     </div>
   );
