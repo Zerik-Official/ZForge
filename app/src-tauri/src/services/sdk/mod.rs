@@ -14,6 +14,7 @@ pub mod manager;
 mod pipe;
 pub mod release;
 pub mod rpc;
+pub mod social;
 pub mod version;
 
 /// GitHub repository that publishes SDK releases.
