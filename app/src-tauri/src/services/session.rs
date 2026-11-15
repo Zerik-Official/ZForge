@@ -5,10 +5,11 @@
 //! Discord Rich Presence subscribe to it.
 
 use std::process::Child;
+use std::sync::Mutex;
 use std::time::Duration;
 
 use serde::Serialize;
-use tokio::sync::watch;
+use tokio::sync::{broadcast, watch};
 use tokio::time::{Instant, MissedTickBehavior, interval};
 
 use crate::domain::game::Game;
@@ -18,6 +19,7 @@ use crate::services::sdk::api::SdkApi;
 use crate::services::sdk::auth::SessionToken;
 use crate::services::sdk::events::{ClientScreen, EventStream, LoadingBackground, SdkEvent};
 use crate::services::sdk::rpc::RpcClient;
+use crate::services::sdk::social::SocialEvent;
 
 /// Time allowed for the SDK to open its event pipe after launch.
 const EVENT_PIPE_TIMEOUT: Duration = Duration::from_secs(90);
@@ -324,9 +326,10 @@ impl SessionSnapshot {
                 }
             }
             SdkEvent::Game { .. } if self.phase == SessionPhase::InWorld => FollowUp::Refresh,
-            SdkEvent::Game { .. } | SdkEvent::AuthAccepted | SdkEvent::AuthRejected(_) => {
-                FollowUp::None
-            }
+            SdkEvent::Game { .. }
+            | SdkEvent::Social(_)
+            | SdkEvent::AuthAccepted
+            | SdkEvent::AuthRejected(_) => FollowUp::None,
         }
     }
 }
@@ -366,11 +369,16 @@ impl StallDetector {
     }
 }
 
+/// Social events kept for slow subscribers before older ones are dropped.
+const SOCIAL_EVENT_BUFFER: usize = 32;
+
 /// Owner of the session state.
 #[derive(Debug)]
 pub struct GameSession {
     state: watch::Sender<SessionSnapshot>,
     rpc: RpcClient,
+    social: broadcast::Sender<SocialEvent>,
+    game_pid: Mutex<Option<u32>>,
 }
 
 impl Default for GameSession {
@@ -385,7 +393,32 @@ impl GameSession {
         Self {
             state: watch::Sender::new(SessionSnapshot::default()),
             rpc: RpcClient::default(),
+            social: broadcast::Sender::new(SOCIAL_EVENT_BUFFER),
+            game_pid: Mutex::new(None),
         }
+    }
+
+    /// Receive social, trade, duel and queue events (SDK 2.1+).
+    pub fn subscribe_social(&self) -> broadcast::Receiver<SocialEvent> {
+        self.social.subscribe()
+    }
+
+    /// Typed access to the SDK of the running game.
+    pub fn api(&self) -> SdkApi<'_> {
+        SdkApi::new(&self.rpc)
+    }
+
+    /// Remember the process id of the game launched through the injector.
+    pub fn set_game_pid(&self, pid: Option<u32>) {
+        match self.game_pid.lock() {
+            Ok(mut guard) => *guard = pid,
+            Err(error) => tracing::warn!(%error, "Could not store the game process id"),
+        }
+    }
+
+    /// Process id of the running game, when known.
+    pub fn game_pid(&self) -> Option<u32> {
+        self.game_pid.lock().ok().and_then(|guard| *guard)
     }
 
     /// Current snapshot.
@@ -449,6 +482,7 @@ impl GameSession {
         if let Err(lock_error) = self.rpc.set_token(None) {
             tracing::warn!(%lock_error, "Could not clear the SDK session token");
         }
+        self.set_game_pid(None);
         if let Some(error) = error {
             tracing::warn!(%error, "Game session ended with an error");
         } else {
@@ -506,6 +540,9 @@ impl GameSession {
         loop {
             tokio::select! {
                 event = stream.next() => match event {
+                    Ok(Some(SdkEvent::Social(social))) => {
+                        let _ = self.social.send(social);
+                    }
                     Ok(Some(event)) => {
                         stalls.observe(&event, Instant::now());
                         let mut follow_up = FollowUp::None;
