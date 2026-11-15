@@ -315,6 +315,11 @@
     "afk": "Ausente",
     "raceClass": "{race}, {class}",
     "zoneSubZone": "{zone}, {subZone}",
+    "zoneDifficulty": "{zone} · {difficulty}",
+    "dungeonNormal": "Normal",
+    "dungeonHeroic": "Heroica",
+    "raidNormal": "{players} jugadores",
+    "raidHeroic": "{players} jugadores · Heroica",
     "races": {
       "1": "Humano",
       "2": "Orco",
