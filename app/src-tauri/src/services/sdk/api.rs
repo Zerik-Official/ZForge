@@ -6,7 +6,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::error::AppResult;
+use crate::error::{AppError, AppResult};
 use crate::services::sdk::rpc::RpcClient;
 
 /// `client.getScreen`.
@@ -133,6 +133,73 @@ struct EventsParams<'a> {
     events: &'a [&'a str],
 }
 
+#[derive(Debug, Serialize)]
+struct IndexParams {
+    index: u32,
+}
+
+/// Result of an SDK action: `{"ok": true}` or `{"error": "..."}`.
+#[derive(Debug, Default, Deserialize)]
+#[serde(default)]
+struct ActionResult {
+    error: Option<String>,
+}
+
+/// A native answer the launcher can give in the game's place (SDK 2.1+).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum GameAction {
+    /// Accept the pending group invitation.
+    AcceptInvite,
+    /// Decline the pending group invitation.
+    DeclineInvite,
+    /// Accept the pending summon.
+    AcceptSummon,
+    /// Decline the pending summon.
+    DeclineSummon,
+    /// Enter the Dungeon Finder group.
+    AcceptProposal,
+    /// Leave the Dungeon Finder queue.
+    RejectProposal,
+    /// Accept the pending trade request.
+    AcceptTradeRequest,
+    /// Decline the pending trade request.
+    DeclineTradeRequest,
+    /// Close the open trade window without trading.
+    CancelTrade,
+    /// Accept the pending duel.
+    AcceptDuel,
+    /// Decline the pending duel.
+    DeclineDuel,
+    /// Enter the battleground or arena of a queue slot.
+    EnterBattlefield(u32),
+    /// Leave a battleground or arena queue slot.
+    LeaveBattlefield(u32),
+    /// Bring the game window to the foreground.
+    FocusWindow,
+}
+
+impl GameAction {
+    /// JSON-RPC method that performs the action.
+    pub fn method(self) -> &'static str {
+        match self {
+            Self::AcceptInvite => "group.acceptInvite",
+            Self::DeclineInvite => "group.declineInvite",
+            Self::AcceptSummon => "summon.accept",
+            Self::DeclineSummon => "summon.decline",
+            Self::AcceptProposal => "lfg.acceptProposal",
+            Self::RejectProposal => "lfg.rejectProposal",
+            Self::AcceptTradeRequest => "trade.acceptRequest",
+            Self::DeclineTradeRequest => "trade.declineRequest",
+            Self::CancelTrade => "trade.cancel",
+            Self::AcceptDuel => "duel.accept",
+            Self::DeclineDuel => "duel.decline",
+            Self::EnterBattlefield(_) => "battlefield.acceptPort",
+            Self::LeaveBattlefield(_) => "battlefield.leaveQueue",
+            Self::FocusWindow => "window.focus",
+        }
+    }
+}
+
 /// Typed access to the SDK.
 #[derive(Debug, Clone, Copy)]
 pub struct SdkApi<'a> {
@@ -203,6 +270,31 @@ impl<'a> SdkApi<'a> {
             .call_with("events.subscribe", Some(EventsParams { events }))
             .await?;
         Ok(())
+    }
+
+    /// Answer in the game's place with the same native function as its button.
+    ///
+    /// # Errors
+    ///
+    /// Fails when the SDK is unreachable or refuses the action, for example
+    /// when nothing is pending any more.
+    pub async fn perform(&self, action: GameAction) -> AppResult<()> {
+        let method = action.method();
+        let result: ActionResult = match action {
+            GameAction::EnterBattlefield(index) | GameAction::LeaveBattlefield(index) => {
+                self.rpc
+                    .call_with(method, Some(IndexParams { index }))
+                    .await?
+            }
+            _ => self.rpc.call(method).await?,
+        };
+        match result.error {
+            Some(message) => Err(AppError::SdkRpc {
+                method: method.to_owned(),
+                message,
+            }),
+            None => Ok(()),
+        }
     }
 }
 
