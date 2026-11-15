@@ -17,6 +17,11 @@ export interface PresenceStrings {
   afk: string;
   raceClass: string;
   zoneSubZone: string;
+  zoneDifficulty: string;
+  dungeonNormal: string;
+  dungeonHeroic: string;
+  raidNormal: string;
+  raidHeroic: string;
   races: Record<number, string>;
   classes: Record<number, string>;
 }

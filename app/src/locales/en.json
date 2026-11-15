@@ -315,6 +315,11 @@
     "afk": "Away",
     "raceClass": "{race} {class}",
     "zoneSubZone": "{zone}, {subZone}",
+    "zoneDifficulty": "{zone} · {difficulty}",
+    "dungeonNormal": "Normal",
+    "dungeonHeroic": "Heroic",
+    "raidNormal": "{players} players",
+    "raidHeroic": "{players} players · Heroic",
     "races": {
       "1": "Human",
       "2": "Orc",

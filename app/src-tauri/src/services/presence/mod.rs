@@ -7,6 +7,7 @@
 
 pub mod activity;
 pub mod strings;
+pub mod zones;
 
 use std::sync::mpsc::{self, Receiver, RecvTimeoutError};
 use std::thread;

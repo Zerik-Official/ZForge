@@ -34,6 +34,11 @@ function buildStrings(): PresenceStrings {
     afk: t("presence.afk"),
     raceClass: t("presence.raceClass"),
     zoneSubZone: t("presence.zoneSubZone"),
+    zoneDifficulty: t("presence.zoneDifficulty"),
+    dungeonNormal: t("presence.dungeonNormal"),
+    dungeonHeroic: t("presence.dungeonHeroic"),
+    raidNormal: t("presence.raidNormal"),
+    raidHeroic: t("presence.raidHeroic"),
     races: byId("presence.races", RACE_IDS),
     classes: byId("presence.classes", CLASS_IDS),
   };

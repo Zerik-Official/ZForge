@@ -1,7 +1,10 @@
 //! Mapping from the game session to a Discord activity.
 
 use crate::services::presence::strings::{PresenceStrings, fill};
-use crate::services::session::{GroupKind, SessionPhase, SessionSnapshot};
+use crate::services::presence::zones::zone_image;
+use crate::services::session::{
+    GroupKind, InstanceInfo, InstanceKind, SessionPhase, SessionSnapshot,
+};
 
 /// Image shown when no better one is known.
 const DEFAULT_IMAGE: &str = "wow-icon";
@@ -12,6 +15,10 @@ const MAX_TEXT_CHARS: usize = 128;
 /// Party and raid size limits in 3.3.5a.
 const PARTY_MAX: i32 = 5;
 const RAID_MAX: i32 = 40;
+
+/// Dungeon difficulty `2` is heroic; raid difficulties `3` and `4` are 10 and 25 heroic.
+const HEROIC_DUNGEON: u32 = 2;
+const FIRST_HEROIC_RAID: u32 = 3;
 
 /// What Discord should show; owned so it can cross threads.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -59,6 +66,20 @@ fn class_image(class_id: u32) -> Option<&'static str> {
         11 => "druid",
         _ => return None,
     })
+}
+
+/// Translated difficulty of a dungeon or raid; battlegrounds and arenas have none.
+fn difficulty_text(instance: &InstanceInfo, strings: &PresenceStrings) -> Option<String> {
+    let players = instance.max_players.to_string();
+    let template = match (instance.kind, instance.difficulty) {
+        (InstanceKind::Party, HEROIC_DUNGEON) => &strings.dungeon_heroic,
+        (InstanceKind::Party, _) => &strings.dungeon_normal,
+        (InstanceKind::Raid, difficulty) if difficulty >= FIRST_HEROIC_RAID => &strings.raid_heroic,
+        (InstanceKind::Raid, _) => &strings.raid_normal,
+        (InstanceKind::Pvp | InstanceKind::Arena, _) => return None,
+    };
+    let filled = fill(template, &[("players", &players)]);
+    (!filled.trim().is_empty()).then_some(filled)
 }
 
 /// Trim to Discord's length limit without splitting characters; empty texts become `None`.
@@ -133,24 +154,43 @@ fn in_world(snapshot: &SessionSnapshot, strings: &PresenceStrings) -> PresenceAc
         }
     }
 
+    let instance = snapshot
+        .location
+        .as_ref()
+        .and_then(|location| location.instance.as_ref());
+
     if let Some(location) = &snapshot.location {
-        activity.large_image = continent_image(Some(i64::from(location.map_id))).to_owned();
-        activity.large_text = if location.sub_zone.is_empty() || location.sub_zone == location.zone
-        {
-            text(location.zone.clone())
+        activity.large_image = location
+            .map_area_id
+            .and_then(zone_image)
+            .unwrap_or_else(|| continent_image(Some(i64::from(location.map_id))))
+            .to_owned();
+        let place = if location.sub_zone.is_empty() || location.sub_zone == location.zone {
+            location.zone.clone()
         } else {
-            text(fill(
+            fill(
                 &strings.zone_sub_zone,
                 &[("zone", &location.zone), ("subZone", &location.sub_zone)],
-            ))
+            )
+        };
+        activity.large_text = match instance.and_then(|instance| difficulty_text(instance, strings))
+        {
+            Some(difficulty) => text(fill(
+                &strings.zone_difficulty,
+                &[("zone", &place), ("difficulty", &difficulty)],
+            )),
+            None => text(place),
         };
     }
 
+    let instance_max = instance
+        .filter(|instance| instance.max_players > 0)
+        .map(|instance| i32::try_from(instance.max_players).unwrap_or(RAID_MAX));
     let group = snapshot.group.map(|group| {
         let (label, max) = match group.kind {
             GroupKind::Solo => (&strings.solo, None),
-            GroupKind::Party => (&strings.party, Some(PARTY_MAX)),
-            GroupKind::Raid => (&strings.raid, Some(RAID_MAX)),
+            GroupKind::Party => (&strings.party, Some(instance_max.unwrap_or(PARTY_MAX))),
+            GroupKind::Raid => (&strings.raid, Some(instance_max.unwrap_or(RAID_MAX))),
         };
         let size = i32::try_from(group.members).unwrap_or(i32::MAX);
         (label.as_str(), max.map(|max| [size.min(max), max]))
@@ -212,6 +252,11 @@ mod tests {
             in_combat: "En combate".to_owned(),
             race_class: "{race} {class}".to_owned(),
             zone_sub_zone: "{zone}, {subZone}".to_owned(),
+            zone_difficulty: "{zone} · {difficulty}".to_owned(),
+            dungeon_normal: "Normal".to_owned(),
+            dungeon_heroic: "Heroica".to_owned(),
+            raid_normal: "{players} jugadores".to_owned(),
+            raid_heroic: "{players} jugadores · Heroica".to_owned(),
             races: [(10, "Elfo de sangre".to_owned())].into_iter().collect(),
             classes: [(6, "Caballero de la Muerte".to_owned())]
                 .into_iter()
@@ -235,8 +280,10 @@ mod tests {
             location: Some(LocationInfo {
                 map_id: 571,
                 zone_id: 4395,
+                map_area_id: None,
                 zone: "Dalaran".to_owned(),
                 sub_zone: "La Ciudadela Violeta".to_owned(),
+                instance: None,
             }),
             status: Some(PlayerStatus {
                 in_combat: true,
@@ -265,6 +312,51 @@ mod tests {
                 start: Some(1_700_000_000),
                 party: Some([3, 5]),
             })
+        );
+    }
+
+    #[test]
+    fn uses_zone_images_difficulty_and_instance_size() {
+        let mut snapshot = playing();
+        snapshot.group = Some(GroupInfo {
+            kind: GroupKind::Raid,
+            members: 25,
+        });
+        snapshot.location = Some(LocationInfo {
+            map_id: 631,
+            zone_id: 4812,
+            map_area_id: Some(505),
+            zone: "Ciudadela de la Corona de Hielo".to_owned(),
+            sub_zone: String::new(),
+            instance: Some(InstanceInfo {
+                kind: InstanceKind::Raid,
+                name: "Ciudadela de la Corona de Hielo".to_owned(),
+                difficulty: 4,
+                max_players: 25,
+            }),
+        });
+        let activity = build(&snapshot, &strings()).unwrap_or_default();
+        assert_eq!(activity.large_image, "dalaran");
+        assert_eq!(
+            activity.large_text.as_deref(),
+            Some("Ciudadela de la Corona de Hielo · 25 jugadores · Heroica")
+        );
+        assert_eq!(activity.party, Some([25, 25]));
+
+        if let Some(location) = snapshot.location.as_mut() {
+            location.map_area_id = None;
+            location.instance = Some(InstanceInfo {
+                kind: InstanceKind::Arena,
+                name: "Arena".to_owned(),
+                difficulty: 1,
+                max_players: 3,
+            });
+        }
+        let arena = build(&snapshot, &strings()).unwrap_or_default();
+        assert_eq!(arena.large_image, "wow-icon");
+        assert_eq!(
+            arena.large_text.as_deref(),
+            Some("Ciudadela de la Corona de Hielo")
         );
     }
 
