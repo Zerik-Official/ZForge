@@ -6,6 +6,7 @@ import { LauncherShell } from "@/features/launcher/LauncherShell";
 import { ConfigConflictModal } from "@/features/game-settings/ConfigConflictModal";
 import { useBoot } from "@/hooks/useBoot";
 import { useConfigConflict } from "@/hooks/useConfigConflict";
+import { useNotificationStrings } from "@/hooks/useNotificationStrings";
 import { usePresenceStrings } from "@/hooks/usePresenceStrings";
 import { useGamesStore } from "@/store/gamesStore";
 import { api } from "@/services/api";
@@ -15,6 +16,7 @@ export default function App() {
   const { conflicts, push: pushConflicts, resolve } = useConfigConflict();
   const { step, done: bootDone } = useBoot(pushConflicts);
   usePresenceStrings();
+  useNotificationStrings();
   const hydrate = useGamesStore((state) => state.hydrate);
 
   /** True once the splash fade-out transition ends. */
