@@ -69,10 +69,33 @@ pub struct WorldState {
     pub zone_name: String,
     /// Localized sub-zone name.
     pub sub_zone_name: String,
+    /// `WorldMapArea` id of the current map (SDK 2.1); `0` when unknown.
+    pub map_area_id: u32,
+    /// Instance type and difficulty (SDK 2.1).
+    pub instance: Option<InstanceState>,
     /// Whether the world is still loading.
     pub loading: bool,
     /// Whether the SDK state cache is populated.
     pub valid: bool,
+}
+
+/// `world.getState.instance` (subset, SDK 2.1).
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct InstanceState {
+    /// Whether the current map is an instance.
+    pub in_instance: bool,
+    /// `none`, `party`, `raid`, `pvp` or `arena`.
+    #[serde(rename = "type")]
+    pub kind: String,
+    /// Localized map name.
+    pub map_name: String,
+    /// Difficulty starting at `1`.
+    pub difficulty: u32,
+    /// Maximum number of players; `0` outside instances.
+    pub max_players: u32,
+    /// Whether the raid difficulty can change inside.
+    pub dynamic: bool,
 }
 
 /// `unit.get` (subset).
@@ -94,8 +117,10 @@ pub struct GroupState {
     /// `party`, `raid` or `none`.
     #[serde(rename = "type")]
     pub kind: String,
-    /// Other members currently known to the client (the player is not included).
+    /// Other members in the list (the player is not included). Before SDK 2.1 only members in range.
     pub member_count: u32,
+    /// Group size including the player (SDK 2.1).
+    pub size: Option<u32>,
 }
 
 #[derive(Debug, Serialize)]
@@ -197,6 +222,29 @@ mod tests {
         let world: WorldState =
             serde_json::from_str(r#"{"mapId":571,"zoneName":"Dalaran","valid":true}"#)?;
         assert_eq!(world.zone_name, "Dalaran");
+        assert_eq!(world.map_area_id, 0);
+        assert_eq!(world.instance, None);
+        Ok(())
+    }
+
+    #[test]
+    fn reads_sdk_21_instance_and_group_size() -> Result<(), serde_json::Error> {
+        let world: WorldState = serde_json::from_str(
+            r#"{"mapId":631,"mapAreaId":605,"valid":true,
+                "instance":{"inInstance":true,"type":"raid","mapName":"Icecrown Citadel",
+                            "difficulty":3,"maxPlayers":10,"dynamic":true,"difficultyKey":"x"}}"#,
+        )?;
+        assert_eq!(world.map_area_id, 605);
+        let instance = world.instance.unwrap_or_default();
+        assert_eq!(instance.kind, "raid");
+        assert_eq!((instance.difficulty, instance.max_players), (3, 10));
+
+        let group: GroupState =
+            serde_json::from_str(r#"{"valid":true,"type":"raid","memberCount":24,"size":25}"#)?;
+        assert_eq!(group.size, Some(25));
+        let old: GroupState =
+            serde_json::from_str(r#"{"valid":true,"type":"party","memberCount":1}"#)?;
+        assert_eq!(old.size, None);
         Ok(())
     }
 }
