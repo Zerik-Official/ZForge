@@ -46,6 +46,16 @@ pub struct PresenceStrings {
     pub race_class: String,
     /// Zone with sub-zone; placeholders `{zone}`, `{subZone}`.
     pub zone_sub_zone: String,
+    /// Zone with the instance difficulty; placeholders `{zone}`, `{difficulty}`.
+    pub zone_difficulty: String,
+    /// Normal dungeon; placeholder `{players}`.
+    pub dungeon_normal: String,
+    /// Heroic dungeon; placeholder `{players}`.
+    pub dungeon_heroic: String,
+    /// Normal raid; placeholder `{players}`.
+    pub raid_normal: String,
+    /// Heroic raid; placeholder `{players}`.
+    pub raid_heroic: String,
     /// Race names by race id.
     pub races: BTreeMap<u32, String>,
     /// Class names by class id.
