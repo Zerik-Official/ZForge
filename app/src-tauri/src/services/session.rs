@@ -113,8 +113,47 @@ pub enum GroupKind {
 pub struct GroupInfo {
     /// Kind of group.
     pub kind: GroupKind,
-    /// Members including the player (only those the client has loaded).
+    /// Members including the player. Before SDK 2.1 only those the client has loaded.
     pub members: u32,
+}
+
+/// Kind of instance the character is in.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum InstanceKind {
+    /// Dungeon.
+    Party,
+    /// Raid.
+    Raid,
+    /// Battleground.
+    Pvp,
+    /// Arena.
+    Arena,
+}
+
+impl InstanceKind {
+    fn from_sdk(kind: &str) -> Option<Self> {
+        match kind {
+            "party" => Some(Self::Party),
+            "raid" => Some(Self::Raid),
+            "pvp" => Some(Self::Pvp),
+            "arena" => Some(Self::Arena),
+            _ => None,
+        }
+    }
+}
+
+/// The instance the character is in (SDK 2.1).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct InstanceInfo {
+    /// Kind of instance.
+    pub kind: InstanceKind,
+    /// Localized instance name.
+    pub name: String,
+    /// Difficulty starting at `1`.
+    pub difficulty: u32,
+    /// Maximum number of players.
+    pub max_players: u32,
 }
 
 /// Where the character is.
@@ -124,10 +163,14 @@ pub struct LocationInfo {
     pub map_id: u32,
     /// Zone id.
     pub zone_id: u32,
+    /// `WorldMapArea` id used for zone images (SDK 2.1).
+    pub map_area_id: Option<u32>,
     /// Localized zone name.
     pub zone: String,
     /// Localized sub-zone name.
     pub sub_zone: String,
+    /// Instance details when the character is inside one (SDK 2.1).
+    pub instance: Option<InstanceInfo>,
 }
 
 /// Character flags shown in Rich Presence.
@@ -558,11 +601,22 @@ impl GameSession {
                 && world.valid
                 && !world.loading
             {
+                let instance = world.instance.as_ref().and_then(|instance| {
+                    let kind = InstanceKind::from_sdk(&instance.kind)?;
+                    instance.in_instance.then(|| InstanceInfo {
+                        kind,
+                        name: instance.map_name.clone(),
+                        difficulty: instance.difficulty,
+                        max_players: instance.max_players,
+                    })
+                });
                 snapshot.location = Some(LocationInfo {
                     map_id: world.map_id,
                     zone_id: world.zone_id,
+                    map_area_id: (world.map_area_id != 0).then_some(world.map_area_id),
                     zone: world.zone_name.clone(),
                     sub_zone: world.sub_zone_name.clone(),
+                    instance,
                 });
             }
             if let Ok(group) = &group {
@@ -573,10 +627,10 @@ impl GameSession {
                 };
                 snapshot.group = Some(GroupInfo {
                     kind,
-                    members: if kind == GroupKind::Solo {
-                        1
-                    } else {
-                        group.member_count + 1
+                    members: match (kind, group.size) {
+                        (GroupKind::Solo, _) => 1,
+                        (_, Some(size)) if size > 0 => size,
+                        _ => group.member_count + 1,
                     },
                 });
             }
