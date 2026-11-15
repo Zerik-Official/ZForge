@@ -83,7 +83,8 @@
     "settings": {
       "tabs": {
         "general": "General",
-        "richPresence": "Rich Presence"
+        "richPresence": "Rich Presence",
+        "notifications": "Notifications"
       },
       "general": {
         "title": "General settings",
@@ -159,6 +160,53 @@
               "licenseAndCopyrightNotice": "License and copyright notice",
               "stateChanges": "State changes"
             }
+          }
+        }
+      },
+      "notifications": {
+        "title": "Windows notifications",
+        "description": "Get a Windows notification when something happens in the game while you are doing something else. Invitations, summons, Dungeon Finder groups, trades, duels and battlegrounds can be answered from the notification itself.",
+        "sdkRequired": {
+          "title": "Requires WoWControlSDK {version}",
+          "description": "Notifications use events added in WoWControlSDK {version}. Install or update the SDK in the Rich Presence tab and launch the game from ZForge."
+        },
+        "enable": "Show Windows notifications",
+        "enableDescription": "Only while a game launched from ZForge with the SDK is running.",
+        "onlyWhenUnfocused": "Only when the game is in the background",
+        "onlyWhenUnfocusedDescription": "Skip notifications while the game window is in the foreground.",
+        "kindsTitle": "Notify me about",
+        "kinds": {
+          "friends": {
+            "label": "Friends",
+            "description": "A friend connects or disconnects."
+          },
+          "whispers": {
+            "label": "Whispers",
+            "description": "Someone whispers to you."
+          },
+          "group_invites": {
+            "label": "Group invitations",
+            "description": "Accept or decline from the notification."
+          },
+          "summons": {
+            "label": "Summons",
+            "description": "Accept or decline a summon from the notification."
+          },
+          "dungeon_finder": {
+            "label": "Dungeon Finder",
+            "description": "Enter the dungeon or leave the queue from the notification."
+          },
+          "trades": {
+            "label": "Trades",
+            "description": "Accept or decline a trade request from the notification."
+          },
+          "duels": {
+            "label": "Duels",
+            "description": "Accept or decline a duel from the notification."
+          },
+          "battlegrounds": {
+            "label": "Battlegrounds and arenas",
+            "description": "Enter or leave the queue when a match is ready."
           }
         }
       }
@@ -343,6 +391,63 @@
       "8": "Mage",
       "9": "Warlock",
       "11": "Druid"
+    }
+  },
+  "notifications": {
+    "friendOnline": {
+      "title": "{name} is online",
+      "body": "Level {level} {class} · {zone}"
+    },
+    "friendOffline": {
+      "title": "{name} went offline",
+      "body": ""
+    },
+    "whisper": {
+      "title": "{name} whispers",
+      "body": "{text}"
+    },
+    "invite": {
+      "title": "Group invitation",
+      "body": "{name} invites you to a group"
+    },
+    "summon": {
+      "title": "Summon",
+      "body": "{name} wants to summon you to {zone}"
+    },
+    "proposal": {
+      "title": "Your group is ready",
+      "body": "{dungeon} · {role}"
+    },
+    "trade": {
+      "title": "Trade request",
+      "body": "{name} wants to trade with you"
+    },
+    "tradeOpened": {
+      "title": "Trade with {name}",
+      "body": "Bring the game to the front to review the items"
+    },
+    "duel": {
+      "title": "Duel",
+      "body": "{name} challenges you to a duel"
+    },
+    "battleground": {
+      "title": "{map} is ready",
+      "body": "Enter the battleground before the invitation expires"
+    },
+    "arena": {
+      "title": "Arena {size}v{size} is ready",
+      "body": "{map}"
+    },
+    "roles": {
+      "TANK": "Tank",
+      "HEALER": "Healer",
+      "DAMAGER": "Damage"
+    },
+    "buttons": {
+      "accept": "Accept",
+      "decline": "Decline",
+      "enter": "Enter",
+      "leaveQueue": "Leave queue"
     }
   }
 }
