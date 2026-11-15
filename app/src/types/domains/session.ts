@@ -26,11 +26,22 @@ export interface GroupInfo {
   members: number;
 }
 
+export type InstanceKind = "party" | "raid" | "pvp" | "arena";
+
+export interface InstanceInfo {
+  kind: InstanceKind;
+  name: string;
+  difficulty: number;
+  max_players: number;
+}
+
 export interface LocationInfo {
   map_id: number;
   zone_id: number;
+  map_area_id: number | null;
   zone: string;
   sub_zone: string;
+  instance: InstanceInfo | null;
 }
 
 export interface PlayerStatus {
