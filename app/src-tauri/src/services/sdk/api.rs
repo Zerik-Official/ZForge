@@ -4,9 +4,12 @@
 //! ignored and missing ones fall back to defaults, so newer SDK versions stay
 //! compatible.
 
+use std::time::Duration;
+
 use serde::{Deserialize, Serialize};
 
 use crate::error::{AppError, AppResult};
+use crate::services::credentials::Password;
 use crate::services::sdk::rpc::RpcClient;
 
 /// `client.getScreen`.
@@ -136,6 +139,60 @@ struct EventsParams<'a> {
 #[derive(Debug, Serialize)]
 struct IndexParams {
     index: u32,
+}
+
+/// `client.login` waits until the login server stops answering for 20 s (SDK
+/// 2.2.1+), then up to 5 s for the realm list and 15 s for the character
+/// selection screen.
+const LOGIN_TIMEOUT: Duration = Duration::from_secs(120);
+
+/// `client.enterWorld` waits up to 30 s for the world to load.
+const ENTER_WORLD_TIMEOUT: Duration = Duration::from_secs(45);
+
+/// A character on the selection screen (`client.getCharacters`).
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
+#[serde(default)]
+pub struct SdkCharacter {
+    /// Slot, starting at 0.
+    pub index: u32,
+    /// Character name.
+    pub name: String,
+    /// Level.
+    pub level: u32,
+    /// Race id.
+    pub race: u32,
+    /// Class id.
+    pub class: u32,
+    /// Gender id.
+    pub gender: u32,
+    /// Last known map id.
+    pub map: u32,
+    /// Last known zone id.
+    pub zone: u32,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(default)]
+struct CharacterList {
+    characters: Vec<SdkCharacter>,
+}
+
+/// Parameters of `client.login`; deliberately not `Debug` because it holds the password.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct LoginParams<'a> {
+    username: &'a str,
+    password: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    realm_list: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    realm_name: Option<&'a str>,
+}
+
+#[derive(Debug, Serialize)]
+struct EnterWorldParams<'a> {
+    name: &'a str,
+    wait: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -311,6 +368,74 @@ impl<'a> SdkApi<'a> {
         result.into_result(method)
     }
 
+    /// Log in from the login screen with `client.login`. With a realm the call
+    /// also selects it and returns on the character selection screen.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`AppError::SdkRpc`] with the SDK reason, for example
+    /// `incorrect password`, when the login fails.
+    pub async fn login(
+        &self,
+        username: &str,
+        password: &Password,
+        realm_list: Option<&str>,
+        realm_name: Option<&str>,
+    ) -> AppResult<()> {
+        const METHOD: &str = "client.login";
+        let params = LoginParams {
+            username,
+            password: password.expose(),
+            realm_list,
+            realm_name,
+        };
+        let result: ActionResult = self
+            .rpc
+            .call_with_timeout(METHOD, Some(params), LOGIN_TIMEOUT)
+            .await?;
+        result.into_result(METHOD)
+    }
+
+    /// Characters of the selected realm, read on the character selection screen.
+    ///
+    /// # Errors
+    ///
+    /// Fails when the SDK is unreachable or reports an error.
+    pub async fn characters(&self) -> AppResult<Vec<SdkCharacter>> {
+        let list: CharacterList = self.rpc.call("client.getCharacters").await?;
+        Ok(list.characters)
+    }
+
+    /// Enter the world with a character and wait until it is loaded.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`AppError::SdkRpc`] with the SDK reason, for example
+    /// `character not found`, when the character cannot enter the world.
+    pub async fn enter_world(&self, name: &str) -> AppResult<()> {
+        const METHOD: &str = "client.enterWorld";
+        let result: ActionResult = self
+            .rpc
+            .call_with_timeout(
+                METHOD,
+                Some(EnterWorldParams { name, wait: true }),
+                ENTER_WORLD_TIMEOUT,
+            )
+            .await?;
+        result.into_result(METHOD)
+    }
+
+    /// Show the game window, ending a hidden start.
+    ///
+    /// # Errors
+    ///
+    /// Fails when the SDK is unreachable or reports an error.
+    pub async fn show_window(&self) -> AppResult<()> {
+        const METHOD: &str = "window.show";
+        let result: ActionResult = self.rpc.call(METHOD).await?;
+        result.into_result(METHOD)
+    }
+
     /// Answer a whisper with `chat.reply` (SDK 2.2+), like pressing R in the
     /// game. Without `line_id` the last whisper received is answered.
     ///
@@ -346,6 +471,29 @@ mod tests {
         assert_eq!(world.zone_name, "Dalaran");
         assert_eq!(world.map_area_id, 0);
         assert_eq!(world.instance, None);
+        Ok(())
+    }
+
+    #[test]
+    fn reads_characters_and_serializes_the_login() -> Result<(), serde_json::Error> {
+        let list: CharacterList = serde_json::from_str(
+            r#"{"count":1,"characters":[{"index":0,"name":"Jaina","level":80,"race":1,"class":8,"gender":1,"map":571,"zone":4395}]}"#,
+        )?;
+        assert_eq!(list.characters.len(), 1);
+        assert_eq!(list.characters[0].name, "Jaina");
+        assert_eq!(list.characters[0].class, 8);
+
+        let password = Password::new("secret".to_owned());
+        let params = LoginParams {
+            username: "player",
+            password: password.expose(),
+            realm_list: None,
+            realm_name: Some("Alpha"),
+        };
+        assert_eq!(
+            serde_json::to_string(&params)?,
+            r#"{"username":"player","password":"secret","realmName":"Alpha"}"#
+        );
         Ok(())
     }
 
