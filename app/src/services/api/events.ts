@@ -8,6 +8,7 @@ const EVENTS = {
   bootProgress: "boot://progress",
   sdkDownloadProgress: "sdk://download-progress",
   sessionChanged: "session://changed",
+  accountsChanged: "accounts://changed",
 } as const;
 
 export function onBootProgress(handler: (step: BootProgress) => void): Promise<UnlistenFn> {
@@ -20,6 +21,10 @@ export function onSdkDownloadProgress(handler: (progress: SdkDownloadProgress) =
 
 export function onSessionChanged(handler: (session: SessionSnapshot) => void): Promise<UnlistenFn> {
   return listen<SessionSnapshot>(EVENTS.sessionChanged, (event) => handler(event.payload));
+}
+
+export function onAccountsChanged(handler: () => void): Promise<UnlistenFn> {
+  return listen(EVENTS.accountsChanged, () => handler());
 }
 
 /**
