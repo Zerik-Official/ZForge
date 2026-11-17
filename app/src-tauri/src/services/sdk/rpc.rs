@@ -104,6 +104,22 @@ impl RpcClient {
         method: &str,
         params: Option<P>,
     ) -> AppResult<R> {
+        self.call_with_timeout(method, params, RESPONSE_TIMEOUT)
+            .await
+    }
+
+    /// Call a method that may take longer than usual to answer, such as
+    /// `client.login`, and decode its `result`.
+    ///
+    /// # Errors
+    ///
+    /// See [`RpcClient::call_with`].
+    pub async fn call_with_timeout<P: Serialize, R: DeserializeOwned>(
+        &self,
+        method: &str,
+        params: Option<P>,
+        response_timeout: Duration,
+    ) -> AppResult<R> {
         let token = self.token()?;
         let request = serde_json::to_vec(&Request {
             jsonrpc: "2.0",
@@ -121,7 +137,7 @@ impl RpcClient {
 
         let mut client = pipe::open(COMMAND_PIPE, PipeAccess::ReadWrite, CONNECT_TIMEOUT).await?;
         client.write_all(&request).await?;
-        let raw = timeout(RESPONSE_TIMEOUT, read_message(&mut client))
+        let raw = timeout(response_timeout, read_message(&mut client))
             .await
             .map_err(|_| AppError::SdkRpc {
                 method: method.to_owned(),
