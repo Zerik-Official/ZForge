@@ -43,6 +43,42 @@ const MIGRATIONS: &[&str] = &[
         PRIMARY KEY (realmlist, name)
     );
     ",
+    // v2: game accounts, their characters and the launch choice of each game.
+    "
+    CREATE TABLE accounts (
+        id                TEXT    PRIMARY KEY,
+        realmlist         TEXT    NOT NULL,
+        username          TEXT    NOT NULL,
+        label             TEXT    NOT NULL,
+        default_realm     TEXT    NOT NULL,
+        default_character TEXT    NOT NULL,
+        created_at        INTEGER NOT NULL,
+        UNIQUE (realmlist, username)
+    );
+
+    CREATE TABLE characters (
+        account_id TEXT    NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+        realm      TEXT    NOT NULL,
+        name       TEXT    NOT NULL,
+        slot       INTEGER NOT NULL,
+        level      INTEGER NOT NULL,
+        race_id    INTEGER NOT NULL,
+        class_id   INTEGER NOT NULL,
+        gender     INTEGER NOT NULL,
+        map_id     INTEGER NOT NULL,
+        zone_id    INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        PRIMARY KEY (account_id, realm, name)
+    );
+
+    CREATE TABLE launch_choices (
+        game_id    TEXT    PRIMARY KEY REFERENCES games(id) ON DELETE CASCADE,
+        account_id TEXT    REFERENCES accounts(id) ON DELETE SET NULL,
+        realm      TEXT    NOT NULL,
+        character  TEXT    NOT NULL,
+        headless   INTEGER NOT NULL
+    );
+    ",
 ];
 
 /// Apply every migration newer than the database's current version.
