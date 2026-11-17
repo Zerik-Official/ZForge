@@ -27,6 +27,8 @@ pub struct WhisperEvent {
     pub text: String,
     /// Whether it is a Battle.net whisper.
     pub battle_net: bool,
+    /// Chat line id, used to answer this whisper with `chat.reply`; `0` when unknown.
+    pub line_id: u64,
 }
 
 /// A group invitation from `group.inviteReceived`.
@@ -188,6 +190,19 @@ mod tests {
                 level: 80,
                 class_name: "Mage".to_owned(),
                 area_name: "Dalaran".to_owned(),
+            }))
+        );
+
+        let whisper = serde_json::from_str(
+            r#"{"author":"Thrall","text":"hola","battleNet":false,"lineId":42,"guid":"0x1","args":[]}"#,
+        )?;
+        assert_eq!(
+            SocialEvent::parse("chat.whisperReceived", &whisper),
+            Some(SocialEvent::Whisper(WhisperEvent {
+                author: "Thrall".to_owned(),
+                text: "hola".to_owned(),
+                battle_net: false,
+                line_id: 42,
             }))
         );
 
