@@ -32,6 +32,11 @@
   padding: 9px 12px;
 }
 
+.field-input::-ms-reveal,
+.field-input::-ms-clear {
+  display: none;
+}
+
 .ghost-btn {
   background: var(--bg-elevated);
   border: 1px solid var(--border-strong);
