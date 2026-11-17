@@ -83,4 +83,6 @@ export interface SessionSnapshot {
   group: GroupInfo | null;
   sdk_connected: boolean;
   last_error: string | null;
+  /** Why the automatic login or entering the world failed, while the game runs. */
+  login_error: string | null;
 }
