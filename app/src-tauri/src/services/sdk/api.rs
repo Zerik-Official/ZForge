@@ -138,11 +138,31 @@ struct IndexParams {
     index: u32,
 }
 
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ReplyParams<'a> {
+    text: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    line_id: Option<u64>,
+}
+
 /// Result of an SDK action: `{"ok": true}` or `{"error": "..."}`.
 #[derive(Debug, Default, Deserialize)]
 #[serde(default)]
 struct ActionResult {
     error: Option<String>,
+}
+
+impl ActionResult {
+    fn into_result(self, method: &str) -> AppResult<()> {
+        match self.error {
+            Some(message) => Err(AppError::SdkRpc {
+                method: method.to_owned(),
+                message,
+            }),
+            None => Ok(()),
+        }
+    }
 }
 
 /// A native answer the launcher can give in the game's place (SDK 2.1+).
@@ -288,13 +308,23 @@ impl<'a> SdkApi<'a> {
             }
             _ => self.rpc.call(method).await?,
         };
-        match result.error {
-            Some(message) => Err(AppError::SdkRpc {
-                method: method.to_owned(),
-                message,
-            }),
-            None => Ok(()),
-        }
+        result.into_result(method)
+    }
+
+    /// Answer a whisper with `chat.reply` (SDK 2.2+), like pressing R in the
+    /// game. Without `line_id` the last whisper received is answered.
+    ///
+    /// # Errors
+    ///
+    /// Fails when the SDK is unreachable or refuses the message, for example
+    /// when the text is too long or the player is not in the world.
+    pub async fn reply_whisper(&self, line_id: Option<u64>, text: &str) -> AppResult<()> {
+        const METHOD: &str = "chat.reply";
+        let result: ActionResult = self
+            .rpc
+            .call_with(METHOD, Some(ReplyParams { text, line_id }))
+            .await?;
+        result.into_result(METHOD)
     }
 }
 

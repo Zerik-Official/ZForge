@@ -35,4 +35,6 @@ export interface NotificationStrings {
   decline: string;
   enter: string;
   leaveQueue: string;
+  reply: string;
+  replyPlaceholder: string;
 }

@@ -447,7 +447,9 @@
       "accept": "Aceptar",
       "decline": "Rechazar",
       "enter": "Entrar",
-      "leaveQueue": "Abandonar cola"
-    }
+      "leaveQueue": "Abandonar cola",
+      "reply": "Responder"
+    },
+    "replyPlaceholder": "Escribe una respuesta"
   }
 }

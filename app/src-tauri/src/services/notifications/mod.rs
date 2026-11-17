@@ -3,21 +3,23 @@
 //! A tokio task listens to the social events of the [`GameSession`] and turns
 //! the ones the user enabled into Windows toasts. Toasts that need an answer
 //! (group invitations, summons, Dungeon Finder, trades, duels, battlegrounds)
-//! carry buttons; pressing one sends the matching native action to the SDK,
-//! and clicking the toast itself brings the game to the foreground.
+//! carry buttons; pressing one sends the matching native action to the SDK.
+//! Whisper toasts carry a text box to answer with `chat.reply` (SDK 2.2+).
+//! Clicking the toast itself brings the game to the foreground.
 
 pub mod focus;
 pub mod strings;
+pub mod toast;
 
 use std::time::{Duration, Instant};
 
 use tauri::{AppHandle, Manager, Runtime};
-use tauri_winrt_notification::{Scenario, Toast};
 use tokio::sync::broadcast::error::RecvError;
 use tokio::sync::{mpsc, watch};
 
 use crate::domain::app_config::NotificationSettings;
 use crate::services::notifications::strings::{NotificationStrings, NotificationText};
+use crate::services::notifications::toast::{Activation, POWERSHELL_APP_ID, Toast, ToastButton};
 use crate::services::presence::strings::fill;
 use crate::services::sdk::api::GameAction;
 use crate::services::sdk::social::SocialEvent;
@@ -30,6 +32,9 @@ const MAX_WHISPER_CHARS: usize = 200;
 /// which was already notified.
 const TRADE_REQUEST_WINDOW: Duration = Duration::from_secs(60);
 
+/// Arguments of the button that sends a whisper reply.
+const REPLY_ARGUMENTS: &str = "chat.reply";
+
 /// A toast ready to be shown.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ToastSpec {
@@ -39,6 +44,28 @@ pub struct ToastSpec {
     pub body: String,
     /// Buttons with the action each one performs.
     pub buttons: Vec<(String, GameAction)>,
+    /// Text box to answer a whisper.
+    pub reply: Option<WhisperReply>,
+}
+
+/// A text box and button that answer a whisper with `chat.reply`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct WhisperReply {
+    /// Chat line of the whisper; `None` answers the last whisper received.
+    pub line_id: Option<u64>,
+    /// Placeholder of the text box.
+    pub placeholder: String,
+    /// Label of the send button.
+    pub button: String,
+}
+
+/// What the user asked for from a toast.
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum ToastAnswer {
+    /// A native action, or bringing the game to the foreground.
+    Action(GameAction),
+    /// Answer a whisper with this text.
+    Reply { line_id: Option<u64>, text: String },
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -67,16 +94,25 @@ impl NotificationService {
             return service;
         };
         let mut events = session.subscribe_social();
-        let (actions, mut pending_actions) = mpsc::unbounded_channel::<GameAction>();
+        let (answers, mut pending_answers) = mpsc::unbounded_channel::<ToastAnswer>();
 
-        let action_app = app.clone();
+        let answer_app = app.clone();
         tauri::async_runtime::spawn(async move {
-            while let Some(action) = pending_actions.recv().await {
-                let Some(session) = action_app.try_state::<GameSession>() else {
+            while let Some(answer) = pending_answers.recv().await {
+                let Some(session) = answer_app.try_state::<GameSession>() else {
                     break;
                 };
-                if let Err(error) = session.api().perform(action).await {
-                    tracing::warn!(%error, method = action.method(), "Notification action failed");
+                match answer {
+                    ToastAnswer::Action(action) => {
+                        if let Err(error) = session.api().perform(action).await {
+                            tracing::warn!(%error, method = action.method(), "Notification action failed");
+                        }
+                    }
+                    ToastAnswer::Reply { line_id, text } => {
+                        if let Err(error) = session.api().reply_whisper(line_id, &text).await {
+                            tracing::warn!(%error, "Whisper reply failed");
+                        }
+                    }
                 }
             }
         });
@@ -114,8 +150,8 @@ impl NotificationService {
                     continue;
                 }
                 let app_id = app_id.clone();
-                let actions = actions.clone();
-                tauri::async_runtime::spawn_blocking(move || show(&spec, &app_id, actions));
+                let answers = answers.clone();
+                tauri::async_runtime::spawn_blocking(move || show(&spec, &app_id, answers));
             }
         });
         service
@@ -144,7 +180,7 @@ impl NotificationService {
 /// with Windows, so they borrow PowerShell's id to be able to show toasts.
 fn app_id<R: Runtime>(app: &AppHandle<R>) -> String {
     if cfg!(debug_assertions) {
-        Toast::POWERSHELL_APP_ID.to_owned()
+        POWERSHELL_APP_ID.to_owned()
     } else {
         app.config().identifier.clone()
     }
@@ -156,27 +192,52 @@ fn game_in_foreground<R: Runtime>(app: &AppHandle<R>) -> bool {
         .is_some_and(focus::is_process_foreground)
 }
 
-fn show(spec: &ToastSpec, app_id: &str, actions: mpsc::UnboundedSender<GameAction>) {
-    let mut toast = Toast::new(app_id).title(&spec.title).text1(&spec.body);
-    if !spec.buttons.is_empty() {
-        toast = toast.scenario(Scenario::Reminder);
+fn show(spec: &ToastSpec, app_id: &str, answers: mpsc::UnboundedSender<ToastAnswer>) {
+    let mut buttons: Vec<ToastButton> = Vec::new();
+    if let Some(reply) = &spec.reply {
+        buttons.push(ToastButton {
+            label: reply.button.clone(),
+            arguments: REPLY_ARGUMENTS.to_owned(),
+            uses_input: true,
+        });
     }
-    for (label, action) in &spec.buttons {
-        toast = toast.add_button(label, &action_id(*action));
-    }
-    toast = toast.on_activated(move |argument| {
-        let action = argument
-            .as_deref()
-            .and_then(parse_action_id)
-            .unwrap_or(GameAction::FocusWindow);
-        if actions.send(action).is_err() {
-            tracing::debug!("Notification action dropped: the launcher is closing");
+    buttons.extend(spec.buttons.iter().map(|(label, action)| ToastButton {
+        label: label.clone(),
+        arguments: action_id(*action),
+        uses_input: false,
+    }));
+    let toast = Toast {
+        title: spec.title.clone(),
+        body: spec.body.clone(),
+        reminder: !spec.buttons.is_empty(),
+        input_placeholder: spec.reply.as_ref().map(|reply| reply.placeholder.clone()),
+        buttons,
+    };
+    let line_id = spec.reply.as_ref().and_then(|reply| reply.line_id);
+    let result = toast.show(app_id, move |activation| {
+        let Some(answer) = answer_for(&activation, line_id) else {
+            return;
+        };
+        if answers.send(answer).is_err() {
+            tracing::debug!("Notification answer dropped: the launcher is closing");
         }
-        Ok(())
     });
-    if let Err(error) = toast.show() {
+    if let Err(error) = result {
         tracing::warn!(%error, "Could not show a Windows notification");
     }
+}
+
+/// What a click on a toast asks for; `None` for a reply sent without text.
+fn answer_for(activation: &Activation, line_id: Option<u64>) -> Option<ToastAnswer> {
+    if activation.arguments == REPLY_ARGUMENTS {
+        let text = activation.input.as_deref().unwrap_or_default().trim();
+        return (!text.is_empty()).then(|| ToastAnswer::Reply {
+            line_id,
+            text: text.to_owned(),
+        });
+    }
+    let action = parse_action_id(&activation.arguments).unwrap_or(GameAction::FocusWindow);
+    Some(ToastAnswer::Action(action))
 }
 
 /// Argument attached to a toast button.
@@ -252,6 +313,7 @@ pub fn build(
             (strings.decline.clone(), decline),
         ]
     };
+    let mut reply: Option<WhisperReply> = None;
     let (texts, buttons) = match event {
         SocialEvent::FriendOnline(friend) if settings.friends => {
             let level = friend.level.to_string();
@@ -269,16 +331,21 @@ pub fn build(
         ),
         SocialEvent::Whisper(whisper) if settings.whispers => {
             let message = shorten(&whisper.text, MAX_WHISPER_CHARS);
-            (
-                text(
-                    &strings.whisper,
-                    &[
-                        ("name", whisper.author.as_str()),
-                        ("text", message.as_str()),
-                    ],
-                )?,
-                Vec::new(),
-            )
+            let texts = text(
+                &strings.whisper,
+                &[
+                    ("name", whisper.author.as_str()),
+                    ("text", message.as_str()),
+                ],
+            )?;
+            if !strings.reply.trim().is_empty() {
+                reply = Some(WhisperReply {
+                    line_id: (whisper.line_id != 0).then_some(whisper.line_id),
+                    placeholder: strings.reply_placeholder.clone(),
+                    button: strings.reply.clone(),
+                });
+            }
+            (texts, Vec::new())
         }
         SocialEvent::InviteReceived(invite) if settings.group_invites => (
             text(&strings.invite, &[("name", invite.inviter_name.as_str())])?,
@@ -357,6 +424,7 @@ pub fn build(
             .into_iter()
             .filter(|(label, _)| !label.trim().is_empty())
             .collect(),
+        reply,
     })
 }
 
@@ -383,6 +451,8 @@ mod tests {
             decline: "Rechazar".to_owned(),
             enter: "Entrar".to_owned(),
             leave_queue: "Abandonar cola".to_owned(),
+            reply: "Responder".to_owned(),
+            reply_placeholder: "Escribe una respuesta".to_owned(),
             ..NotificationStrings::default()
         }
     }
@@ -408,6 +478,7 @@ mod tests {
                     ("Aceptar".to_owned(), GameAction::AcceptInvite),
                     ("Rechazar".to_owned(), GameAction::DeclineInvite),
                 ],
+                reply: None,
             })
         );
 
@@ -434,6 +505,7 @@ mod tests {
             author: "Arthas".to_owned(),
             text: "x".repeat(300),
             battle_net: false,
+            line_id: 0,
         });
         assert_eq!(
             build(&whisper, &NotificationSettings::default(), &strings()),
@@ -478,6 +550,57 @@ mod tests {
                 "Comercio con Thrall".to_owned(),
                 vec![("Rechazar".to_owned(), GameAction::CancelTrade)]
             ))
+        );
+    }
+
+    #[test]
+    fn whispers_offer_a_reply_box() {
+        let whisper = SocialEvent::Whisper(WhisperEvent {
+            author: "Jaina".to_owned(),
+            text: "¿Vienes?".to_owned(),
+            battle_net: false,
+            line_id: 7,
+        });
+        let reply = build(&whisper, &enabled(), &strings()).and_then(|toast| toast.reply);
+        assert_eq!(
+            reply,
+            Some(WhisperReply {
+                line_id: Some(7),
+                placeholder: "Escribe una respuesta".to_owned(),
+                button: "Responder".to_owned(),
+            })
+        );
+
+        let untranslated = NotificationStrings {
+            reply: String::new(),
+            ..strings()
+        };
+        let toast = build(&whisper, &enabled(), &untranslated);
+        assert_eq!(toast.map(|toast| toast.reply), Some(None));
+    }
+
+    #[test]
+    fn turns_clicks_into_answers() {
+        let click = |arguments: &str, input: Option<&str>| Activation {
+            arguments: arguments.to_owned(),
+            input: input.map(str::to_owned),
+        };
+        assert_eq!(
+            answer_for(&click(REPLY_ARGUMENTS, Some("  ya voy ")), Some(3)),
+            Some(ToastAnswer::Reply {
+                line_id: Some(3),
+                text: "ya voy".to_owned(),
+            })
+        );
+        assert_eq!(answer_for(&click(REPLY_ARGUMENTS, Some("  ")), None), None);
+        assert_eq!(answer_for(&click(REPLY_ARGUMENTS, None), None), None);
+        assert_eq!(
+            answer_for(&click("summon.accept", None), None),
+            Some(ToastAnswer::Action(GameAction::AcceptSummon))
+        );
+        assert_eq!(
+            answer_for(&click("", None), None),
+            Some(ToastAnswer::Action(GameAction::FocusWindow))
         );
     }
 
