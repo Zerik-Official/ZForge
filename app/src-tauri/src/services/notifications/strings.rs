@@ -54,6 +54,10 @@ pub struct NotificationStrings {
     pub enter: String,
     /// "Leave queue" button.
     pub leave_queue: String,
+    /// "Reply" button of whisper toasts; empty hides the reply box.
+    pub reply: String,
+    /// Placeholder of the whisper reply box.
+    pub reply_placeholder: String,
 }
 
 #[cfg(test)]
