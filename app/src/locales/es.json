@@ -49,7 +49,12 @@
         "sdk_rpc": "El SDK rechazó una petición.",
         "sdk_injection_failed": "No se pudo iniciar el juego con el SDK.",
         "game_already_running": "El juego ya está en ejecución.",
-        "sdk_unauthorized": "El SDK rechazó el token de sesión del launcher."
+        "sdk_unauthorized": "El SDK rechazó el token de sesión del launcher.",
+        "credential": "Windows no pudo guardar o leer la contraseña de la cuenta.",
+        "password_missing": "Esta cuenta no tiene contraseña guardada. Edítala para añadirla.",
+        "account_requires_sdk": "Lanzar con una cuenta o en segundo plano requiere el SDK 2.2 o posterior.",
+        "account_exists": "Ese servidor ya tiene una cuenta con este nombre de usuario.",
+        "account_invalid": "Una cuenta necesita servidor y nombre de usuario."
       }
     },
     "configConflict": {
@@ -84,7 +89,8 @@
       "tabs": {
         "general": "General",
         "richPresence": "Rich Presence",
-        "notifications": "Notificaciones"
+        "notifications": "Notificaciones",
+        "accounts": "Cuentas"
       },
       "general": {
         "title": "Ajustes generales",
@@ -182,7 +188,7 @@
           },
           "whispers": {
             "label": "Susurros",
-            "description": "Alguien te susurra."
+            "description": "Alguien te susurra. Puedes responder desde la notificación."
           },
           "group_invites": {
             "label": "Invitaciones a grupo",
@@ -208,6 +214,37 @@
             "label": "Campos de batalla y arenas",
             "description": "Entra o abandona la cola cuando la partida está lista."
           }
+        }
+      },
+      "accounts": {
+        "title": "Cuentas de juego",
+        "description": "Guarda tus cuentas de cada servidor para iniciar sesión, elegir el reino y entrar al mundo con un personaje directamente desde el launcher. Las contraseñas se guardan en el Administrador de credenciales de Windows, nunca en la base de datos del launcher. Los personajes se guardan cada vez que entras con una cuenta.",
+        "add": "Añadir cuenta",
+        "edit": "Editar cuenta",
+        "passwordNote": "La contraseña se guarda en el Administrador de credenciales de Windows",
+        "server": "Servidor (realmlist)",
+        "serverPlaceholder": "logon.servidor.com",
+        "username": "Usuario",
+        "password": "Contraseña",
+        "passwordKeep": "Déjala vacía para conservar la guardada",
+        "showPassword": "Mostrar contraseña",
+        "hidePassword": "Ocultar contraseña",
+        "label": "Nombre a mostrar",
+        "labelPlaceholder": "Opcional, por ejemplo Principal",
+        "defaultRealm": "Reino por defecto",
+        "defaultRealmPlaceholder": "El guardado en la configuración del juego",
+        "defaultCharacter": "Personaje por defecto",
+        "defaultCharacterPlaceholder": "Quedarse en la selección de personaje",
+        "level": "Nivel {level}",
+        "noDefaultRealm": "Sin reino por defecto",
+        "noPassword": "Sin contraseña",
+        "noCharacters": "Los personajes aparecen aquí después de entrar con esta cuenta desde el launcher.",
+        "empty": "Todavía no has añadido ninguna cuenta.",
+        "confirmDelete": "¿Eliminar esta cuenta?",
+        "confirmDeleteDescription": "Se eliminarán \"{name}\" y sus personajes guardados, y su contraseña se borrará del Administrador de credenciales de Windows.",
+        "sdkRequired": {
+          "title": "Requiere el SDK",
+          "description": "Iniciar sesión con una cuenta y lanzar el juego en segundo plano requieren el SDK {version} o posterior. Instálalo o actualízalo en la pestaña Rich Presence."
         }
       }
     }
@@ -343,6 +380,37 @@
       "login": "En el login",
       "character_select": "Eligiendo personaje",
       "in_world": "Jugando"
+    },
+    "loginErrors": {
+      "not_on_login_screen": "El juego no llegó a la pantalla de inicio de sesión.",
+      "username_and_password_required": "La cuenta no tiene usuario o contraseña.",
+      "login_failed": "No se pudo iniciar sesión.",
+      "server_down": "El servidor de inicio de sesión no está disponible.",
+      "unknown_account": "La cuenta no existe en este servidor.",
+      "incorrect_password": "Contraseña incorrecta.",
+      "disconnected": "Se perdió la conexión con el servidor.",
+      "parental_control": "El control parental bloquea esta cuenta.",
+      "chargeback": "La cuenta tiene un contracargo.",
+      "conversion_required": "La cuenta debe convertirse.",
+      "account_banned": "La cuenta está baneada.",
+      "account_suspended": "La cuenta está suspendida.",
+      "account_locked": "La cuenta está bloqueada.",
+      "game_account_locked": "La cuenta de juego está bloqueada.",
+      "unlockable_lock": "La cuenta tiene un bloqueo.",
+      "already_online": "La cuenta ya está conectada.",
+      "bad_version": "El servidor no acepta esta versión del cliente.",
+      "no_time_remaining": "La cuenta no tiene tiempo de juego.",
+      "database_busy": "La base de datos de inicio de sesión está ocupada. Inténtalo de nuevo.",
+      "trial_expired": "El periodo de prueba ha caducado.",
+      "account_converted": "La cuenta fue convertida.",
+      "login_timeout": "El servidor no respondió al inicio de sesión.",
+      "realm_list_timeout": "La lista de reinos no se cargó.",
+      "realm_select_timeout": "No se pudo seleccionar el reino. Revisa su nombre.",
+      "not_on_character_select_screen": "El juego no está en la selección de personaje.",
+      "character_not_found": "Ese personaje no existe en el reino.",
+      "enter_world_timeout": "El mundo tardó demasiado en cargar.",
+      "sdk_unavailable": "El SDK no respondió durante el inicio de sesión.",
+      "unknown_error": "El inicio de sesión automático falló."
     }
   },
   "presence": {
@@ -451,5 +519,20 @@
       "reply": "Responder"
     },
     "replyPlaceholder": "Escribe una respuesta"
+  },
+  "home": {
+    "launch": {
+      "account": "Cuenta",
+      "noAccount": "Sin cuenta",
+      "noAccounts": "Añade cuentas en Ajustes del launcher → Cuentas para iniciar sesión y entrar al mundo automáticamente.",
+      "noAccountDescription": "El juego se abre en la pantalla de inicio de sesión, como siempre.",
+      "realm": "Reino",
+      "realmPlaceholder": "El guardado en la configuración del juego",
+      "character": "Personaje",
+      "stayInCharacterSelect": "Quedarse en la selección de personaje",
+      "characterSelectShort": "Selección de personaje",
+      "headless": "Iniciar en segundo plano",
+      "headlessDescription": "La ventana del juego permanece oculta hasta que el personaje está en el mundo. Se recomienda el modo ventana."
+    }
   }
 }
