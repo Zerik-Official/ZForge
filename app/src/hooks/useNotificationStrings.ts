@@ -32,6 +32,8 @@ function buildStrings(): NotificationStrings {
     decline: t("notifications.buttons.decline"),
     enter: t("notifications.buttons.enter"),
     leaveQueue: t("notifications.buttons.leaveQueue"),
+    reply: t("notifications.buttons.reply"),
+    replyPlaceholder: t("notifications.replyPlaceholder"),
   };
 }
 
