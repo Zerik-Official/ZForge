@@ -387,6 +387,7 @@
     },
     "loginErrors": {
       "not_on_login_screen": "The game did not reach the login screen.",
+      "login_screen_not_ready": "The game did not accept the login in time. Try again.",
       "username_and_password_required": "The account has no login name or password.",
       "login_failed": "Could not log in.",
       "server_down": "The login server is offline.",

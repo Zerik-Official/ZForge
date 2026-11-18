@@ -146,8 +146,10 @@ struct IndexParams {
 /// selection screen.
 const LOGIN_TIMEOUT: Duration = Duration::from_secs(120);
 
-/// `client.enterWorld` waits up to 30 s for the world to load.
-const ENTER_WORLD_TIMEOUT: Duration = Duration::from_secs(45);
+/// `client.enterWorld` waits up to 30 s for the world to load and, since SDK
+/// 2.2.1, enters again up to two more times when the client returns to the
+/// character list.
+const ENTER_WORLD_TIMEOUT: Duration = Duration::from_secs(120);
 
 /// A character on the selection screen (`client.getCharacters`).
 #[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]

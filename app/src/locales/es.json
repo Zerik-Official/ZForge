@@ -387,6 +387,7 @@
     },
     "loginErrors": {
       "not_on_login_screen": "El juego no llegó a la pantalla de inicio de sesión.",
+      "login_screen_not_ready": "El juego no aceptó el inicio de sesión a tiempo. Inténtalo de nuevo.",
       "username_and_password_required": "La cuenta no tiene usuario o contraseña.",
       "login_failed": "No se pudo iniciar sesión.",
       "server_down": "El servidor de inicio de sesión no está disponible.",
