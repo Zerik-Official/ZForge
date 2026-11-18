@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { SdkRequirement } from "@/components/sdk/SdkRequirement";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Combobox, type ComboboxOption } from "@/components/ui/Combobox";
 import { Select, type SelectOption } from "@/components/ui/Select";
 import { accountName, accountRealms } from "@/hooks/useAccounts";
 import { t } from "@/locales/i18n";
 import type { AccountSummary, LaunchChoice } from "@/types/domains/accounts";
+import type { FeatureStatus } from "@/types/domains/capabilities";
 
 const NO_ACCOUNT = "";
 const STAY_IN_CHARACTER_SELECT = "";
@@ -13,6 +15,10 @@ interface LaunchSelectorProps {
   accounts: AccountSummary[];
   choice: LaunchChoice;
   onChange: (choice: LaunchChoice) => void;
+  /** Whether the installed SDK can log in automatically. */
+  accountsFeature: FeatureStatus | null;
+  /** Whether the installed SDK can start the game in the background. */
+  hiddenStartFeature: FeatureStatus | null;
   disabled?: boolean;
 }
 
@@ -20,7 +26,14 @@ interface LaunchSelectorProps {
  * Popover next to the Play button to start the game with an account, realm
  * and character, optionally hidden until the character is in the world.
  */
-export function LaunchSelector({ accounts, choice, onChange, disabled = false }: LaunchSelectorProps) {
+export function LaunchSelector({
+  accounts,
+  choice,
+  onChange,
+  accountsFeature,
+  hiddenStartFeature,
+  disabled = false,
+}: LaunchSelectorProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -93,10 +106,14 @@ export function LaunchSelector({ accounts, choice, onChange, disabled = false }:
 
       {open ? (
         <div className="absolute bottom-full right-0 mb-3 flex w-80 flex-col gap-3 rounded-2xl border border-(--border-strong) bg-(--bg-elevated) p-4 shadow-2xl">
-          <div className="flex flex-col gap-1.5">
-            <label className="field-label">{t("home.launch.account")}</label>
-            <Select value={account?.id ?? NO_ACCOUNT} options={accountOptions} onChange={selectAccount} />
-          </div>
+          {accountsFeature?.available === false ? (
+            <SdkRequirement status={accountsFeature} />
+          ) : (
+            <div className="flex flex-col gap-1.5">
+              <label className="field-label">{t("home.launch.account")}</label>
+              <Select value={account?.id ?? NO_ACCOUNT} options={accountOptions} onChange={selectAccount} />
+            </div>
+          )}
 
           {account ? (
             <>
@@ -117,15 +134,18 @@ export function LaunchSelector({ accounts, choice, onChange, disabled = false }:
                   onChange={(character) => onChange({ ...choice, character, headless: character !== "" && choice.headless })}
                 />
               </div>
-              <Checkbox
-                checked={choice.headless}
-                onChange={(headless) => onChange({ ...choice, headless })}
-                label={t("home.launch.headless")}
-                description={t("home.launch.headlessDescription")}
-                disabled={choice.character === ""}
-              />
+              <div className="flex items-start gap-2">
+                <Checkbox
+                  checked={choice.headless}
+                  onChange={(headless) => onChange({ ...choice, headless })}
+                  label={t("home.launch.headless")}
+                  description={t("home.launch.headlessDescription")}
+                  disabled={choice.character === "" || hiddenStartFeature?.available === false}
+                />
+                <SdkRequirement status={hiddenStartFeature} variant="badge" />
+              </div>
             </>
-          ) : (
+          ) : accountsFeature?.available === false ? null : (
             <span className="text-[11px] leading-relaxed text-(--muted)">
               {accounts.length === 0 ? t("home.launch.noAccounts") : t("home.launch.noAccountDescription")}
             </span>
