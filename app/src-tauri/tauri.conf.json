@@ -27,7 +27,7 @@
       "csp": null,
       "assetProtocol": {
         "enable": true,
-        "scope": ["$APPDATA/assets/custom/**"]
+        "scope": ["$APPDATA/assets/custom/**", "$APPDATA/themes/**"]
       }
     }
   },
