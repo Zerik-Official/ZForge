@@ -15,3 +15,4 @@ pub mod servers;
 pub mod session;
 pub mod settings;
 pub mod system;
+pub mod themes;
