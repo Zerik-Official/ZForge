@@ -51,6 +51,7 @@ const CHARACTER_LIST_RETRY: Duration = Duration::from_millis(400);
 /// Login and character errors reported by the SDK that the frontend translates.
 const LOGIN_ERROR_CODES: &[&str] = &[
     "not_on_login_screen",
+    "login_screen_not_ready",
     "username_and_password_required",
     "login_failed",
     "server_down",
