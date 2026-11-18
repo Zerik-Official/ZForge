@@ -3,6 +3,8 @@
 use serde::ser::SerializeStruct;
 use serde::{Serialize, Serializer};
 
+use crate::domain::theme::ThemeError;
+
 /// Convenience alias for results that fail with [`AppError`].
 pub type AppResult<T> = Result<T, AppError>;
 
@@ -113,6 +115,10 @@ pub enum AppError {
     #[error("no password is stored for account {0}")]
     PasswordMissing(String),
 
+    /// A theme folder or archive cannot be used.
+    #[error("invalid theme: {0}")]
+    ThemeInvalid(ThemeError),
+
     /// An account needs a server and a login name.
     #[error("an account needs a server and a login name")]
     AccountInvalid,
@@ -154,15 +160,20 @@ impl AppError {
             Self::AccountRequiresSdk => "account_requires_sdk",
             Self::AccountExists => "account_exists",
             Self::AccountInvalid => "account_invalid",
+            Self::ThemeInvalid(_) => "theme_invalid",
         }
     }
 }
 
 impl Serialize for AppError {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut state = serializer.serialize_struct("AppError", 2)?;
+        let mut state = serializer.serialize_struct("AppError", 3)?;
         state.serialize_field("code", self.code())?;
         state.serialize_field("message", &self.to_string())?;
+        match self {
+            Self::ThemeInvalid(details) => state.serialize_field("details", details)?,
+            _ => state.serialize_field("details", &Option::<()>::None)?,
+        }
         state.end()
     }
 }
