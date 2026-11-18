@@ -6,6 +6,7 @@ pub mod game;
 pub mod game_settings;
 pub mod server;
 pub mod settings_schema;
+pub mod theme;
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
