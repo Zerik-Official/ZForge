@@ -7,6 +7,7 @@ use tauri_plugin_opener::OpenerExt;
 use crate::error::{AppError, AppResult};
 use crate::events;
 use crate::paths::AppPaths;
+use crate::services::sdk::capabilities::Capabilities;
 use crate::services::sdk::installer::{DownloadProgress, SdkInstaller};
 use crate::services::sdk::manager::{SdkContext, SdkStatus};
 use crate::services::sdk::release::{ReleaseClient, SdkRelease};
@@ -50,6 +51,33 @@ pub async fn get_sdk_status(
     .await
 }
 
+/// Launcher features and whether the installed SDK supports them.
+#[tauri::command]
+pub async fn get_capabilities(
+    paths: State<'_, AppPaths>,
+    config: State<'_, AppConfigStore>,
+    releases: State<'_, ReleaseClient>,
+    installer: State<'_, SdkInstaller>,
+) -> AppResult<Capabilities> {
+    let tools_dir = paths.tools_dir();
+    let status = SdkContext {
+        tools_dir: &tools_dir,
+        config: &config,
+        releases: &releases,
+        installer: &installer,
+    }
+    .status()
+    .await?;
+    Ok(Capabilities::from_status(&status))
+}
+
+/// Tell the frontend that the installed SDK changed.
+pub fn emit_capabilities_changed<R: Runtime>(app: &AppHandle<R>) {
+    if let Err(error) = app.emit(events::CAPABILITIES_CHANGED, ()) {
+        tracing::debug!(%error, "Could not emit capabilities change");
+    }
+}
+
 /// Download and install the latest SDK, emitting progress events.
 #[tauri::command]
 pub async fn install_sdk<R: Runtime>(
@@ -67,7 +95,9 @@ pub async fn install_sdk<R: Runtime>(
         installer: &installer,
     }
     .install(progress_emitter(&app))
-    .await?;
+    .await;
+    emit_capabilities_changed(&app);
+    let installed = installed?;
     Ok(InstalledSdk {
         version: installed.version,
         path: installed.path.to_string_lossy().into_owned(),
