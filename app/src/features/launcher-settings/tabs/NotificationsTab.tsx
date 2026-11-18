@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
+import { SdkRequirement } from "@/components/sdk/SdkRequirement";
 import { Checkbox } from "@/components/ui/Checkbox";
+import { featureStatus, useCapabilities } from "@/hooks/useCapabilities";
 import { t, useLocale } from "@/locales/i18n";
 import { api, errorCode } from "@/services/api";
 import type { NotificationKind, NotificationSettings } from "@/types/domains/notifications";
-import type { SdkStatus } from "@/types/domains/sdk";
 
 const KINDS: { kind: NotificationKind; icon: string }[] = [
   { kind: "friends", icon: "fa-user-group" },
@@ -16,31 +17,22 @@ const KINDS: { kind: NotificationKind; icon: string }[] = [
   { kind: "battlegrounds", icon: "fa-flag" },
 ];
 
-const REQUIRED_SDK = [2, 1];
-
-function supportsNotifications(version: string | null | undefined): boolean {
-  if (!version) return false;
-  const [major = 0, minor = 0] = version.replace(/^v/i, "").split(".").map((part) => Number.parseInt(part, 10) || 0);
-  return major > REQUIRED_SDK[0] || (major === REQUIRED_SDK[0] && minor >= REQUIRED_SDK[1]);
-}
-
 /**
  * Windows notifications settings tab.
  */
 export function NotificationsTab() {
   useLocale();
+  const capabilities = useCapabilities();
   const [settings, setSettings] = useState<NotificationSettings | null>(null);
-  const [sdk, setSdk] = useState<SdkStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       try {
-        const [config, status] = await Promise.all([api.getAppConfig(), api.getSdkStatus()]);
+        const config = await api.getAppConfig();
         if (cancelled) return;
         setSettings(config.notifications);
-        setSdk(status);
       } catch (e) {
         if (!cancelled) setError(t(`common.errors.codes.${errorCode(e)}`));
       }
@@ -72,7 +64,7 @@ export function NotificationsTab() {
     );
   }
 
-  const sdkReady = sdk?.valid === true && supportsNotifications(sdk.version);
+  const whisperReply = featureStatus(capabilities, "whisper_reply");
 
   return (
     <div className="flex flex-col gap-4 p-8">
@@ -81,17 +73,7 @@ export function NotificationsTab() {
         <p className="max-w-xl text-[11px] leading-relaxed text-(--muted)">{t("launcher.settings.notifications.description")}</p>
       </div>
 
-      {!sdkReady ? (
-        <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3">
-          <i className="fa-solid fa-circle-info mt-0.5 text-[13px] text-amber-500" />
-          <div className="flex flex-col gap-1">
-            <span className="text-[12px] font-semibold text-amber-500">{t("launcher.settings.notifications.sdkRequired.title")}</span>
-            <span className="text-[11px] leading-relaxed text-(--muted)">
-              {t("launcher.settings.notifications.sdkRequired.description", { version: REQUIRED_SDK.join(".") })}
-            </span>
-          </div>
-        </div>
-      ) : null}
+      <SdkRequirement status={featureStatus(capabilities, "notifications")} />
 
       <div className="flex flex-col gap-3 rounded-xl border border-(--border-strong) bg-(--bg-card) p-5">
         <Checkbox
@@ -121,6 +103,11 @@ export function NotificationsTab() {
               description={t(`launcher.settings.notifications.kinds.${kind}.description`)}
               disabled={!settings.enabled}
             />
+            {kind === "whispers" && whisperReply?.available === false ? (
+              <span className="ml-auto">
+                <SdkRequirement status={whisperReply} variant="badge" />
+              </span>
+            ) : null}
           </div>
         ))}
       </div>
