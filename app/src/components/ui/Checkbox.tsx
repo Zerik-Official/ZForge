@@ -1,3 +1,10 @@
+import { useState } from "react";
+import { useThemeControls } from "@/store/themeStore";
+import { imageStyle } from "@/utils/theme";
+
+/** Size of a skinned checkbox when the theme does not set one. */
+const SKIN_SIZE = 22;
+
 /**
  * Properties for the {@link Checkbox} component.
  */
@@ -31,6 +38,37 @@ interface CheckboxProps {
  * ```
  */
 export function Checkbox({ checked, onChange, label, description, disabled }: CheckboxProps) {
+  const skin = useThemeControls()?.checkbox ?? null;
+  const [hovered, setHovered] = useState(false);
+
+  if (skin) {
+    const box = hovered && !disabled && skin.hover ? skin.hover : skin.box;
+    const check = disabled && skin.checkDisabled ? skin.checkDisabled : skin.check;
+    const size = box.width ?? SKIN_SIZE;
+    return (
+      <label
+        className={`flex items-start gap-2 text-[13px] text-(--text-soft) ${disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        <input
+          type="checkbox"
+          checked={checked}
+          disabled={disabled}
+          onChange={(event) => onChange(event.target.checked)}
+          className="sr-only"
+        />
+        <span className="relative -mt-0.5 flex shrink-0 items-center justify-center" style={imageStyle(box, size, size)}>
+          {checked ? <span className="absolute" style={imageStyle(check, size, size)} /> : null}
+        </span>
+        <span className="flex flex-col gap-0.5">
+          <span>{label}</span>
+          {description ? <span className="text-[11px] text-(--muted)">{description}</span> : null}
+        </span>
+      </label>
+    );
+  }
+
   return (
     <label
       className={`group flex items-start gap-2.5 text-[13px] text-(--text-soft) ${
