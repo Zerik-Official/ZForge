@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useThemeControls } from "@/store/themeStore";
+import { frameStyle, imageStyle } from "@/utils/theme";
 
 /**
  * A single option in the {@link Select} dropdown.
@@ -45,6 +47,7 @@ interface SelectProps {
 export function Select({ value, options, onChange, placeholder = "Seleccionar" }: SelectProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const skin = useThemeControls()?.select ?? null;
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -66,16 +69,25 @@ export function Select({ value, options, onChange, placeholder = "Seleccionar" }
 
   return (
     <div className="select-root" ref={rootRef}>
-      <button type="button" className="select-trigger cursor-pointer" onClick={() => setOpen((prev) => !prev)}>
+      <button
+        type="button"
+        className="select-trigger cursor-pointer"
+        style={skin ? frameStyle(skin.frame) : undefined}
+        onClick={() => setOpen((prev) => !prev)}
+      >
         <span className="flex min-w-0 items-center gap-2">
           {renderThumb(selected?.thumb)}
           <span className="truncate">{selected?.label ?? placeholder}</span>
         </span>
-        <i className={`fa-solid fa-chevron-down select-chevron${open ? " select-chevron--open" : ""}`} />
+        {skin?.arrow ? (
+          <span className="shrink-0" style={imageStyle(skin.arrow, 20, 20)} />
+        ) : (
+          <i className={`fa-solid fa-chevron-down select-chevron${open ? " select-chevron--open" : ""}`} />
+        )}
       </button>
 
       {open ? (
-        <div className="select-menu">
+        <div className="select-menu" style={skin ? frameStyle(skin.frame) : undefined}>
           {options.map((option) => (
             <button
               key={option.value}
