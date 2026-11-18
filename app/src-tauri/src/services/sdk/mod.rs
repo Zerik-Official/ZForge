@@ -7,6 +7,7 @@
 
 pub mod api;
 pub mod auth;
+pub mod capabilities;
 pub mod events;
 pub mod installation;
 pub mod installer;
