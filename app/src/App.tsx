@@ -9,6 +9,7 @@ import { useConfigConflict } from "@/hooks/useConfigConflict";
 import { useNotificationStrings } from "@/hooks/useNotificationStrings";
 import { usePresenceStrings } from "@/hooks/usePresenceStrings";
 import { useGamesStore } from "@/store/gamesStore";
+import { useThemeStore } from "@/store/themeStore";
 import { api } from "@/services/api";
 import { setLocale, type Locale } from "@/locales/i18n";
 
@@ -18,6 +19,11 @@ export default function App() {
   usePresenceStrings();
   useNotificationStrings();
   const hydrate = useGamesStore((state) => state.hydrate);
+  const loadTheme = useThemeStore((state) => state.load);
+
+  useEffect(() => {
+    void loadTheme();
+  }, [loadTheme]);
 
   /** True once the splash fade-out transition ends. */
   const [splashGone, setSplashGone] = useState(false);
