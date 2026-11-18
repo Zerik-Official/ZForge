@@ -54,7 +54,8 @@
         "password_missing": "This account has no saved password. Edit it to add one.",
         "account_requires_sdk": "Launching with an account or in the background needs a newer SDK. Update it in the SDK tab.",
         "account_exists": "That server already has an account with this login name.",
-        "account_invalid": "An account needs a server and a login name."
+        "account_invalid": "An account needs a server and a login name.",
+        "theme_invalid": "The theme is not valid. Check its theme.json and files."
       }
     },
     "configConflict": {
@@ -88,6 +89,7 @@
     "settings": {
       "tabs": {
         "general": "General",
+        "appearance": "Appearance",
         "sdk": "SDK",
         "richPresence": "Rich Presence",
         "notifications": "Notifications",
@@ -98,6 +100,52 @@
         "description": "Manage general launcher preferences.",
         "language": "Language",
         "languageDescription": "Select the display language for the launcher."
+      },
+      "appearance": {
+        "title": "Appearance",
+        "description": "Themes change the launcher colors and fonts, skin checkboxes, sliders, dropdowns and tabs with images, and can lay out the game settings like the game panels. Import a theme as a .zip or copy its folder into the themes folder.",
+        "import": "Import .zip",
+        "openFolder": "Themes folder",
+        "active": "Active",
+        "use": "Use",
+        "builtIn": {
+          "name": "ZForge (default)",
+          "description": "The launcher's own dark theme."
+        },
+        "help": "A theme is a folder with a theme.json and the images and fonts it uses (PNG, JPG, WEBP, GIF or BLP). An icon.* file is shown in this list, and previews appear in the theme details. The launcher does not include any game assets: each theme brings its own.",
+        "confirmDelete": "Delete this theme?",
+        "confirmDeleteDescription": "\"{name}\" and its files will be removed from the themes folder.",
+        "noPreviews": "This theme has no previews.",
+        "incompatible": "not supported by this launcher version",
+        "requiresLauncher": "Requires ZForge {requires}",
+        "details": {
+          "author": "Author",
+          "version": "Version",
+          "requires": "Launcher version",
+          "anyVersion": "Any version"
+        },
+        "problems": {
+          "manifest_missing": "There is no {detail} in the theme folder.",
+          "manifest_too_large": "{detail} is too large (512 KiB at most).",
+          "manifest_syntax": "theme.json has a syntax error or a field with the wrong type at line:column {detail}.",
+          "schema_version": "schemaVersion {detail} is not supported; use 1.",
+          "id": "The id \"{detail}\" is not valid: use lowercase letters, digits, - and _ (\"dark\" is reserved).",
+          "id_mismatch": "The folder name does not match the id \"{detail}\".",
+          "name": "The name is empty or longer than 80 characters.",
+          "color": "The color \"{detail}\" is not a launcher token or its value is not a color.",
+          "font_family": "The font family \"{detail}\" has characters that are not allowed.",
+          "layout": "The layout \"{detail}\" has a size, position or setting that is not valid.",
+          "requires": "\"{detail}\" is not a valid version requirement, for example >=0.2.0, <=1.0.0.",
+          "file_path": "The path \"{detail}\" is empty, absolute or leaves the theme folder.",
+          "missing_file": "The file \"{detail}\" does not exist.",
+          "unsupported_file": "The file \"{detail}\" has an unsupported format.",
+          "blp_unreadable": "The BLP image \"{detail}\" could not be read.",
+          "archive_missing_manifest": "The zip has no {detail} at its root or in a single top folder.",
+          "archive_too_many_files": "The zip has {detail} files (2000 at most).",
+          "archive_too_large": "The zip is {detail} once extracted (64 MiB at most).",
+          "archive_unreadable": "The zip could not be read: {detail}",
+          "unreadable": "A file of the theme could not be read: {detail}"
+        }
       },
       "sdk": {
         "title": "WoWControlSDK",
