@@ -1,5 +1,6 @@
 //! Persistence: SQLite database and the global `config.json` file.
 
+mod accounts;
 pub mod app_config;
 pub mod database;
 mod game_settings;

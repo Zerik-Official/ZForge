@@ -11,10 +11,12 @@ pub mod services;
 pub mod storage;
 
 use tauri::{AppHandle, Emitter, Manager, Runtime};
+use tokio::sync::broadcast::error::RecvError;
 
 use crate::commands::boot::BootState;
 use crate::config::DISCORD_CLIENT_ID;
 use crate::paths::AppPaths;
+use crate::services::accounts;
 use crate::services::notifications::NotificationService;
 use crate::services::presence::PresenceService;
 use crate::services::sdk::installer::SdkInstaller;
@@ -38,6 +40,33 @@ fn forward_session_changes<R: Runtime>(app: &AppHandle<R>, session: &GameSession
     });
 }
 
+/// Save the characters read after each automatic login.
+fn store_seen_characters<R: Runtime>(app: &AppHandle<R>, session: &GameSession) {
+    let app = app.clone();
+    let mut seen = session.subscribe_characters();
+    tauri::async_runtime::spawn(async move {
+        loop {
+            let characters = match seen.recv().await {
+                Ok(characters) => characters,
+                Err(RecvError::Lagged(skipped)) => {
+                    tracing::debug!(skipped, "Skipped character lists");
+                    continue;
+                }
+                Err(RecvError::Closed) => break,
+            };
+            let database = app.state::<Database>();
+            match accounts::store_characters(&database, &characters) {
+                Ok(()) => {
+                    if let Err(error) = app.emit(events::ACCOUNTS_CHANGED, ()) {
+                        tracing::debug!(%error, "Could not emit account change");
+                    }
+                }
+                Err(error) => tracing::warn!(%error, "Could not save the characters"),
+            }
+        }
+    });
+}
+
 /// Build and run the Tauri application until the main window closes.
 ///
 /// # Errors
@@ -50,6 +79,10 @@ pub fn run() -> tauri::Result<()> {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
+            commands::accounts::list_accounts,
+            commands::accounts::save_account,
+            commands::accounts::delete_account,
+            commands::accounts::get_launch_choice,
             commands::app_config::get_app_config,
             commands::app_config::save_app_config,
             commands::assets::list_assets,
@@ -105,6 +138,7 @@ pub fn run() -> tauri::Result<()> {
             app.manage(BootState::default());
             let session = GameSession::new();
             forward_session_changes(app.handle(), &session);
+            store_seen_characters(app.handle(), &session);
             app.manage(PresenceService::start(
                 DISCORD_CLIENT_ID,
                 startup_config.discord_enabled,

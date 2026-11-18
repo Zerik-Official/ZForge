@@ -10,6 +10,7 @@ import type { AppConfig, GameSettings } from "@/types/domains/settings";
 import type { Game, GameDraft } from "@/types/domains/game";
 import type { CustomAssetKind } from "@/types/domains/assets";
 import type { CustomServerInput } from "@/types/domains/server";
+import type { LaunchChoice } from "@/types/domains/accounts";
 
 export { errorCode, isApiError, type ApiError } from "./api/bridge";
 export { windowApi } from "./api/domains/window.api";
@@ -22,12 +23,13 @@ export { bootApi } from "./api/domains/boot.api";
 export { sessionApi } from "./api/domains/session.api";
 export { presenceApi } from "./api/domains/presence.api";
 export { notificationsApi } from "./api/domains/notifications.api";
+export { accountsApi } from "./api/domains/accounts.api";
 
 export const api = {
   minimizeWindow: () => windowApi.minimizeWindow(),
   closeWindow: () => windowApi.closeWindow(),
   runBoot: () => bootApi.runBoot(),
-  launchGame: (gameId: string) => sessionApi.launchGame(gameId),
+  launchGame: (gameId: string, choice?: LaunchChoice) => sessionApi.launchGame(gameId, choice),
   getSession: () => sessionApi.getSession(),
   listGames: () => gamesApi.listGames(),
   addGame: (draft: GameDraft) => gamesApi.addGame(draft),

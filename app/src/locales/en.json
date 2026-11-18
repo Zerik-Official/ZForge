@@ -49,7 +49,12 @@
         "sdk_rpc": "The SDK rejected a request.",
         "sdk_injection_failed": "Could not start the game with the SDK.",
         "game_already_running": "The game is already running.",
-        "sdk_unauthorized": "The SDK rejected the launcher's session token."
+        "sdk_unauthorized": "The SDK rejected the launcher's session token.",
+        "credential": "Windows could not store or read the account password.",
+        "password_missing": "This account has no saved password. Edit it to add one.",
+        "account_requires_sdk": "Launching with an account or in the background needs the SDK 2.2 or newer.",
+        "account_exists": "That server already has an account with this login name.",
+        "account_invalid": "An account needs a server and a login name."
       }
     },
     "configConflict": {
@@ -84,7 +89,8 @@
       "tabs": {
         "general": "General",
         "richPresence": "Rich Presence",
-        "notifications": "Notifications"
+        "notifications": "Notifications",
+        "accounts": "Accounts"
       },
       "general": {
         "title": "General settings",
@@ -182,7 +188,7 @@
           },
           "whispers": {
             "label": "Whispers",
-            "description": "Someone whispers to you."
+            "description": "Someone whispers to you. You can reply from the notification."
           },
           "group_invites": {
             "label": "Group invitations",
@@ -208,6 +214,37 @@
             "label": "Battlegrounds and arenas",
             "description": "Enter or leave the queue when a match is ready."
           }
+        }
+      },
+      "accounts": {
+        "title": "Game accounts",
+        "description": "Save your accounts for each server to log in, pick the realm and enter the world with a character straight from the launcher. Passwords are stored in the Windows Credential Manager, never in the launcher database. The characters are saved each time you log in with an account.",
+        "add": "Add account",
+        "edit": "Edit account",
+        "passwordNote": "The password is kept in the Windows Credential Manager",
+        "server": "Server (realmlist)",
+        "serverPlaceholder": "logon.server.com",
+        "username": "Login name",
+        "password": "Password",
+        "passwordKeep": "Leave empty to keep the saved password",
+        "showPassword": "Show password",
+        "hidePassword": "Hide password",
+        "label": "Name shown",
+        "labelPlaceholder": "Optional, for example Main",
+        "defaultRealm": "Default realm",
+        "defaultRealmPlaceholder": "The one saved in the game settings",
+        "defaultCharacter": "Default character",
+        "defaultCharacterPlaceholder": "Stay in character selection",
+        "level": "Level {level}",
+        "noDefaultRealm": "No default realm",
+        "noPassword": "No password",
+        "noCharacters": "Characters appear here after logging in with this account from the launcher.",
+        "empty": "You have not added any account yet.",
+        "confirmDelete": "Delete this account?",
+        "confirmDeleteDescription": "\"{name}\" and its saved characters will be removed, and its password deleted from the Windows Credential Manager.",
+        "sdkRequired": {
+          "title": "Requires the SDK",
+          "description": "Logging in with an account and starting the game in the background need the SDK {version} or newer. Install or update it in the Rich Presence tab."
         }
       }
     }
@@ -343,6 +380,37 @@
       "login": "At login",
       "character_select": "Choosing character",
       "in_world": "Playing"
+    },
+    "loginErrors": {
+      "not_on_login_screen": "The game did not reach the login screen.",
+      "username_and_password_required": "The account has no login name or password.",
+      "login_failed": "Could not log in.",
+      "server_down": "The login server is offline.",
+      "unknown_account": "The account does not exist on this server.",
+      "incorrect_password": "Incorrect password.",
+      "disconnected": "The connection to the server was lost.",
+      "parental_control": "Parental controls block this account.",
+      "chargeback": "The account has a chargeback.",
+      "conversion_required": "The account must be converted.",
+      "account_banned": "The account is banned.",
+      "account_suspended": "The account is suspended.",
+      "account_locked": "The account is locked.",
+      "game_account_locked": "The game account is locked.",
+      "unlockable_lock": "The account has a lock.",
+      "already_online": "The account is already logged in.",
+      "bad_version": "The server does not accept this client version.",
+      "no_time_remaining": "The account has no game time left.",
+      "database_busy": "The login database is busy. Try again.",
+      "trial_expired": "The trial period has expired.",
+      "account_converted": "The account was converted.",
+      "login_timeout": "The server did not answer the login.",
+      "realm_list_timeout": "The realm list did not load.",
+      "realm_select_timeout": "Could not select the realm. Check its name.",
+      "not_on_character_select_screen": "The game is not on the character selection screen.",
+      "character_not_found": "That character does not exist on the realm.",
+      "enter_world_timeout": "The world took too long to load.",
+      "sdk_unavailable": "The SDK did not respond while logging in.",
+      "unknown_error": "The automatic login failed."
     }
   },
   "presence": {
@@ -451,5 +519,20 @@
       "reply": "Reply"
     },
     "replyPlaceholder": "Type a reply"
+  },
+  "home": {
+    "launch": {
+      "account": "Account",
+      "noAccount": "No account",
+      "noAccounts": "Add accounts in Launcher settings → Accounts to log in and enter the world automatically.",
+      "noAccountDescription": "The game opens on the login screen, as usual.",
+      "realm": "Realm",
+      "realmPlaceholder": "The one saved in the game settings",
+      "character": "Character",
+      "stayInCharacterSelect": "Stay in character selection",
+      "characterSelectShort": "Character selection",
+      "headless": "Start in the background",
+      "headlessDescription": "The game window stays hidden until the character is in the world. Windowed mode is recommended."
+    }
   }
 }

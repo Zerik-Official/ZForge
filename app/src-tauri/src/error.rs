@@ -104,6 +104,26 @@ pub enum AppError {
     /// A game session is already running.
     #[error("a game session is already running")]
     GameAlreadyRunning,
+
+    /// The Windows Credential Manager failed.
+    #[error("credential manager error: {0}")]
+    Credential(String),
+
+    /// The account has no stored password.
+    #[error("no password is stored for account {0}")]
+    PasswordMissing(String),
+
+    /// An account needs a server and a login name.
+    #[error("an account needs a server and a login name")]
+    AccountInvalid,
+
+    /// The server already has an account with that login name.
+    #[error("an account with that login name already exists on this server")]
+    AccountExists,
+
+    /// Logging in with an account or a hidden window needs an installed SDK.
+    #[error("launching with an account or hidden needs the SDK")]
+    AccountRequiresSdk,
 }
 
 impl AppError {
@@ -129,6 +149,11 @@ impl AppError {
             Self::SdkInjectionFailed(_) => "sdk_injection_failed",
             Self::GameAlreadyRunning => "game_already_running",
             Self::SdkUnauthorized => "sdk_unauthorized",
+            Self::Credential(_) => "credential",
+            Self::PasswordMissing(_) => "password_missing",
+            Self::AccountRequiresSdk => "account_requires_sdk",
+            Self::AccountExists => "account_exists",
+            Self::AccountInvalid => "account_invalid",
         }
     }
 }

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { api } from "@/services/api";
+import { useEffect, useState } from "react";
+import { accountsApi, api, errorCode } from "@/services/api";
 import { useGamesStore } from "@/store/gamesStore";
 import { toDisplaySrc } from "@/utils/asset";
 import type { Game } from "@/types/domains/game";
@@ -7,8 +7,13 @@ import { GameSettingsModal } from "@/features/game-settings/GameSettingsModal";
 import { t, useLocale } from "@/locales/i18n";
 import { TooltipSimple } from "@/components/ui/Tooltip";
 import { useSession } from "@/hooks/useSession";
+import { useAccounts } from "@/hooks/useAccounts";
+import type { LaunchChoice } from "@/types/domains/accounts";
 import { EmptyState } from "./EmptyState";
 import { HomeDock } from "./HomeDock";
+import { LaunchSelector } from "./LaunchSelector";
+
+const NO_CHOICE: LaunchChoice = { account_id: null, realm: "", character: "", headless: false };
 
 interface HomeStageProps {
   onGoGames: () => void;
@@ -23,6 +28,25 @@ export function HomeStage({ onGoGames }: HomeStageProps) {
   const session = useSession();
   const [requesting, setRequesting] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const { accounts } = useAccounts();
+  const [choice, setChoice] = useState<LaunchChoice>(NO_CHOICE);
+  const [launchError, setLaunchError] = useState<{ gameId: string; text: string } | null>(null);
+
+  const activeGameId = (games.find((game) => game.id === activeId) ?? games[0])?.id ?? null;
+
+  useEffect(() => {
+    if (!activeGameId) return;
+    let cancelled = false;
+    accountsApi
+      .getLaunchChoice(activeGameId)
+      .then((saved) => {
+        if (!cancelled) setChoice(saved);
+      })
+      .catch((error: unknown) => console.error("Could not read the launch choice", error));
+    return () => {
+      cancelled = true;
+    };
+  }, [activeGameId]);
 
   if (games.length === 0) {
     return <EmptyState onAdd={onGoGames} />;
@@ -33,13 +57,24 @@ export function HomeStage({ onGoGames }: HomeStageProps) {
   const sessionActive = session !== null && session.phase !== "idle";
   const launching = requesting || sessionActive;
 
+  const knownAccount = accounts?.some((account) => account.id === choice.account_id) ?? false;
+  const launchChoice: LaunchChoice = knownAccount ? choice : NO_CHOICE;
+  const loginError = session?.game_id === active.id ? session.login_error : null;
+  const errorText = loginError
+    ? t(`session.loginErrors.${loginError}`)
+    : launchError?.gameId === active.id
+      ? launchError.text
+      : null;
+
   async function handlePlay() {
     if (launching) return;
     setRequesting(true);
+    setLaunchError(null);
     try {
-      await api.launchGame(active.id);
+      await api.launchGame(active.id, launchChoice);
     } catch (error) {
       console.error("Could not launch the game", error);
+      setLaunchError({ gameId: active.id, text: t(`common.errors.codes.${errorCode(error)}`) });
     } finally {
       setRequesting(false);
     }
@@ -64,7 +99,15 @@ export function HomeStage({ onGoGames }: HomeStageProps) {
         <img src={toDisplaySrc(active.poster)} alt={active.name} className="h-full w-full rounded-xl object-cover" />
       </div>
 
+      {errorText ? (
+        <div className="absolute bottom-34 right-6 flex max-w-90 items-start gap-2 rounded-xl border border-(--danger)/30 bg-(--bg-elevated)/85 px-3.5 py-2.5 text-[11.5px] text-(--danger) shadow-xl backdrop-blur-xl">
+          <i className="fa-solid fa-circle-exclamation mt-0.5 text-[12px]" />
+          <span>{errorText}</span>
+        </div>
+      ) : null}
+
       <div className="absolute bottom-15 right-6 flex items-center gap-2 rounded-2xl border border-(--border-strong) bg-(--bg-elevated)/70 p-2.5 shadow-2xl backdrop-blur-xl">
+        <LaunchSelector accounts={accounts ?? []} choice={launchChoice} onChange={setChoice} disabled={launching} />
         <button
           disabled={launching}
           onClick={handlePlay}

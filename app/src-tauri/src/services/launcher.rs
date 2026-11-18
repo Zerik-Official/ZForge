@@ -53,6 +53,8 @@ pub struct LaunchOptions {
     pub priority: LaunchPriority,
     /// Delete the client `Cache` folder before starting.
     pub clear_cache: bool,
+    /// Keep the game window hidden until the SDK shows it (SDK 2.2+).
+    pub hidden: bool,
 }
 
 impl LaunchOptions {
@@ -69,6 +71,7 @@ impl LaunchOptions {
                 values.get("clear_cache_on_launch"),
                 Some(SettingValue::Bool(true))
             ),
+            hidden: false,
         }
     }
 }
@@ -210,6 +213,9 @@ pub fn launch_injected(
     if token.is_some() {
         command.arg("--token-stdin");
     }
+    if options.hidden {
+        command.arg("--hidden");
+    }
     command
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -282,6 +288,7 @@ mod tests {
                 arguments: vec!["-console".to_owned()],
                 priority: LaunchPriority::High,
                 clear_cache: true,
+                hidden: false,
             }
         );
     }

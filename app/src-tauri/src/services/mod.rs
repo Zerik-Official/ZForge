@@ -1,6 +1,8 @@
 //! Business logic shared by IPC commands and background tasks.
 
+pub mod accounts;
 pub mod assets;
+pub mod credentials;
 pub mod game_config;
 pub mod game_settings;
 pub mod games;

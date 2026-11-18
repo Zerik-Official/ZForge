@@ -8,3 +8,6 @@ pub const SESSION_CHANGED: &str = "session://changed";
 
 /// SDK download progress; payload: [`crate::services::sdk::installer::DownloadProgress`].
 pub const SDK_DOWNLOAD_PROGRESS: &str = "sdk://download-progress";
+
+/// Saved accounts or their characters changed; no payload.
+pub const ACCOUNTS_CHANGED: &str = "accounts://changed";

@@ -15,7 +15,8 @@ use tokio::time::{Instant, MissedTickBehavior, interval};
 use crate::domain::game::Game;
 use crate::domain::{UnixMillis, now_millis};
 use crate::error::{AppError, AppResult};
-use crate::services::sdk::api::SdkApi;
+use crate::services::credentials::Password;
+use crate::services::sdk::api::{SdkApi, SdkCharacter};
 use crate::services::sdk::auth::SessionToken;
 use crate::services::sdk::events::{ClientScreen, EventStream, LoadingBackground, SdkEvent};
 use crate::services::sdk::rpc::RpcClient;
@@ -34,6 +35,49 @@ const REFRESH_EVERY_TICKS: u32 = 5;
 /// versions before 1.2 report a loading on logout and drop it after 5 s
 /// without emitting `loading.cancelled`.
 const LOADING_STALL: Duration = Duration::from_secs(6);
+
+/// Time allowed for the client to reach the login screen after launch.
+const LOGIN_SCREEN_TIMEOUT: Duration = Duration::from_secs(180);
+
+/// Time allowed for the character selection screen after logging in.
+const CHARACTER_SELECT_TIMEOUT: Duration = Duration::from_secs(30);
+
+/// Attempts to read a character list that is still empty after logging in.
+const CHARACTER_LIST_ATTEMPTS: u32 = 5;
+
+/// Pause between attempts to read the character list.
+const CHARACTER_LIST_RETRY: Duration = Duration::from_millis(400);
+
+/// Login and character errors reported by the SDK that the frontend translates.
+const LOGIN_ERROR_CODES: &[&str] = &[
+    "not_on_login_screen",
+    "username_and_password_required",
+    "login_failed",
+    "server_down",
+    "unknown_account",
+    "incorrect_password",
+    "disconnected",
+    "parental_control",
+    "chargeback",
+    "conversion_required",
+    "account_banned",
+    "account_suspended",
+    "account_locked",
+    "game_account_locked",
+    "unlockable_lock",
+    "already_online",
+    "bad_version",
+    "no_time_remaining",
+    "database_busy",
+    "trial_expired",
+    "account_converted",
+    "login_timeout",
+    "realm_list_timeout",
+    "realm_select_timeout",
+    "not_on_character_select_screen",
+    "character_not_found",
+    "enter_world_timeout",
+];
 
 /// WoW UI events that trigger an immediate state refresh.
 const WATCHED_EVENTS: &[&str] = &[
@@ -205,6 +249,60 @@ pub struct LoadingScreenInfo {
     pub background: Option<LoadingBackground>,
 }
 
+/// Log in, pick a realm and enter the world once the login screen appears.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AutoLogin {
+    /// Account the characters are saved for.
+    pub account_id: String,
+    /// Login name.
+    pub username: String,
+    /// Password read from the Credential Manager.
+    pub password: Password,
+    /// Realm list host; empty keeps the one in the client settings.
+    pub realmlist: String,
+    /// Realm to select; empty lets the client choose.
+    pub realm: String,
+    /// Character to enter the world with; empty stops at character selection.
+    pub character: String,
+    /// The window was started hidden and must be shown at the end.
+    pub headless: bool,
+}
+
+/// Characters read from the selection screen after an automatic login.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CharactersSeen {
+    /// Account that logged in.
+    pub account_id: String,
+    /// Realm the characters belong to.
+    pub realm: String,
+    /// Characters on the selection screen.
+    pub characters: Vec<SdkCharacter>,
+}
+
+/// Code of a failed automatic login, translated by the frontend.
+fn login_error_code(error: &AppError) -> String {
+    match error {
+        AppError::SdkRpc { message, .. } => {
+            let code = message.trim().to_ascii_lowercase().replace(' ', "_");
+            if LOGIN_ERROR_CODES.contains(&code.as_str()) {
+                code
+            } else {
+                "unknown_error".to_owned()
+            }
+        }
+        AppError::SdkUnavailable | AppError::SdkUnauthorized => "sdk_unavailable".to_owned(),
+        _ => "unknown_error".to_owned(),
+    }
+}
+
+/// An automatic login step that did not finish in time.
+fn login_timeout(method: &str, reason: &str) -> AppError {
+    AppError::SdkRpc {
+        method: method.to_owned(),
+        message: reason.to_owned(),
+    }
+}
+
 /// What the session loop must do after applying an event.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum FollowUp {
@@ -245,6 +343,8 @@ pub struct SessionSnapshot {
     pub sdk_connected: bool,
     /// Error code of the last session that failed to start.
     pub last_error: Option<String>,
+    /// Why the automatic login or entering the world failed, while the game runs.
+    pub login_error: Option<String>,
 }
 
 impl SessionSnapshot {
@@ -378,7 +478,9 @@ pub struct GameSession {
     state: watch::Sender<SessionSnapshot>,
     rpc: RpcClient,
     social: broadcast::Sender<SocialEvent>,
+    characters: broadcast::Sender<CharactersSeen>,
     game_pid: Mutex<Option<u32>>,
+    auto_login: Mutex<Option<AutoLogin>>,
 }
 
 impl Default for GameSession {
@@ -394,8 +496,35 @@ impl GameSession {
             state: watch::Sender::new(SessionSnapshot::default()),
             rpc: RpcClient::default(),
             social: broadcast::Sender::new(SOCIAL_EVENT_BUFFER),
+            characters: broadcast::Sender::new(SOCIAL_EVENT_BUFFER),
             game_pid: Mutex::new(None),
+            auto_login: Mutex::new(None),
         }
+    }
+
+    /// Receive the characters read after each automatic login.
+    pub fn subscribe_characters(&self) -> broadcast::Receiver<CharactersSeen> {
+        self.characters.subscribe()
+    }
+
+    /// Log in automatically in the next SDK session.
+    ///
+    /// # Errors
+    ///
+    /// Fails when the lock is poisoned.
+    pub fn set_auto_login(&self, login: Option<AutoLogin>) -> AppResult<()> {
+        *self
+            .auto_login
+            .lock()
+            .map_err(|_| AppError::LockPoisoned("automatic login"))? = login;
+        Ok(())
+    }
+
+    fn take_auto_login(&self) -> Option<AutoLogin> {
+        self.auto_login
+            .lock()
+            .ok()
+            .and_then(|mut guard| guard.take())
     }
 
     /// Receive social, trade, duel and queue events (SDK 2.1+).
@@ -483,6 +612,9 @@ impl GameSession {
             tracing::warn!(%lock_error, "Could not clear the SDK session token");
         }
         self.set_game_pid(None);
+        if let Err(lock_error) = self.set_auto_login(None) {
+            tracing::warn!(%lock_error, "Could not clear the automatic login");
+        }
         if let Some(error) = error {
             tracing::warn!(%error, "Game session ended with an error");
         } else {
@@ -533,6 +665,15 @@ impl GameSession {
         }
         self.sync_screen(&api).await;
 
+        let auto_login = self.take_auto_login();
+        let login_task = async {
+            if let Some(login) = auto_login {
+                self.auto_login(&api, login).await;
+            }
+        };
+        tokio::pin!(login_task);
+        let mut login_done = false;
+
         let mut stalls = StallDetector::default();
         let mut ticks: u32 = 0;
         let mut tick = interval(TICK);
@@ -555,6 +696,7 @@ impl GameSession {
                         break;
                     }
                 },
+                () = &mut login_task, if !login_done => login_done = true,
                 _ = tick.tick() => {
                     ticks = ticks.wrapping_add(1);
                     let phase = self.state.borrow().phase;
@@ -568,6 +710,81 @@ impl GameSession {
             }
         }
         self.finish(None);
+    }
+
+    /// Run an automatic login and show a hidden window at the end, whatever happened.
+    async fn auto_login(&self, api: &SdkApi<'_>, login: AutoLogin) {
+        if let Err(error) = self.log_in(api, &login).await {
+            tracing::warn!(%error, "Automatic login failed");
+            let code = login_error_code(&error);
+            self.update(|snapshot| snapshot.login_error = Some(code));
+        }
+        if login.headless
+            && let Err(error) = api.show_window().await
+        {
+            tracing::warn!(%error, "Could not show the hidden game window");
+        }
+    }
+
+    async fn log_in(&self, api: &SdkApi<'_>, login: &AutoLogin) -> AppResult<()> {
+        if !self
+            .reached_phase(SessionPhase::Login, LOGIN_SCREEN_TIMEOUT)
+            .await
+        {
+            return Err(login_timeout("client.login", "not on login screen"));
+        }
+        tracing::info!(account_id = %login.account_id, "Logging in automatically");
+        let non_empty = |text: &str| (!text.is_empty()).then(|| text.to_owned());
+        let realmlist = non_empty(&login.realmlist);
+        let realm = non_empty(&login.realm);
+        api.login(
+            &login.username,
+            &login.password,
+            realmlist.as_deref(),
+            realm.as_deref(),
+        )
+        .await?;
+        if !self
+            .reached_phase(SessionPhase::CharacterSelect, CHARACTER_SELECT_TIMEOUT)
+            .await
+        {
+            return Err(login_timeout("client.login", "realm select timeout"));
+        }
+
+        let characters = self.read_characters(api).await;
+        if !characters.is_empty() {
+            let _ = self.characters.send(CharactersSeen {
+                account_id: login.account_id.clone(),
+                realm: login.realm.clone(),
+                characters,
+            });
+        }
+        if !login.character.is_empty() {
+            api.enter_world(&login.character).await?;
+        }
+        Ok(())
+    }
+
+    /// The character list, retried briefly while the server is still sending it.
+    async fn read_characters(&self, api: &SdkApi<'_>) -> Vec<SdkCharacter> {
+        for attempt in 1..=CHARACTER_LIST_ATTEMPTS {
+            match api.characters().await {
+                Ok(characters) if !characters.is_empty() => return characters,
+                Ok(_) => {}
+                Err(error) => tracing::debug!(%error, attempt, "Could not read the characters"),
+            }
+            tokio::time::sleep(CHARACTER_LIST_RETRY).await;
+        }
+        Vec::new()
+    }
+
+    /// Wait until the session reaches a phase; `false` when it did not in time.
+    async fn reached_phase(&self, phase: SessionPhase, limit: Duration) -> bool {
+        let mut changes = self.state.subscribe();
+        matches!(
+            tokio::time::timeout(limit, changes.wait_for(|snapshot| snapshot.phase == phase)).await,
+            Ok(Ok(_))
+        )
     }
 
     async fn follow_up(&self, api: &SdkApi<'_>, follow_up: FollowUp) {
@@ -821,5 +1038,43 @@ mod tests {
         session.begin(&game(), LaunchMode::Sdk)?;
         assert_eq!(session.snapshot().mode, Some(LaunchMode::Sdk));
         Ok(())
+    }
+
+    #[test]
+    fn maps_login_failures_to_codes() {
+        let rpc = |message: &str| AppError::SdkRpc {
+            method: "client.login".to_owned(),
+            message: message.to_owned(),
+        };
+        assert_eq!(
+            login_error_code(&rpc("incorrect password")),
+            "incorrect_password"
+        );
+        assert_eq!(
+            login_error_code(&rpc("Character not found")),
+            "character_not_found"
+        );
+        assert_eq!(login_error_code(&rpc("something new")), "unknown_error");
+        assert_eq!(
+            login_error_code(&AppError::SdkUnavailable),
+            "sdk_unavailable"
+        );
+        assert_eq!(
+            login_error_code(&AppError::GameAlreadyRunning),
+            "unknown_error"
+        );
+    }
+
+    #[test]
+    fn waits_for_a_phase() {
+        let session = GameSession::new();
+        let wait = Duration::from_millis(10);
+        assert!(!tauri::async_runtime::block_on(
+            session.reached_phase(SessionPhase::Login, wait)
+        ));
+        session.update(|snapshot| snapshot.phase = SessionPhase::Login);
+        assert!(tauri::async_runtime::block_on(
+            session.reached_phase(SessionPhase::Login, wait)
+        ));
     }
 }
