@@ -52,7 +52,7 @@
         "sdk_unauthorized": "The SDK rejected the launcher's session token.",
         "credential": "Windows could not store or read the account password.",
         "password_missing": "This account has no saved password. Edit it to add one.",
-        "account_requires_sdk": "Launching with an account or in the background needs the SDK 2.2 or newer.",
+        "account_requires_sdk": "Launching with an account or in the background needs a newer SDK. Update it in the SDK tab.",
         "account_exists": "That server already has an account with this login name.",
         "account_invalid": "An account needs a server and a login name."
       }
@@ -88,6 +88,7 @@
     "settings": {
       "tabs": {
         "general": "General",
+        "sdk": "SDK",
         "richPresence": "Rich Presence",
         "notifications": "Notifications",
         "accounts": "Accounts"
@@ -98,42 +99,53 @@
         "language": "Language",
         "languageDescription": "Select the display language for the launcher."
       },
-      "richPresence": {
-        "title": "Rich Presence",
-        "empty": "Discord Rich Presence integration is currently in development.",
-        "sdkNotFound": {
-          "title": "SDK not found",
-          "description": "The WoWControlSDK was not found in the launcher tools folder. It is required to interact with World of Warcraft.",
-          "download": "Download SDK",
-          "downloading": "Downloading SDK…",
-          "installing": "Installing SDK…"
-        },
-        "sdkCorrupted": {
-          "title": "SDK corrupted",
-          "description": "Some SDK files are missing or corrupted.",
-          "repair": "Repair SDK"
-        },
-        "repairing": "Repairing SDK…",
-        "applicationIdMissing": {
-          "title": "Application ID not configured",
-          "description": "A Discord Application ID must be configured in the .env file (DISCORD_CLIENT_ID) before Rich Presence can be used."
-        },
-        "corruptionError": "During the last check, SDK corruption was detected or it was removed.",
-        "settings": {
-          "enableDiscord": "Enable Discord Rich Presence",
-          "enableDiscordDescription": "Show your in-game status on Discord.",
-          "autoUpdate": "Check for SDK updates automatically",
-          "autoUpdateDescription": "When enabled, the launcher checks GitHub at startup and downloads a newer SDK version if available."
+      "sdk": {
+        "title": "WoWControlSDK",
+        "description": "The SDK is injected into the game so the launcher can read its state and act on it. It is required for live game data, notifications, accounts and starting in the background.",
+        "corruptionError": "The last check found the SDK corrupted or removed.",
+        "state": {
+          "missing": {
+            "title": "SDK not installed",
+            "description": "Install it to use the features below."
+          },
+          "corrupted": {
+            "title": "SDK damaged",
+            "description": "Some SDK files are missing or damaged. Repair it to download them again."
+          },
+          "outdated": {
+            "title": "Update available",
+            "description": "A newer SDK version is available. Some features may need it."
+          },
+          "upToDate": {
+            "title": "SDK up to date",
+            "description": "The installed SDK is the latest published version."
+          }
         },
         "version": {
           "installed": "Installed: v{version}",
           "latest": "Latest: v{version}",
-          "updateAvailable": "Update available"
+          "none": "Not installed"
         },
+        "missingFiles": "Missing: {files}",
         "progress": {
           "speed": "{speed}/s",
-          "remaining": "{time} remaining",
+          "remaining": "{time} left",
           "downloaded": "{downloaded} / {total}"
+        },
+        "autoUpdate": "Update the SDK automatically",
+        "autoUpdateDescription": "When enabled, the launcher checks GitHub at startup, downloads a newer SDK if there is one and repairs a damaged one.",
+        "featuresTitle": "What the SDK enables"
+      },
+      "richPresence": {
+        "title": "Rich Presence",
+        "description": "Show what you are doing in the game on your Discord profile.",
+        "applicationIdMissing": {
+          "title": "Application ID not configured",
+          "description": "A Discord Application ID must be configured in the .env file (DISCORD_CLIENT_ID) before Rich Presence can be used."
+        },
+        "settings": {
+          "enableDiscord": "Enable Discord Rich Presence",
+          "enableDiscordDescription": "Show your in-game status on Discord."
         },
         "moreInfo": "More info",
         "info": {
@@ -172,10 +184,6 @@
       "notifications": {
         "title": "Windows notifications",
         "description": "Get a Windows notification when something happens in the game while you are doing something else. Invitations, summons, Dungeon Finder groups, trades, duels and battlegrounds can be answered from the notification itself.",
-        "sdkRequired": {
-          "title": "Requires WoWControlSDK {version}",
-          "description": "Notifications use events added in WoWControlSDK {version}. Install or update the SDK in the Rich Presence tab and launch the game from ZForge."
-        },
         "enable": "Show Windows notifications",
         "enableDescription": "Only while a game launched from ZForge with the SDK is running.",
         "onlyWhenUnfocused": "Only when the game is in the background",
@@ -241,11 +249,7 @@
         "noCharacters": "Characters appear here after logging in with this account from the launcher.",
         "empty": "You have not added any account yet.",
         "confirmDelete": "Delete this account?",
-        "confirmDeleteDescription": "\"{name}\" and its saved characters will be removed, and its password deleted from the Windows Credential Manager.",
-        "sdkRequired": {
-          "title": "Requires the SDK",
-          "description": "Logging in with an account and starting the game in the background need the SDK {version} or newer. Install or update it in the Rich Presence tab."
-        }
+        "confirmDeleteDescription": "\"{name}\" and its saved characters will be removed, and its password deleted from the Windows Credential Manager."
       }
     }
   },
@@ -411,6 +415,44 @@
       "enter_world_timeout": "The world took too long to load.",
       "sdk_unavailable": "The SDK did not respond while logging in.",
       "unknown_error": "The automatic login failed."
+    }
+  },
+  "capabilities": {
+    "requires": "Requires SDK {version}",
+    "available": "Available",
+    "installing": "Installing the SDK…",
+    "notPublished": "That version is not published yet.",
+    "reasons": {
+      "sdk_missing": "The SDK is not installed.",
+      "sdk_corrupted": "The installed SDK is damaged.",
+      "sdk_outdated": "The installed SDK is too old."
+    },
+    "actions": {
+      "install": "Install SDK",
+      "update": "Update SDK",
+      "repair": "Repair SDK"
+    },
+    "features": {
+      "live_session": {
+        "label": "Live game data",
+        "description": "Session state, character, zone and group in the launcher and in Discord Rich Presence."
+      },
+      "notifications": {
+        "label": "Windows notifications",
+        "description": "Friends, whispers, invitations, summons, Dungeon Finder, trades, duels and battlegrounds, with answer buttons."
+      },
+      "whisper_reply": {
+        "label": "Reply to whispers",
+        "description": "Answer a whisper from its notification."
+      },
+      "accounts": {
+        "label": "Automatic login",
+        "description": "Log in, select the realm and enter the world with a character from the launcher."
+      },
+      "hidden_start": {
+        "label": "Start in the background",
+        "description": "Keep the game window out of sight until the character is in the world."
+      }
     }
   },
   "presence": {
