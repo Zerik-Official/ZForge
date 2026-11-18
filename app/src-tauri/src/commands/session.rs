@@ -12,25 +12,12 @@ use crate::services::accounts;
 use crate::services::game_settings::SettingsContext;
 use crate::services::launcher::{self, LaunchOptions};
 use crate::services::sdk::auth::{self, SessionToken};
+use crate::services::sdk::capabilities::Feature;
 use crate::services::sdk::installation;
-use crate::services::sdk::version::SdkVersion;
 use crate::services::session::{GameSession, LaunchMode, SessionSnapshot};
 use crate::services::settings_schema::SchemaRegistry;
 use crate::services::system;
 use crate::storage::Database;
-
-/// First SDK version whose injector accepts `--hidden`.
-const FIRST_VERSION_WITH_HIDDEN_START: &str = "2.2.0";
-
-fn supports_hidden_start(version: &str) -> bool {
-    match (
-        SdkVersion::parse(version),
-        SdkVersion::parse(FIRST_VERSION_WITH_HIDDEN_START),
-    ) {
-        (Some(installed), Some(first)) => installed >= first,
-        _ => false,
-    }
-}
 
 /// Current game session.
 #[tauri::command]
@@ -86,11 +73,19 @@ pub async fn launch_game<R: Runtime>(
     let auto_login = accounts::auto_login(&database, &choice, &fallback_realm)?;
     let mut options = LaunchOptions::from_settings(&settings);
     let sdk = installation::find_valid(&paths.tools_dir())?;
-    let needs_sdk = auto_login.is_some() || choice.headless;
-    if needs_sdk
-        && sdk
-            .as_ref()
-            .is_none_or(|sdk| choice.headless && !supports_hidden_start(&sdk.version))
+    let required: Vec<Feature> = [
+        (auto_login.is_some(), Feature::Accounts),
+        (choice.headless, Feature::HiddenStart),
+    ]
+    .into_iter()
+    .filter_map(|(used, feature)| used.then_some(feature))
+    .collect();
+    if !required.is_empty()
+        && sdk.as_ref().is_none_or(|sdk| {
+            !required
+                .iter()
+                .all(|feature| feature.supported_by(&sdk.version))
+        })
     {
         return Err(AppError::AccountRequiresSdk);
     }
@@ -143,17 +138,4 @@ pub async fn launch_game<R: Runtime>(
         }
     }
     Ok(())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn hidden_start_needs_sdk_22() {
-        assert!(supports_hidden_start("v2.2.0"));
-        assert!(supports_hidden_start("2.10"));
-        assert!(!supports_hidden_start("2.1.3"));
-        assert!(!supports_hidden_start("unknown"));
-    }
 }

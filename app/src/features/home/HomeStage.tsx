@@ -8,6 +8,7 @@ import { t, useLocale } from "@/locales/i18n";
 import { TooltipSimple } from "@/components/ui/Tooltip";
 import { useSession } from "@/hooks/useSession";
 import { useAccounts } from "@/hooks/useAccounts";
+import { featureStatus, useCapabilities } from "@/hooks/useCapabilities";
 import type { LaunchChoice } from "@/types/domains/accounts";
 import { EmptyState } from "./EmptyState";
 import { HomeDock } from "./HomeDock";
@@ -29,6 +30,9 @@ export function HomeStage({ onGoGames }: HomeStageProps) {
   const [requesting, setRequesting] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { accounts } = useAccounts();
+  const capabilities = useCapabilities();
+  const accountsFeature = featureStatus(capabilities, "accounts");
+  const hiddenStartFeature = featureStatus(capabilities, "hidden_start");
   const [choice, setChoice] = useState<LaunchChoice>(NO_CHOICE);
   const [launchError, setLaunchError] = useState<{ gameId: string; text: string } | null>(null);
 
@@ -58,7 +62,10 @@ export function HomeStage({ onGoGames }: HomeStageProps) {
   const launching = requesting || sessionActive;
 
   const knownAccount = accounts?.some((account) => account.id === choice.account_id) ?? false;
-  const launchChoice: LaunchChoice = knownAccount ? choice : NO_CHOICE;
+  const launchChoice: LaunchChoice =
+    knownAccount && accountsFeature?.available !== false
+      ? { ...choice, headless: choice.headless && hiddenStartFeature?.available !== false }
+      : NO_CHOICE;
   const loginError = session?.game_id === active.id ? session.login_error : null;
   const errorText = loginError
     ? t(`session.loginErrors.${loginError}`)
@@ -107,7 +114,14 @@ export function HomeStage({ onGoGames }: HomeStageProps) {
       ) : null}
 
       <div className="absolute bottom-15 right-6 flex items-center gap-2 rounded-2xl border border-(--border-strong) bg-(--bg-elevated)/70 p-2.5 shadow-2xl backdrop-blur-xl">
-        <LaunchSelector accounts={accounts ?? []} choice={launchChoice} onChange={setChoice} disabled={launching} />
+        <LaunchSelector
+          accounts={accounts ?? []}
+          choice={launchChoice}
+          onChange={setChoice}
+          accountsFeature={accountsFeature}
+          hiddenStartFeature={hiddenStartFeature}
+          disabled={launching}
+        />
         <button
           disabled={launching}
           onClick={handlePlay}

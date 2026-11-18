@@ -1,9 +1,15 @@
 import { call } from "../bridge";
+import type { Capabilities } from "@/types/domains/capabilities";
 import type { InstalledSdk, SdkLatestInfo, SdkStatus } from "@/types/domains/sdk";
 
 export class SdkApi {
   getSdkStatus(): Promise<SdkStatus> {
     return call("get_sdk_status");
+  }
+
+  /** Launcher features and whether the installed SDK supports them. */
+  getCapabilities(): Promise<Capabilities> {
+    return call("get_capabilities");
   }
 
   installSdk(): Promise<InstalledSdk> {

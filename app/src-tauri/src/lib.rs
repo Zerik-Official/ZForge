@@ -95,6 +95,7 @@ pub fn run() -> tauri::Result<()> {
             commands::games::remove_game,
             commands::games::reorder_games,
             commands::sdk::get_sdk_status,
+            commands::sdk::get_capabilities,
             commands::sdk::install_sdk,
             commands::sdk::check_sdk_update,
             commands::sdk::get_sdk_license,

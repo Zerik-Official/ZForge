@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
+import { SdkRequirement } from "@/components/sdk/SdkRequirement";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { accountName, useAccounts } from "@/hooks/useAccounts";
+import { featureStatus, useCapabilities } from "@/hooks/useCapabilities";
 import { t, useLocale } from "@/locales/i18n";
 import { api, accountsApi, errorCode } from "@/services/api";
 import type { AccountSummary } from "@/types/domains/accounts";
-import type { SdkStatus } from "@/types/domains/sdk";
 import type { ServerEntry } from "@/types/domains/server";
-import { ACCOUNTS_SDK, sdkVersionAtLeast } from "@/utils/sdkVersion";
 import { AccountModal } from "../components/AccountModal";
 
 /**
@@ -16,8 +16,8 @@ import { AccountModal } from "../components/AccountModal";
 export function AccountsTab() {
   useLocale();
   const { accounts, error: loadError, reload } = useAccounts();
+  const capabilities = useCapabilities();
   const [servers, setServers] = useState<ServerEntry[]>([]);
-  const [sdk, setSdk] = useState<SdkStatus | null>(null);
   const [editing, setEditing] = useState<AccountSummary | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [deleting, setDeleting] = useState<AccountSummary | null>(null);
@@ -27,10 +27,9 @@ export function AccountsTab() {
     let cancelled = false;
     void (async () => {
       try {
-        const [serverList, status] = await Promise.all([api.listServers(), api.getSdkStatus()]);
+        const serverList = await api.listServers();
         if (cancelled) return;
         setServers(serverList);
-        setSdk(status);
       } catch (e) {
         if (!cancelled) setError(t(`common.errors.codes.${errorCode(e)}`));
       }
@@ -82,8 +81,6 @@ export function AccountsTab() {
     );
   }
 
-  const sdkReady = sdk?.valid === true && sdkVersionAtLeast(sdk.version, ...ACCOUNTS_SDK);
-
   return (
     <div className="flex flex-col gap-4 p-8">
       <div className="flex items-start justify-between gap-4">
@@ -100,17 +97,7 @@ export function AccountsTab() {
         </button>
       </div>
 
-      {sdk && !sdkReady ? (
-        <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3">
-          <i className="fa-solid fa-circle-info mt-0.5 text-[13px] text-amber-500" />
-          <div className="flex flex-col gap-1">
-            <span className="text-[12px] font-semibold text-amber-500">{t("launcher.settings.accounts.sdkRequired.title")}</span>
-            <span className="text-[11px] leading-relaxed text-(--muted)">
-              {t("launcher.settings.accounts.sdkRequired.description", { version: ACCOUNTS_SDK.join(".") })}
-            </span>
-          </div>
-        </div>
-      ) : null}
+      <SdkRequirement status={featureStatus(capabilities, "accounts")} />
 
       {groups.length === 0 ? (
         <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-(--border-strong) px-6 py-10 text-center">

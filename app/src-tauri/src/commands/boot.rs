@@ -6,7 +6,7 @@ use serde::Serialize;
 use tauri::{AppHandle, Emitter, Runtime, State};
 use tokio::sync::OnceCell;
 
-use crate::commands::sdk::progress_emitter;
+use crate::commands::sdk::{emit_capabilities_changed, progress_emitter};
 use crate::error::AppResult;
 use crate::events;
 use crate::paths::AppPaths;
@@ -101,6 +101,7 @@ pub async fn run_boot<R: Runtime>(
             if let Err(error) = sdk_result {
                 tracing::warn!(%error, "SDK boot check failed");
             }
+            emit_capabilities_changed(&app);
 
             let games = database.list_games()?;
             emit_step(&app, "boot.loadingGames", 22, &[("count", games.len().to_string())]);

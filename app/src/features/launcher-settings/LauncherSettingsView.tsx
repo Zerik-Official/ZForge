@@ -4,11 +4,12 @@ import { AccountsTab } from "./tabs/AccountsTab";
 import { GeneralTab } from "./tabs/GeneralTab";
 import { NotificationsTab } from "./tabs/NotificationsTab";
 import { RichPresenceTab } from "./tabs/RichPresenceTab";
+import { SdkTab } from "./tabs/SdkTab";
 
 /**
  * Available tabs in the launcher settings view.
  */
-export type LauncherSettingsTab = "general" | "richPresence" | "notifications" | "accounts";
+export type LauncherSettingsTab = "general" | "sdk" | "richPresence" | "notifications" | "accounts";
 
 /**
  * Properties for the {@link LauncherSettingsView} component.
@@ -41,6 +42,17 @@ export function LauncherSettingsView({ initialTab = "general" }: LauncherSetting
         >
           <i className="fa-solid fa-gear text-[13px]" />
           {t("launcher.settings.tabs.general")}
+        </button>
+        <button
+          className={`flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-colors cursor-pointer ${
+            activeTab === "sdk"
+              ? "bg-(--accent-dim) text-(--accent)"
+              : "text-(--muted) hover:bg-(--bg-hover) hover:text-(--text-soft)"
+          }`}
+          onClick={() => setActiveTab("sdk")}
+        >
+          <i className="fa-solid fa-cube text-[13px]" />
+          {t("launcher.settings.tabs.sdk")}
         </button>
         <button
           className={`flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-colors cursor-pointer ${
@@ -79,6 +91,7 @@ export function LauncherSettingsView({ initialTab = "general" }: LauncherSetting
 
       <section className="flex min-w-0 flex-1 flex-col overflow-y-auto">
         {activeTab === "general" ? <GeneralTab /> : null}
+        {activeTab === "sdk" ? <SdkTab /> : null}
         {activeTab === "richPresence" ? <RichPresenceTab /> : null}
         {activeTab === "notifications" ? <NotificationsTab /> : null}
         {activeTab === "accounts" ? <AccountsTab /> : null}

@@ -52,7 +52,7 @@
         "sdk_unauthorized": "El SDK rechazó el token de sesión del launcher.",
         "credential": "Windows no pudo guardar o leer la contraseña de la cuenta.",
         "password_missing": "Esta cuenta no tiene contraseña guardada. Edítala para añadirla.",
-        "account_requires_sdk": "Lanzar con una cuenta o en segundo plano requiere el SDK 2.2 o posterior.",
+        "account_requires_sdk": "Lanzar con una cuenta o en segundo plano requiere un SDK más reciente. Actualízalo en la pestaña SDK.",
         "account_exists": "Ese servidor ya tiene una cuenta con este nombre de usuario.",
         "account_invalid": "Una cuenta necesita servidor y nombre de usuario."
       }
@@ -88,6 +88,7 @@
     "settings": {
       "tabs": {
         "general": "General",
+        "sdk": "SDK",
         "richPresence": "Rich Presence",
         "notifications": "Notificaciones",
         "accounts": "Cuentas"
@@ -98,42 +99,53 @@
         "language": "Idioma",
         "languageDescription": "Selecciona el idioma de la interfaz del launcher."
       },
-      "richPresence": {
-        "title": "Rich Presence",
-        "empty": "La integración con Discord Rich Presence está actualmente en desarrollo.",
-        "sdkNotFound": {
-          "title": "SDK no encontrado",
-          "description": "No se encontró WoWControlSDK en la carpeta tools del launcher. Es necesario para interactuar con World of Warcraft.",
-          "download": "Descargar SDK",
-          "downloading": "Descargando SDK…",
-          "installing": "Instalando SDK…"
-        },
-        "sdkCorrupted": {
-          "title": "SDK corrupto",
-          "description": "Faltan algunos archivos del SDK o están dañados.",
-          "repair": "Reparar SDK"
-        },
-        "repairing": "Reparando SDK…",
-        "applicationIdMissing": {
-          "title": "Application ID no configurado",
-          "description": "Debe configurarse un Application ID de Discord en el archivo .env (DISCORD_CLIENT_ID) antes de poder usar Rich Presence."
-        },
-        "corruptionError": "En la última comprobación, se detectó una corrupción en el SDK o este fue eliminado.",
-        "settings": {
-          "enableDiscord": "Activar Discord Rich Presence",
-          "enableDiscordDescription": "Muestra tu estado dentro del juego en Discord.",
-          "autoUpdate": "Buscar actualizaciones automáticas del SDK",
-          "autoUpdateDescription": "Si está activado, el launcher comprueba GitHub al iniciar y descarga una versión más reciente del SDK si existe."
+      "sdk": {
+        "title": "WoWControlSDK",
+        "description": "El SDK se inyecta en el juego para que el launcher pueda leer su estado y actuar sobre él. Es necesario para los datos del juego en vivo, las notificaciones, las cuentas y el inicio en segundo plano.",
+        "corruptionError": "En la última comprobación se detectó que el SDK estaba dañado o se había eliminado.",
+        "state": {
+          "missing": {
+            "title": "SDK no instalado",
+            "description": "Instálalo para usar las funciones de abajo."
+          },
+          "corrupted": {
+            "title": "SDK dañado",
+            "description": "Faltan archivos del SDK o están dañados. Repáralo para descargarlos de nuevo."
+          },
+          "outdated": {
+            "title": "Actualización disponible",
+            "description": "Hay una versión más reciente del SDK. Algunas funciones pueden necesitarla."
+          },
+          "upToDate": {
+            "title": "SDK actualizado",
+            "description": "El SDK instalado es la última versión publicada."
+          }
         },
         "version": {
           "installed": "Instalado: v{version}",
           "latest": "Última: v{version}",
-          "updateAvailable": "Actualización disponible"
+          "none": "No instalado"
         },
+        "missingFiles": "Faltan: {files}",
         "progress": {
           "speed": "{speed}/s",
           "remaining": "{time} restante",
           "downloaded": "{downloaded} / {total}"
+        },
+        "autoUpdate": "Actualizar el SDK automáticamente",
+        "autoUpdateDescription": "Si está activado, el launcher comprueba GitHub al iniciar, descarga una versión más reciente del SDK si existe y repara uno dañado.",
+        "featuresTitle": "Qué permite el SDK"
+      },
+      "richPresence": {
+        "title": "Rich Presence",
+        "description": "Muestra en tu perfil de Discord lo que estás haciendo en el juego.",
+        "applicationIdMissing": {
+          "title": "Application ID no configurado",
+          "description": "Debe configurarse un Application ID de Discord en el archivo .env (DISCORD_CLIENT_ID) antes de poder usar Rich Presence."
+        },
+        "settings": {
+          "enableDiscord": "Activar Discord Rich Presence",
+          "enableDiscordDescription": "Muestra tu estado dentro del juego en Discord."
         },
         "moreInfo": "Más información",
         "info": {
@@ -172,10 +184,6 @@
       "notifications": {
         "title": "Notificaciones de Windows",
         "description": "Recibe una notificación de Windows cuando pase algo en el juego mientras haces otra cosa. Las invitaciones, invocaciones, grupos del Buscador de mazmorras, comercios, duelos y campos de batalla se pueden responder desde la propia notificación.",
-        "sdkRequired": {
-          "title": "Requiere WoWControlSDK {version}",
-          "description": "Las notificaciones usan eventos añadidos en WoWControlSDK {version}. Instala o actualiza el SDK en la pestaña Rich Presence y lanza el juego desde ZForge."
-        },
         "enable": "Mostrar notificaciones de Windows",
         "enableDescription": "Solo mientras haya un juego lanzado desde ZForge con el SDK.",
         "onlyWhenUnfocused": "Solo cuando el juego está en segundo plano",
@@ -241,11 +249,7 @@
         "noCharacters": "Los personajes aparecen aquí después de entrar con esta cuenta desde el launcher.",
         "empty": "Todavía no has añadido ninguna cuenta.",
         "confirmDelete": "¿Eliminar esta cuenta?",
-        "confirmDeleteDescription": "Se eliminarán \"{name}\" y sus personajes guardados, y su contraseña se borrará del Administrador de credenciales de Windows.",
-        "sdkRequired": {
-          "title": "Requiere el SDK",
-          "description": "Iniciar sesión con una cuenta y lanzar el juego en segundo plano requieren el SDK {version} o posterior. Instálalo o actualízalo en la pestaña Rich Presence."
-        }
+        "confirmDeleteDescription": "Se eliminarán \"{name}\" y sus personajes guardados, y su contraseña se borrará del Administrador de credenciales de Windows."
       }
     }
   },
@@ -411,6 +415,44 @@
       "enter_world_timeout": "El mundo tardó demasiado en cargar.",
       "sdk_unavailable": "El SDK no respondió durante el inicio de sesión.",
       "unknown_error": "El inicio de sesión automático falló."
+    }
+  },
+  "capabilities": {
+    "requires": "Requiere SDK {version}",
+    "available": "Disponible",
+    "installing": "Instalando el SDK…",
+    "notPublished": "Esa versión aún no está publicada.",
+    "reasons": {
+      "sdk_missing": "El SDK no está instalado.",
+      "sdk_corrupted": "El SDK instalado está dañado.",
+      "sdk_outdated": "El SDK instalado es demasiado antiguo."
+    },
+    "actions": {
+      "install": "Instalar SDK",
+      "update": "Actualizar SDK",
+      "repair": "Reparar SDK"
+    },
+    "features": {
+      "live_session": {
+        "label": "Datos del juego en vivo",
+        "description": "Estado de la sesión, personaje, zona y grupo en el launcher y en Discord Rich Presence."
+      },
+      "notifications": {
+        "label": "Notificaciones de Windows",
+        "description": "Amigos, susurros, invitaciones, invocaciones, buscador de mazmorras, comercios, duelos y campos de batalla, con botones para responder."
+      },
+      "whisper_reply": {
+        "label": "Responder susurros",
+        "description": "Contesta un susurro desde su notificación."
+      },
+      "accounts": {
+        "label": "Inicio de sesión automático",
+        "description": "Inicia sesión, elige el reino y entra al mundo con un personaje desde el launcher."
+      },
+      "hidden_start": {
+        "label": "Iniciar en segundo plano",
+        "description": "Mantiene la ventana del juego fuera de la vista hasta que el personaje está en el mundo."
+      }
     }
   },
   "presence": {
