@@ -13,7 +13,7 @@ use crate::services::assets::{self, AssetManifest, CustomAssetKind};
 const MAIN_WINDOW_LABEL: &str = "main";
 
 /// Show a native "open file" dialog attached to the main window.
-async fn pick_file<R: Runtime>(
+pub(crate) async fn pick_file<R: Runtime>(
     app: &AppHandle<R>,
     filter_name: &str,
     extensions: &[&str],
