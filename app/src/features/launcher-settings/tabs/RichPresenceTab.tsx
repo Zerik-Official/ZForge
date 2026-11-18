@@ -1,189 +1,62 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { SdkRequirement } from "@/components/sdk/SdkRequirement";
 import { Checkbox } from "@/components/ui/Checkbox";
-import { TooltipSimple } from "@/components/ui/Tooltip";
+import { featureStatus, useCapabilities } from "@/hooks/useCapabilities";
 import { t, useLocale } from "@/locales/i18n";
 import { api, errorCode } from "@/services/api";
-import { onSdkDownloadProgress, subscribe } from "@/services/api/events";
-import type { SdkDownloadProgress, SdkStatus } from "@/types/domains/sdk";
-import { formatBytes, formatEta, formatSpeed } from "@/utils/formatters";
-import { SdkInfoModal } from "../components/SdkInfoModal";
-
-function cleanVersion(v: string | null | undefined): string {
-  if (!v) return "";
-  return v.replace(/^v/i, "");
-}
+import type { SdkStatus } from "@/types/domains/sdk";
 
 /**
- * Rich Presence settings tab.
+ * Rich Presence settings tab. The SDK itself is managed in the SDK tab; this
+ * tab only shows what Rich Presence needs from it.
  */
 export function RichPresenceTab() {
   useLocale();
+  const capabilities = useCapabilities();
   const [status, setStatus] = useState<SdkStatus | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [downloading, setDownloading] = useState(false);
-  const [progress, setProgress] = useState<SdkDownloadProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [showInfo, setShowInfo] = useState(false);
 
-  const refreshStatus = useCallback(async () => {
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .getSdkStatus()
+      .then((next) => {
+        if (!cancelled) setStatus(next);
+      })
+      .catch((e: unknown) => {
+        if (!cancelled) setError(t(`common.errors.codes.${errorCode(e)}`));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function handleToggleDiscord(value: boolean) {
     try {
-      const s = await api.getSdkStatus();
-      setStatus(s);
+      await api.saveAppConfig({ discord_enabled: value });
+      setStatus((prev) => (prev ? { ...prev, discord_enabled: value } : prev));
       setError(null);
     } catch (e) {
       setError(t(`common.errors.codes.${errorCode(e)}`));
     }
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      setLoading(true);
-      await refreshStatus();
-      if (!cancelled) setLoading(false);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [refreshStatus]);
-
-  useEffect(() => {
-    return subscribe(
-      onSdkDownloadProgress((payload) => {
-        setProgress(payload);
-        setDownloading(true);
-      }),
-    );
-  }, []);
-
-  async function handleInstall() {
-    setDownloading(true);
-    setProgress({ percent: 0, downloaded: 0, total: 0, speed: 0, eta: 0, version: status?.latest_version ?? "" });
-    setError(null);
-    try {
-      await api.installSdk();
-    } catch (e) {
-      setError(t(`common.errors.codes.${errorCode(e)}`));
-    } finally {
-      setDownloading(false);
-      setProgress(null);
-      await refreshStatus();
-    }
   }
 
-  async function handleToggleDiscord(value: boolean) {
-    await api.saveAppConfig({ discord_enabled: value });
-    setStatus((prev) => (prev ? { ...prev, discord_enabled: value } : prev));
-  }
-
-  async function handleToggleAutoUpdate(value: boolean) {
-    await api.saveAppConfig({ discord_auto_update: value });
-    setStatus((prev) => (prev ? { ...prev, discord_auto_update: value } : prev));
-  }
-
-  const showErrorBanner = useMemo(() => {
-    const msg = status?.sdk_last_error;
-    if (!msg) return null;
-    if (status?.sdk_ever_installed === false) return null;
-    return msg;
-  }, [status]);
-
-  if (loading) {
+  if (!status) {
     return (
       <div className="flex flex-1 items-center justify-center text-(--muted)">
-        <i className="fa-solid fa-spinner fa-spin text-[18px]" />
+        {error ? <span className="text-[12px] text-(--danger)">{error}</span> : <i className="fa-solid fa-spinner fa-spin text-[18px]" />}
       </div>
     );
   }
 
-  const needsInstall = status?.needs_install ?? false;
-  const needsRepair = status?.needs_repair ?? false;
-  const needsAppId = !status?.application_id_configured;
-  const validAndConfigured = status?.valid && status?.application_id_configured && !needsInstall && !needsRepair;
-
   return (
     <div className="flex flex-col gap-4 p-8">
-      {showErrorBanner ? (
-        <div className="flex items-center gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3">
-          <i className="fa-solid fa-triangle-exclamation text-[13px] text-amber-500" />
-          <span className="text-[12px] font-semibold text-amber-500">
-            {showErrorBanner === "sdk_corrupted"
-              ? t("launcher.settings.richPresence.corruptionError")
-              : t(`common.errors.codes.${showErrorBanner}`)}
-          </span>
-        </div>
-      ) : null}
+      <div className="flex flex-col gap-1">
+        <h2 className="text-[13px] font-semibold text-(--text)">{t("launcher.settings.richPresence.title")}</h2>
+        <p className="max-w-xl text-[11px] leading-relaxed text-(--muted)">{t("launcher.settings.richPresence.description")}</p>
+      </div>
 
-      {needsInstall || needsRepair ? (
-        <div className="flex flex-col gap-4 rounded-xl border border-(--border-strong) bg-(--bg-card) p-5">
-          <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-(--border-strong) bg-(--bg-elevated)">
-              <i className="fa-solid fa-cube text-[14px] text-(--muted)" />
-            </div>
-            <div className="flex flex-col gap-1">
-              <h3 className="text-[13px] font-semibold text-(--text)">
-                {needsRepair ? t("launcher.settings.richPresence.sdkCorrupted.title") : t("launcher.settings.richPresence.sdkNotFound.title")}
-              </h3>
-              <p className="max-w-xl text-[12px] leading-relaxed text-(--muted)">
-                {needsRepair ? t("launcher.settings.richPresence.sdkCorrupted.description") : t("launcher.settings.richPresence.sdkNotFound.description")}
-              </p>
-              {status?.version ? (
-                <span className="text-[11px] text-(--muted-2)">{t("launcher.settings.richPresence.version.installed", { version: cleanVersion(status.version) })}</span>
-              ) : null}
-              {status?.latest_version ? (
-                <span className="text-[11px] text-(--muted-2)">{t("launcher.settings.richPresence.version.latest", { version: cleanVersion(status.latest_version) })}</span>
-              ) : null}
-              {status?.missing_files && status.missing_files.length > 0 ? (
-                <span className="text-[11px] text-(--danger)">Missing: {status.missing_files.join(", ")}</span>
-              ) : null}
-            </div>
-          </div>
-
-          {downloading && progress ? (
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between text-[11px] text-(--muted)">
-                <span>{t("launcher.settings.richPresence.sdkNotFound.downloading")}</span>
-                <span>{progress.percent}%</span>
-              </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-(--bg-input) border border-(--border-strong)">
-                <div className="h-full bg-(--primary) transition-all duration-200" style={{ width: `${progress.percent}%` }} />
-              </div>
-              <div className="flex items-center justify-between text-[11px] text-(--muted-2)">
-                <span>{t("launcher.settings.richPresence.progress.downloaded", { downloaded: formatBytes(progress.downloaded), total: progress.total ? formatBytes(progress.total) : "—" })}</span>
-                <span className="flex items-center gap-2">
-                  <span>{t("launcher.settings.richPresence.progress.speed", { speed: formatSpeed(progress.speed) })}</span>
-                  <span>·</span>
-                  <span>{t("launcher.settings.richPresence.progress.remaining", { time: formatEta(progress.eta) })}</span>
-                </span>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                className="flex w-fit items-center gap-2 rounded-lg bg-[linear-gradient(160deg,var(--primary-hover),var(--primary-active))] px-4 py-2 text-[13px] font-semibold text-white shadow-[0_0_20px_var(--primary-glow)] hover:brightness-105 cursor-pointer disabled:opacity-50"
-                onClick={handleInstall}
-                disabled={downloading}
-              >
-                <i className="fa-solid fa-download text-[12px]" />
-                {needsRepair ? t("launcher.settings.richPresence.sdkCorrupted.repair") : t("launcher.settings.richPresence.sdkNotFound.download")}
-              </button>
-              <TooltipSimple content={t("launcher.settings.richPresence.moreInfo")} side="top">
-                <button
-                  className="flex items-center gap-2 rounded-lg border border-(--border-strong) bg-(--bg-elevated) px-3 py-2 text-[13px] font-medium text-(--text-soft) hover:bg-(--bg-hover) hover:text-(--text) cursor-pointer"
-                  onClick={() => setShowInfo(true)}
-                >
-                  <i className="fa-solid fa-circle-info text-[12px]" />
-                  {t("launcher.settings.richPresence.moreInfo")}
-                </button>
-              </TooltipSimple>
-            </div>
-          )}
-
-          {error ? <span className="text-[12px] text-(--danger)">{error}</span> : null}
-        </div>
-      ) : null}
-
-      {status?.valid && needsAppId ? (
+      {status.application_id_configured ? null : (
         <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3">
           <i className="fa-solid fa-circle-info mt-0.5 text-[13px] text-amber-500" />
           <div className="flex flex-col gap-1">
@@ -191,53 +64,21 @@ export function RichPresenceTab() {
             <span className="text-[11px] leading-relaxed text-(--muted)">{t("launcher.settings.richPresence.applicationIdMissing.description")}</span>
           </div>
         </div>
-      ) : null}
+      )}
 
-      {validAndConfigured ? (
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1">
-            <h2 className="text-[13px] font-semibold text-(--text)">{t("launcher.settings.richPresence.title")}</h2>
-            <p className="text-[11px] text-(--muted)">
-              {status?.version ? t("launcher.settings.richPresence.version.installed", { version: cleanVersion(status.version) }) : null}
-              {status?.latest_version ? ` · ${t("launcher.settings.richPresence.version.latest", { version: cleanVersion(status.latest_version) })}` : null}
-              {status?.update_available ? ` · ${t("launcher.settings.richPresence.version.updateAvailable")}` : null}
-            </p>
-          </div>
+      <SdkRequirement status={featureStatus(capabilities, "live_session")} />
 
-          <div className="flex flex-col gap-3 rounded-xl border border-(--border-strong) bg-(--bg-card) p-5">
-            <Checkbox
-              checked={!!status?.discord_enabled}
-              onChange={handleToggleDiscord}
-              label={t("launcher.settings.richPresence.settings.enableDiscord")}
-            />
-            <span className="ml-6 text-[11px] text-(--muted)">{t("launcher.settings.richPresence.settings.enableDiscordDescription")}</span>
-          </div>
+      <div className="flex flex-col gap-3 rounded-xl border border-(--border-strong) bg-(--bg-card) p-5">
+        <Checkbox
+          checked={status.discord_enabled}
+          onChange={(value) => void handleToggleDiscord(value)}
+          label={t("launcher.settings.richPresence.settings.enableDiscord")}
+          description={t("launcher.settings.richPresence.settings.enableDiscordDescription")}
+          disabled={!status.application_id_configured}
+        />
+      </div>
 
-          <div className="flex flex-col gap-3 rounded-xl border border-(--border-strong) bg-(--bg-card) p-5">
-            <Checkbox
-              checked={!!status?.discord_auto_update}
-              onChange={handleToggleAutoUpdate}
-              label={t("launcher.settings.richPresence.settings.autoUpdate")}
-            />
-            <span className="ml-6 text-[11px] text-(--muted)">{t("launcher.settings.richPresence.settings.autoUpdateDescription")}</span>
-          </div>
-        </div>
-      ) : null}
-
-      {!validAndConfigured && !needsInstall && !needsRepair && status?.valid && !needsAppId ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-(--border-strong) bg-(--bg-card)">
-            <i className="fa-brands fa-discord text-xl text-(--muted-2)" />
-          </div>
-          <h3 className="text-[14px] font-semibold text-(--text)">{t("launcher.settings.richPresence.title")}</h3>
-          <p className="max-w-sm text-[12px] leading-relaxed text-(--muted)">{t("launcher.settings.richPresence.empty")}</p>
-          <span className="rounded-full border border-(--border-strong) bg-(--bg-elevated) px-3 py-1 text-[11px] font-medium text-(--muted)">
-            {t("common.comingSoon")}
-          </span>
-        </div>
-      ) : null}
-
-      <SdkInfoModal open={showInfo} onClose={() => setShowInfo(false)} />
+      {error ? <span className="text-[12px] text-(--danger)">{error}</span> : null}
     </div>
   );
 }
