@@ -8,6 +8,7 @@
 //!     zforge.db            games, per-game settings and custom servers
 //!     assets/custom/<kind> user-provided icons, logos and scenes
 //!     tools/               external tools such as WoWControlSDK
+//!     themes/<id>/         installed themes
 //! ```
 
 use std::path::{Path, PathBuf};
@@ -64,5 +65,10 @@ impl AppPaths {
     /// Directory holding external tools such as WoWControlSDK.
     pub fn tools_dir(&self) -> PathBuf {
         self.root.join("tools")
+    }
+
+    /// Directory holding installed themes.
+    pub fn themes_dir(&self) -> PathBuf {
+        self.root.join("themes")
     }
 }
