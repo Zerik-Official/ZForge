@@ -6,11 +6,14 @@ import { Modal, ModalHeader, ModalFooter } from "@/components/ui/Modal";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Combobox } from "@/components/ui/Combobox";
 import { SettingsCategory } from "@/features/settings/SettingsCategory";
+import { ThemedLayout } from "@/features/settings/ThemedLayout";
+import { useThemeStore } from "@/store/themeStore";
+import { frameStyle } from "@/utils/theme";
 import { t, useLocale } from "@/locales/i18n";
 import { useGameSettingsForm } from "@/hooks/useGameSettingsForm";
 import { settingsApi } from "@/services/api/domains/settings.api";
 import type { Game } from "@/types/domains/game";
-import type { SettingsSchema } from "@/types/domains/schema";
+import type { SettingControl, SettingsSchema } from "@/types/domains/schema";
 
 interface GameSettingsModalProps {
   open: boolean;
@@ -45,6 +48,7 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
     persistSettings,
   } = useGameSettingsForm(game, open);
 
+  const theme = useThemeStore((state) => state.theme);
   const [schema, setSchema] = useState<SettingsSchema | null>(null);
   const [schemaLoading, setSchemaLoading] = useState(false);
 
@@ -78,6 +82,11 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
 
   const loading = formLoading || schemaLoading;
   const activeCategory = schema?.categories.find((c) => c.id === category) ?? schema?.categories[0] ?? null;
+  const themedLayout = activeCategory ? theme?.layouts[activeCategory.id] : undefined;
+  const tabSkin = theme?.controls.tab ?? null;
+  const settingsByKey: Record<string, SettingControl> = Object.fromEntries(
+    (schema?.categories ?? []).flatMap((c) => c.settings).map((setting) => [setting.key, setting]),
+  );
 
   const RESOLUTIONS = [
     "720x576", "800x600", "1280x600", "1024x768", "1280x720", "1280x768",
@@ -159,9 +168,14 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
           {(schema?.categories ?? []).map((cat) => (
             <button
               key={cat.id}
-              className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-[12.5px] transition-colors cursor-pointer ${
-                category === cat.id ? "bg-(--accent-dim) text-(--accent)" : "text-(--text-soft) hover:bg-(--bg-hover)"
+              className={`flex items-center gap-2.5 px-3 py-2 text-[12.5px] transition-colors cursor-pointer ${
+                tabSkin
+                  ? category === cat.id
+                    ? "text-(--text)"
+                    : "text-(--text-soft) hover:text-(--text)"
+                  : `rounded-lg ${category === cat.id ? "bg-(--accent-dim) text-(--accent)" : "text-(--text-soft) hover:bg-(--bg-hover)"}`
               }`}
+              style={tabSkin ? frameStyle(category === cat.id ? tabSkin.active : tabSkin.inactive) : undefined}
               onClick={() => setCategory(cat.id)}
             >
               <i className={`${cat.icon} text-[13px]`} />
@@ -175,6 +189,16 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
             <div className="flex h-full items-center justify-center text-(--muted)">
               <i className="fa-solid fa-spinner fa-spin text-[18px]" />
             </div>
+          ) : activeCategory && themedLayout ? (
+            <ThemedLayout
+              layout={themedLayout}
+              settings={settingsByKey}
+              values={settings as unknown as Record<string, unknown>}
+              onChange={handleChange}
+              panel={theme?.controls.panel ?? null}
+              sources={sources}
+              extraOptions={extraOptions}
+            />
           ) : activeCategory ? (
             activeCategory.id === "multi" ? (
               <div className="flex h-full flex-col items-center justify-center gap-3 text-(--muted)">

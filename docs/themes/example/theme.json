@@ -1,0 +1,212 @@
+{
+  "schemaVersion": 1,
+  "id": "example-gold",
+  "name": "Example Gold",
+  "author": "Zerik",
+  "version": "1.0.0",
+  "description": "Gold and dark brown colors with the Video settings laid out in panels.",
+  "requires": ">=0.1.0",
+  "colors": {
+    "bg": "#0b0806",
+    "bg-soft": "#120d09",
+    "bg-card": "#1a130d",
+    "bg-elevated": "#211810",
+    "bg-hover": "#2c2015",
+    "bg-input": "#160f0a",
+    "border-strong": "rgba(200, 162, 74, 0.25)",
+    "primary": "#c8a24a",
+    "primary-hover": "#e0bb5c",
+    "primary-active": "#a8852f",
+    "primary-dim": "rgba(200, 162, 74, 0.16)",
+    "primary-soft": "rgba(200, 162, 74, 0.08)",
+    "primary-glow": "rgba(200, 162, 74, 0.35)",
+    "accent": "#e0bb5c",
+    "accent-dim": "rgba(224, 187, 92, 0.14)",
+    "text": "#f5ecd9",
+    "text-soft": "#dccfb4",
+    "muted": "#a8987a",
+    "scroll-thumb": "#c8a24a",
+    "scroll-thumb-hover": "#e0bb5c"
+  },
+  "layouts": {
+    "graphics": {
+      "width": 640,
+      "height": 300,
+      "sections": [
+        {
+          "title": "settings.categories.graphics",
+          "x": 0,
+          "y": 0,
+          "width": 640,
+          "height": 176,
+          "controls": [
+            {
+              "setting": "resolution",
+              "x": 16,
+              "y": 36,
+              "width": 295
+            },
+            {
+              "setting": "refresh_rate",
+              "x": 329,
+              "y": 36,
+              "width": 295
+            },
+            {
+              "setting": "multisample",
+              "x": 16,
+              "y": 104,
+              "width": 295
+            },
+            {
+              "setting": "vsync",
+              "x": 329,
+              "y": 128,
+              "width": 295
+            }
+          ]
+        },
+        {
+          "title": "settings.graphics.windowed",
+          "x": 0,
+          "y": 188,
+          "width": 640,
+          "height": 112,
+          "controls": [
+            {
+              "setting": "windowed",
+              "x": 16,
+              "y": 36,
+              "width": 295
+            },
+            {
+              "setting": "window_resize_lock",
+              "x": 16,
+              "y": 70,
+              "width": 295
+            },
+            {
+              "setting": "window_maximized",
+              "x": 329,
+              "y": 70,
+              "width": 295
+            }
+          ]
+        }
+      ]
+    },
+    "effects": {
+      "width": 640,
+      "height": 524,
+      "sections": [
+        {
+          "title": "settings.categories.effects",
+          "x": 0,
+          "y": 0,
+          "width": 640,
+          "height": 410,
+          "controls": [
+            {
+              "setting": "farclip",
+              "x": 16,
+              "y": 36,
+              "width": 295
+            },
+            {
+              "setting": "environment_detail",
+              "x": 329,
+              "y": 36,
+              "width": 295
+            },
+            {
+              "setting": "shadow_level",
+              "x": 16,
+              "y": 98,
+              "width": 295
+            },
+            {
+              "setting": "base_mip",
+              "x": 329,
+              "y": 98,
+              "width": 295
+            },
+            {
+              "setting": "ground_effect_density",
+              "x": 16,
+              "y": 160,
+              "width": 295
+            },
+            {
+              "setting": "texture_filtering_mode",
+              "x": 329,
+              "y": 160,
+              "width": 295
+            },
+            {
+              "setting": "ground_effect_dist",
+              "x": 16,
+              "y": 222,
+              "width": 295
+            },
+            {
+              "setting": "weather_density",
+              "x": 329,
+              "y": 222,
+              "width": 295
+            },
+            {
+              "setting": "ext_shadow_quality",
+              "x": 16,
+              "y": 284,
+              "width": 295
+            },
+            {
+              "setting": "component_texture_level",
+              "x": 329,
+              "y": 284,
+              "width": 295
+            },
+            {
+              "setting": "particle_density",
+              "x": 16,
+              "y": 346,
+              "width": 295
+            }
+          ]
+        },
+        {
+          "x": 0,
+          "y": 422,
+          "width": 640,
+          "height": 102,
+          "controls": [
+            {
+              "setting": "specular",
+              "x": 16,
+              "y": 28,
+              "width": 295
+            },
+            {
+              "setting": "ffx_death",
+              "x": 329,
+              "y": 28,
+              "width": 295
+            },
+            {
+              "setting": "ffx_glow",
+              "x": 16,
+              "y": 58,
+              "width": 295
+            },
+            {
+              "setting": "projected_textures",
+              "x": 329,
+              "y": 58,
+              "width": 295
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

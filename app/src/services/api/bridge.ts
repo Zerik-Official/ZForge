@@ -4,6 +4,8 @@ import { invoke, type InvokeArgs } from "@tauri-apps/api/core";
 export interface ApiError {
   code: string;
   message: string;
+  /** Extra data for some codes, such as the problem of an invalid theme. */
+  details?: unknown;
 }
 
 export function isApiError(value: unknown): value is ApiError {

@@ -1,4 +1,9 @@
 import { useRef, useState, useCallback } from "react";
+import { useThemeControls } from "@/store/themeStore";
+import { frameStyle, imageStyle } from "@/utils/theme";
+
+/** Size of a skinned slider thumb when the theme does not set one. */
+const SKIN_THUMB = 16;
 
 interface SliderProps {
   value: number;
@@ -13,6 +18,7 @@ interface SliderProps {
 export function Slider({ value, onChange, min = 0, max = 100, step = 1, options, disabled = false }: SliderProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
+  const skin = useThemeControls()?.slider ?? null;
 
   const isDiscrete = Array.isArray(options) && options.length > 0;
   const opts = isDiscrete ? options! : [];
@@ -74,13 +80,25 @@ export function Slider({ value, onChange, min = 0, max = 100, step = 1, options,
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
     >
-      <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-(--bg-input) border border-(--border-strong) overflow-hidden">
-        <div className="absolute inset-y-0 left-0 bg-(--primary) rounded-full" style={{ width: `${ratio * 100}%` }} />
-      </div>
-      <div
-        className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white border-2 border-(--primary) shadow-[0_2px_8px_rgba(0,0,0,0.4)] transition-[left] duration-75"
-        style={{ left: `${ratio * 100}%` }}
-      />
+      {skin ? (
+        <>
+          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2" style={frameStyle(skin.track)} />
+          <div
+            className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 transition-[left] duration-75"
+            style={{ ...imageStyle(skin.thumb, SKIN_THUMB, SKIN_THUMB), left: `${ratio * 100}%` }}
+          />
+        </>
+      ) : (
+        <>
+          <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-(--bg-input) border border-(--border-strong) overflow-hidden">
+            <div className="absolute inset-y-0 left-0 bg-(--primary) rounded-full" style={{ width: `${ratio * 100}%` }} />
+          </div>
+          <div
+            className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white border-2 border-(--primary) shadow-[0_2px_8px_rgba(0,0,0,0.4)] transition-[left] duration-75"
+            style={{ left: `${ratio * 100}%` }}
+          />
+        </>
+      )}
     </div>
   );
 }

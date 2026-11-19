@@ -116,6 +116,11 @@ pub fn run() -> tauri::Result<()> {
             commands::settings::pull_game_settings,
             commands::system::get_display_resolution,
             commands::system::list_audio_devices,
+            commands::themes::list_themes,
+            commands::themes::get_active_theme,
+            commands::themes::import_theme,
+            commands::themes::delete_theme,
+            commands::themes::open_themes_folder,
         ])
         .setup(|app| {
             let paths = AppPaths::resolve(app.handle())?;
