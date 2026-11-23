@@ -130,6 +130,18 @@ pub enum AppError {
     /// Logging in with an account or a hidden window needs an installed SDK.
     #[error("launching with an account or hidden needs the SDK")]
     AccountRequiresSdk,
+
+    /// An addon, account, realm or character name cannot be used as a folder name.
+    #[error("invalid addon name: {0}")]
+    AddonNameInvalid(String),
+
+    /// An addon archive has no folder with a `.toc` file of the same name.
+    #[error("the archive contains no addon")]
+    AddonArchiveEmpty,
+
+    /// An addon archive has too many files or is too large once extracted.
+    #[error("the addon archive is too large")]
+    AddonArchiveTooLarge,
 }
 
 impl AppError {
@@ -161,6 +173,9 @@ impl AppError {
             Self::AccountExists => "account_exists",
             Self::AccountInvalid => "account_invalid",
             Self::ThemeInvalid(_) => "theme_invalid",
+            Self::AddonNameInvalid(_) => "addon_name_invalid",
+            Self::AddonArchiveEmpty => "addon_archive_empty",
+            Self::AddonArchiveTooLarge => "addon_archive_too_large",
         }
     }
 }
