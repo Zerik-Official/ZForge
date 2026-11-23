@@ -116,9 +116,9 @@ export function SdkInfoModal({ open, onClose }: SdkInfoModalProps) {
         </div>
 
         {showLicense ? (
-          <div className="flex flex-col gap-2 rounded-xl border border-(--border-strong) bg-(--bg-input) p-4">
+          <div className="flex flex-col gap-2 rounded-(--radius) border border-(--border-strong) bg-(--bg-input) p-4">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-(--muted)">Apache License 2.0</span>
+              <span className="text-[12.5px] font-semibold text-(--text-soft)">Apache License 2.0</span>
               <button
                 className="text-[11px] text-(--muted) hover:text-(--text-soft) cursor-pointer"
                 onClick={() => setShowLicense(false)}
@@ -139,7 +139,7 @@ export function SdkInfoModal({ open, onClose }: SdkInfoModalProps) {
                     const meta = LICENSE_COLUMN_META[column];
                     return (
                       <div key={column} className="flex flex-col gap-2">
-                        <span className="text-[10.5px] font-semibold uppercase tracking-wide text-(--muted)">
+                        <span className="text-[12px] font-semibold text-(--text-soft)">
                           {t(`launcher.settings.richPresence.info.${meta.titleKey}`)}
                         </span>
                         <ul className="flex flex-col gap-1.5">
