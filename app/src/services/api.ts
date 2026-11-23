@@ -25,6 +25,7 @@ export { presenceApi } from "./api/domains/presence.api";
 export { notificationsApi } from "./api/domains/notifications.api";
 export { accountsApi } from "./api/domains/accounts.api";
 export { themesApi } from "./api/domains/themes.api";
+export { addonsApi } from "./api/domains/addons.api";
 
 export const api = {
   minimizeWindow: () => windowApi.minimizeWindow(),
