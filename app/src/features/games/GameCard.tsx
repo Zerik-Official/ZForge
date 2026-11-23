@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { t, useLocale } from "@/locales/i18n";
 import { TooltipSimple } from "@/components/ui/Tooltip";
 import type { Game } from "@/types/domains/game";
+import { useGamesStore } from "@/store/gamesStore";
 import { toDisplaySrc } from "@/utils/asset";
 
 interface GameCardProps {
@@ -16,6 +17,7 @@ export function GameCard({ game, onEdit, onRemove }: GameCardProps) {
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const [glare, setGlare] = useState({ x: 50, y: 50 });
   const [hover, setHover] = useState(false);
+  const expansionName = useGamesStore((state) => state.assets?.expansions?.[game.expansion]?.name ?? game.expansion);
 
   function handleMove(event: React.MouseEvent<HTMLDivElement>) {
     if (!cardRef.current) return;
@@ -46,7 +48,7 @@ export function GameCard({ game, onEdit, onRemove }: GameCardProps) {
     >
       <div
         ref={cardRef}
-        className="relative h-53.75 w-37 shrink-0 overflow-hidden rounded-[10px] border border-(--border-strong) bg-black shadow-[0_10px_24px_rgba(0,0,0,0.45)]"
+        className="relative h-53.75 w-37 shrink-0 overflow-hidden rounded-[10px] border border-(--border-strong) bg-(--bg-card) shadow-(--shadow-md)"
         style={{
           transform: `rotateX(${tilt.y}deg) rotateY(${tilt.x}deg) scale3d(${hover ? 1.02 : 1}, ${hover ? 1.02 : 1}, 1)`,
           transition: hover ? "transform 100ms ease-out" : "transform 600ms ease-out",
@@ -102,11 +104,15 @@ export function GameCard({ game, onEdit, onRemove }: GameCardProps) {
         </div>
       </div>
 
-      <div className="flex w-full flex-col gap-1 px-1">
-        <span className="truncate text-center text-[12.5px] font-semibold leading-tight text-(--text)">{game.name}</span>
-        <span className="text-center text-[10px] uppercase tracking-wide text-(--muted)">
-          {game.expansion}
-          {game.show_on_main ? t("common.onHome") : ""}
+      <div className="flex w-full flex-col items-center gap-1 px-1">
+        <span className="max-w-full truncate text-center text-[13.5px] font-semibold leading-tight text-(--text)">{game.name}</span>
+        <span className="flex items-center gap-1.5 text-[12px] text-(--muted)">
+          {expansionName}
+          {game.show_on_main ? (
+            <TooltipSimple content={t("launcher.games.onHome")} side="bottom" align="center">
+              <i className="fa-solid fa-house text-[10px] text-(--muted-2)" aria-label={t("launcher.games.onHome")} />
+            </TooltipSimple>
+          ) : null}
         </span>
       </div>
     </div>
