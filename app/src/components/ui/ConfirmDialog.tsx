@@ -4,6 +4,8 @@ import { Modal } from "@/components/ui/Modal";
  * Properties for the {@link ConfirmDialog} component.
  */
 interface ConfirmDialogProps {
+  /** Shows the confirm button in the danger color, for actions that delete something. */
+  destructive?: boolean;
   /** Controls whether the dialog is visible. */
   open: boolean;
   /** FontAwesome icon class applied to the leading badge. */
@@ -48,25 +50,28 @@ export function ConfirmDialog({
   cancelLabel = "No",
   onConfirm,
   onCancel,
+  destructive = false,
 }: ConfirmDialogProps) {
   return (
     <Modal open={open} onClose={onCancel} className="w-full max-w-sm" closeOnBackdropClick={false}>
       <div className="flex flex-col gap-4 p-6">
         <div className="flex items-start gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-(--border-strong) bg-(--primary-soft)">
-            <i className={`${icon} text-[13px] text-(--primary-hover)`} />
+          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[7px] ${destructive ? "bg-(--danger)/12" : "bg-(--bg-elevated)"}`}>
+            <i className={`${icon} text-[14px] ${destructive ? "text-(--danger)" : "text-(--primary)"}`} />
           </div>
-          <div className="flex flex-col gap-1">
-            <h3 className="text-[13.5px] font-semibold text-(--text)">{title}</h3>
-            <p className="text-[12.5px] leading-relaxed text-(--muted)">{description}</p>
+          <div className="flex flex-col gap-1.5">
+            <h3 className="text-[15px] font-semibold text-(--text)">{title}</h3>
+            <p className="text-[13px] leading-relaxed text-(--muted)">{description}</p>
           </div>
         </div>
         <div className="flex items-center justify-end gap-2">
-          <button className="ghost-btn rounded-lg px-4 py-2 text-[13px] cursor-pointer" onClick={onCancel}>
+          <button className="ghost-btn rounded-[7px] px-4 py-2 text-[13px] cursor-pointer" onClick={onCancel}>
             {cancelLabel}
           </button>
           <button
-            className="play-btn rounded-lg px-4 py-2 text-[13px] font-semibold text-white cursor-pointer"
+            className={`rounded-[7px] px-4 py-2 text-[13px] font-semibold cursor-pointer ${
+              destructive ? "bg-(--danger) text-(--on-primary) transition-[filter] hover:brightness-110" : "play-btn"
+            }`}
             onClick={onConfirm}
           >
             {confirmLabel}

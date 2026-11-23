@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { PageState } from "@/components/layout/PageState";
+import { SettingsGroup, SettingsPage } from "@/components/layout/SettingsPage";
 import { SdkRequirement } from "@/components/sdk/SdkRequirement";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { accountName, useAccounts } from "@/hooks/useAccounts";
@@ -70,76 +72,89 @@ export function AccountsTab() {
   }
 
   if (!accounts) {
-    return (
-      <div className="flex flex-1 items-center justify-center text-(--muted)">
-        {loadError ? (
-          <span className="text-[12px] text-(--danger)">{t(`common.errors.codes.${errorCode(loadError)}`)}</span>
-        ) : (
-          <i className="fa-solid fa-spinner fa-spin text-[18px]" />
-        )}
-      </div>
-    );
+    return <PageState error={loadError ? t(`common.errors.codes.${errorCode(loadError)}`) : null} />;
   }
 
   return (
-    <div className="flex flex-col gap-4 p-8">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-[13px] font-semibold text-(--text)">{t("launcher.settings.accounts.title")}</h2>
-          <p className="max-w-xl text-[11px] leading-relaxed text-(--muted)">{t("launcher.settings.accounts.description")}</p>
-        </div>
+    <SettingsPage
+      title={t("launcher.settings.accounts.title")}
+      description={t("launcher.settings.accounts.description")}
+      actions={
         <button
-          className="play-btn flex shrink-0 items-center gap-2 rounded-lg px-4 py-2 text-[12.5px] font-semibold text-white cursor-pointer"
+          className="play-btn flex items-center gap-2 rounded-[7px] px-4 py-2 text-[13px] font-semibold cursor-pointer"
           onClick={() => openModal(null)}
         >
           <i className="fa-solid fa-plus text-[11px]" />
           {t("launcher.settings.accounts.add")}
         </button>
-      </div>
-
+      }
+    >
       <SdkRequirement status={featureStatus(capabilities, "accounts")} />
 
       {groups.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-(--border-strong) px-6 py-10 text-center">
+        <button
+          className="flex flex-col items-center gap-2.5 rounded-(--radius) border border-dashed border-(--border-strong) px-6 py-12 text-center transition-colors hover:border-(--muted-2) hover:bg-(--bg-card) cursor-pointer"
+          onClick={() => openModal(null)}
+        >
           <i className="fa-solid fa-user-shield text-[20px] text-(--muted-2)" />
-          <span className="text-[12px] text-(--muted)">{t("launcher.settings.accounts.empty")}</span>
-        </div>
+          <span className="text-[13px] text-(--muted)">{t("launcher.settings.accounts.empty")}</span>
+        </button>
       ) : null}
 
       {groups.map((group) => (
-        <div key={group.realmlist} className="flex flex-col gap-3 rounded-xl border border-(--border-strong) bg-(--bg-card) p-5">
-          <div className="flex items-center gap-2">
-            {group.server?.logo ? <img src={group.server.logo} alt="" className="h-5 w-5 rounded object-contain" /> : <i className="fa-solid fa-server text-[12px] text-(--muted)" />}
-            <h3 className="text-[12px] font-semibold text-(--text-soft)">{group.server?.name ?? group.realmlist}</h3>
-            <span className="text-[10.5px] text-(--muted-2)">{group.realmlist}</span>
-          </div>
-
+        <SettingsGroup
+          key={group.realmlist}
+          title={
+            <span className="flex items-center gap-2">
+              {group.server?.logo ? (
+                <img src={group.server.logo} alt="" className="h-5 w-5 rounded object-contain" />
+              ) : (
+                <i className="fa-solid fa-server text-[12px] text-(--muted)" />
+              )}
+              {group.server?.name ?? group.realmlist}
+            </span>
+          }
+          aside={<span className="text-[12px] text-(--muted-2)">{group.realmlist}</span>}
+        >
           {group.accounts.map((account) => (
-            <div key={account.id} className="flex flex-col gap-2 rounded-lg border border-(--border) bg-(--bg-elevated) px-4 py-3">
+            <div key={account.id} className="flex flex-col gap-2.5 px-4.5 py-3.5">
               <div className="flex items-center justify-between gap-3">
-                <div className="flex min-w-0 flex-col">
-                  <span className="truncate text-[12.5px] font-semibold text-(--text)">{accountName(account)}</span>
-                  <span className="truncate text-[10.5px] text-(--muted)">
-                    {account.label.trim() ? `${account.username} · ` : ""}
-                    {account.default_realm || t("launcher.settings.accounts.noDefaultRealm")}
-                    {account.default_character ? ` · ${account.default_character}` : ""}
+                <div className="flex min-w-0 flex-col gap-1">
+                  <span className="truncate text-[13.5px] font-[550] text-(--text)">{accountName(account)}</span>
+                  <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 text-[12px] text-(--muted)">
+                    {account.label.trim() ? (
+                      <span className="flex items-center gap-1.5">
+                        <i className="fa-solid fa-key text-[10px] text-(--muted-2)" />
+                        {account.username}
+                      </span>
+                    ) : null}
+                    <span className="flex items-center gap-1.5">
+                      <i className="fa-solid fa-globe text-[10px] text-(--muted-2)" />
+                      {account.default_realm || t("launcher.settings.accounts.noDefaultRealm")}
+                    </span>
+                    {account.default_character ? (
+                      <span className="flex items-center gap-1.5">
+                        <i className="fa-solid fa-user text-[10px] text-(--muted-2)" />
+                        {account.default_character}
+                      </span>
+                    ) : null}
                   </span>
                 </div>
-                <div className="flex shrink-0 items-center gap-1.5">
+                <div className="flex shrink-0 items-center gap-1">
                   {account.has_password ? null : (
-                    <span className="rounded-md bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-500">
+                    <span className="mr-1 rounded-md bg-(--warning)/10 px-2 py-0.5 text-[11px] font-semibold text-(--warning)">
                       {t("launcher.settings.accounts.noPassword")}
                     </span>
                   )}
                   <button
-                    className="flex h-7.5 w-7.5 items-center justify-center rounded-lg text-(--muted) transition-colors hover:bg-(--bg-hover) hover:text-(--text-soft) cursor-pointer"
+                    className="flex h-8 w-8 items-center justify-center rounded-[7px] text-(--muted) transition-colors hover:bg-(--bg-hover) hover:text-(--text) cursor-pointer"
                     onClick={() => openModal(account)}
                     aria-label={t("common.edit")}
                   >
                     <i className="fa-solid fa-pen text-[11px]" />
                   </button>
                   <button
-                    className="flex h-7.5 w-7.5 items-center justify-center rounded-lg text-(--muted) transition-colors hover:bg-(--bg-hover) hover:text-(--danger) cursor-pointer"
+                    className="flex h-8 w-8 items-center justify-center rounded-[7px] text-(--muted) transition-colors hover:bg-(--bg-hover) hover:text-(--danger) cursor-pointer"
                     onClick={() => setDeleting(account)}
                     aria-label={t("common.delete")}
                   >
@@ -153,28 +168,26 @@ export function AccountsTab() {
                   {account.characters.map((character) => (
                     <span
                       key={`${character.realm}/${character.name}`}
-                      className="rounded-md border border-(--border) bg-(--bg-card) px-2 py-1 text-[10.5px] text-(--text-soft)"
+                      className="flex items-baseline gap-1.5 rounded-md bg-(--bg-elevated) px-2 py-1 text-[11.5px]"
                       title={character.realm}
                     >
-                      <span className="font-semibold">{character.name}</span>
+                      <span className="font-semibold text-(--text-soft)">{character.name}</span>
                       <span className="text-(--muted)">
-                        {" · "}
-                        {t("launcher.settings.accounts.level", { level: character.level })}
-                        {" "}
+                        {t("launcher.settings.accounts.level", { level: character.level })}{" "}
                         {t(`presence.races.${character.race_id}`)} {t(`presence.classes.${character.class_id}`)}
                       </span>
                     </span>
                   ))}
                 </div>
               ) : (
-                <span className="text-[10.5px] text-(--muted-2)">{t("launcher.settings.accounts.noCharacters")}</span>
+                <span className="text-[12px] text-(--muted-2)">{t("launcher.settings.accounts.noCharacters")}</span>
               )}
             </div>
           ))}
-        </div>
+        </SettingsGroup>
       ))}
 
-      {error ? <span className="text-[12px] text-(--danger)">{error}</span> : null}
+      {error ? <span className="text-[12.5px] text-(--danger)">{error}</span> : null}
 
       {modalOpen ? (
         <AccountModal
@@ -189,6 +202,7 @@ export function AccountsTab() {
       <ConfirmDialog
         open={deleting !== null}
         icon="fa-solid fa-trash"
+        destructive
         title={t("launcher.settings.accounts.confirmDelete")}
         description={t("launcher.settings.accounts.confirmDeleteDescription", { name: deleting ? accountName(deleting) : "" })}
         confirmLabel={t("common.delete")}
@@ -196,6 +210,6 @@ export function AccountsTab() {
         onConfirm={() => void confirmDelete()}
         onCancel={() => setDeleting(null)}
       />
-    </div>
+    </SettingsPage>
   );
 }

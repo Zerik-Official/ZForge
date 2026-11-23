@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react";
+import { Notice } from "@/components/layout/Notice";
+import { PageState } from "@/components/layout/PageState";
+import { SettingsGroup, SettingsPage } from "@/components/layout/SettingsPage";
 import { SdkRequirement } from "@/components/sdk/SdkRequirement";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { featureStatus, useCapabilities } from "@/hooks/useCapabilities";
@@ -42,43 +45,34 @@ export function RichPresenceTab() {
   }
 
   if (!status) {
-    return (
-      <div className="flex flex-1 items-center justify-center text-(--muted)">
-        {error ? <span className="text-[12px] text-(--danger)">{error}</span> : <i className="fa-solid fa-spinner fa-spin text-[18px]" />}
-      </div>
-    );
+    return <PageState error={error} />;
   }
 
   return (
-    <div className="flex flex-col gap-4 p-8">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-[13px] font-semibold text-(--text)">{t("launcher.settings.richPresence.title")}</h2>
-        <p className="max-w-xl text-[11px] leading-relaxed text-(--muted)">{t("launcher.settings.richPresence.description")}</p>
-      </div>
-
+    <SettingsPage title={t("launcher.settings.richPresence.title")} description={t("launcher.settings.richPresence.description")}>
       {status.application_id_configured ? null : (
-        <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3">
-          <i className="fa-solid fa-circle-info mt-0.5 text-[13px] text-amber-500" />
-          <div className="flex flex-col gap-1">
-            <span className="text-[12px] font-semibold text-amber-500">{t("launcher.settings.richPresence.applicationIdMissing.title")}</span>
-            <span className="text-[11px] leading-relaxed text-(--muted)">{t("launcher.settings.richPresence.applicationIdMissing.description")}</span>
-          </div>
-        </div>
+        <Notice
+          tone="warning"
+          icon="fa-solid fa-circle-info"
+          title={t("launcher.settings.richPresence.applicationIdMissing.title")}
+          description={t("launcher.settings.richPresence.applicationIdMissing.description")}
+        />
       )}
 
       <SdkRequirement status={featureStatus(capabilities, "live_session")} />
 
-      <div className="flex flex-col gap-3 rounded-xl border border-(--border-strong) bg-(--bg-card) p-5">
+      <SettingsGroup>
         <Checkbox
+          layout="row"
           checked={status.discord_enabled}
           onChange={(value) => void handleToggleDiscord(value)}
           label={t("launcher.settings.richPresence.settings.enableDiscord")}
           description={t("launcher.settings.richPresence.settings.enableDiscordDescription")}
           disabled={!status.application_id_configured}
         />
-      </div>
+      </SettingsGroup>
 
-      {error ? <span className="text-[12px] text-(--danger)">{error}</span> : null}
-    </div>
+      {error ? <span className="text-[12.5px] text-(--danger)">{error}</span> : null}
+    </SettingsPage>
   );
 }

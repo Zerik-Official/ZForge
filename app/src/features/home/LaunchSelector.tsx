@@ -88,24 +88,33 @@ export function LaunchSelector({
     });
   }
 
-  const summary = account
-    ? [accountName(account), choice.character || t("home.launch.characterSelectShort")].join(" · ")
-    : t("home.launch.noAccount");
+  const title = account ? choice.character || t("home.launch.characterSelectShort") : t("home.launch.noAccount");
+  const subtitle = account
+    ? choice.realm.trim()
+      ? t("home.launch.accountOnRealm", { account: accountName(account), realm: choice.realm.trim() })
+      : accountName(account)
+    : t("home.launch.pickAccount");
 
   return (
     <div className="relative" ref={rootRef}>
       <button
         disabled={disabled}
         onClick={() => setOpen((prev) => !prev)}
-        className="flex h-11 max-w-50 items-center gap-2 rounded-xl border border-(--border-strong) bg-(--bg-elevated) px-3 text-[12px] text-(--text-soft) transition-colors hover:border-(--primary) hover:bg-(--bg-hover) disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+        aria-expanded={open}
+        className="flex h-13 max-w-72 items-center gap-3 rounded-(--radius) border border-(--border-strong) bg-(--bg-card)/90 pr-4 pl-2 text-left backdrop-blur-md transition-colors hover:bg-(--bg-elevated) disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
       >
-        <i className={`fa-solid ${choice.headless && account ? "fa-eye-slash" : "fa-user"} text-[12px] text-(--muted)`} />
-        <span className="truncate">{summary}</span>
-        <i className={`fa-solid fa-chevron-up text-[9px] text-(--muted) transition-transform ${open ? "" : "rotate-180"}`} />
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[7px] bg-(--bg-elevated) text-[14px] text-(--text-soft)">
+          <i className={`fa-solid ${choice.headless && account ? "fa-eye-slash" : "fa-user"}`} />
+        </span>
+        <span className="flex min-w-0 flex-col gap-0.5">
+          <span className="truncate text-[13.5px] font-semibold text-(--text)">{title}</span>
+          <span className="truncate text-[12px] text-(--muted)">{subtitle}</span>
+        </span>
+        <i className={`fa-solid fa-chevron-up ml-1 text-[10px] text-(--muted) transition-transform ${open ? "" : "rotate-180"}`} />
       </button>
 
       {open ? (
-        <div className="absolute bottom-full right-0 mb-3 flex w-80 flex-col gap-3 rounded-2xl border border-(--border-strong) bg-(--bg-elevated) p-4 shadow-2xl">
+        <div className="absolute bottom-full left-0 z-20 mb-3 flex w-80 flex-col gap-3.5 rounded-(--radius-lg) border border-(--border-strong) bg-(--bg-elevated) p-4 shadow-(--shadow-lg) animate-[popIn_0.15s_ease_both]">
           {accountsFeature?.available === false ? (
             <SdkRequirement status={accountsFeature} />
           ) : (
@@ -146,7 +155,7 @@ export function LaunchSelector({
               </div>
             </>
           ) : accountsFeature?.available === false ? null : (
-            <span className="text-[11px] leading-relaxed text-(--muted)">
+            <span className="text-[12.5px] leading-relaxed text-(--muted)">
               {accounts.length === 0 ? t("home.launch.noAccounts") : t("home.launch.noAccountDescription")}
             </span>
           )}

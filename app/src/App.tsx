@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { TitleBar } from "@/components/layout/TitleBar";
+import { WindowBar } from "@/components/layout/WindowBar";
 import { SplashScreen } from "@/components/layout/SplashScreen";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { LauncherShell } from "@/features/launcher/LauncherShell";
@@ -27,6 +27,7 @@ export default function App() {
 
   /** True once the splash fade-out transition ends. */
   const [splashGone, setSplashGone] = useState(false);
+  const handleSplashDone = useCallback(() => setSplashGone(true), []);
 
   /** Language gate — null until we know if the user has chosen one. */
   const [languageChecked, setLanguageChecked] = useState(false);
@@ -100,12 +101,12 @@ export default function App() {
         <SplashScreen
           step={step}
           bootDone={bootDone}
-          onDone={() => setSplashGone(true)}
+          onDone={handleSplashDone}
         />
       )}
 
       {showLanguageSelector && <LanguageSelector onSelect={handleSelectLanguage} />}
-      <TitleBar />
+      <WindowBar />
 
       <main
         style={{

@@ -31,7 +31,7 @@ export function ThemeDetailsModal({ theme, active, busy, onUse, onClose }: Theme
       <ModalBody className="gap-4">
         {preview ? (
           <div className="flex flex-col gap-2">
-            <div className="flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl border border-(--border-strong) bg-(--bg-input)">
+            <div className="flex aspect-video w-full items-center justify-center overflow-hidden rounded-(--radius) border border-(--border-strong) bg-(--bg-input)">
               <img src={toDisplaySrc(preview)} alt="" className="h-full w-full object-contain" />
             </div>
             {theme.previews.length > 1 ? (
@@ -51,7 +51,7 @@ export function ThemeDetailsModal({ theme, active, busy, onUse, onClose }: Theme
             ) : null}
           </div>
         ) : (
-          <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-(--border-strong) text-(--muted-2)">
+          <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-(--radius) border border-dashed border-(--border-strong) text-(--muted-2)">
             <i className="fa-solid fa-image text-[20px]" />
             <span className="text-[11px]">{t("launcher.settings.appearance.noPreviews")}</span>
           </div>
@@ -82,7 +82,7 @@ export function ThemeDetailsModal({ theme, active, busy, onUse, onClose }: Theme
           {t("common.cancel")}
         </button>
         <button
-          className="play-btn rounded-lg px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-40 cursor-pointer"
+          className="play-btn rounded-lg px-4 py-2 text-[13px] font-semibold disabled:opacity-40 cursor-pointer"
           onClick={onUse}
           disabled={active || busy || !theme.compatible || theme.error !== null}
         >

@@ -294,7 +294,7 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
                 {t("addGame.preview")}
               </span>
 
-            <div className="flex items-center gap-3 rounded-xl border border-(--border-strong) bg-(--bg-input) p-3">
+            <div className="flex items-center gap-3 rounded-(--radius) border border-(--border-strong) bg-(--bg-input) p-3">
               <div className="flex h-19 w-13 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-(--border-strong) bg-black">
                 {form.box ? (
                   <img src={toDisplaySrc(form.box)} alt="" className="h-full w-full object-cover" />
@@ -304,7 +304,7 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[13px] font-semibold text-(--text)">{form.name || t("addGame.previewGame")}</p>
-                <p className="text-[11px] uppercase tracking-wide text-(--muted)">{form.expansion}</p>
+                <p className="text-[12px] text-(--muted)">{assets?.expansions?.[form.expansion]?.name ?? form.expansion}</p>
                 <p className="mt-1 flex items-center gap-1.5 text-[10px] text-(--muted-2)">
                   <span className="h-4 w-4 overflow-hidden rounded bg-(--bg-card) p-0.5">
                     {form.icon ? <img src={toDisplaySrc(form.icon)} alt="" className="h-full w-full object-contain" /> : null}
@@ -325,7 +325,7 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
           {t("common.cancel")}
         </button>
         <button
-          className="play-btn rounded-lg px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-40 cursor-pointer"
+          className="play-btn rounded-lg px-4 py-2 text-[13px] font-semibold disabled:opacity-40 cursor-pointer"
           onClick={handleSave}
           disabled={busy || !form.name.trim() || !form.exePath.trim()}
         >

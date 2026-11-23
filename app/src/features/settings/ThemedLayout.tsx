@@ -50,7 +50,7 @@ export function ThemedLayout({ layout, settings, values, onChange, panel, source
         {layout.sections.map((section, index) => (
           <div
             key={`${section.title ?? "section"}-${index}`}
-            className={`absolute ${section.framed && !panel ? "rounded-xl border border-(--border-strong) bg-(--bg-input)" : ""}`}
+            className={`absolute ${section.framed && !panel ? "rounded-(--radius) border border-(--border-strong) bg-(--bg-input)" : ""}`}
             style={{
               left: section.x,
               top: section.y,

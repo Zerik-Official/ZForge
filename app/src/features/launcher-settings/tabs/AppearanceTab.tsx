@@ -1,3 +1,5 @@
+import { PageState } from "@/components/layout/PageState";
+import { SettingsGroup, SettingsPage } from "@/components/layout/SettingsPage";
 import { useCallback, useEffect, useState } from "react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { t, useLocale } from "@/locales/i18n";
@@ -115,11 +117,7 @@ export function AppearanceTab() {
   }
 
   if (!themes) {
-    return (
-      <div className="flex flex-1 items-center justify-center text-(--muted)">
-        {error ? <span className="text-[12px] text-(--danger)">{error}</span> : <i className="fa-solid fa-spinner fa-spin text-[18px]" />}
-      </div>
-    );
+    return <PageState error={error} />;
   }
 
   const builtIn: ThemeSummary = {
@@ -136,79 +134,72 @@ export function AppearanceTab() {
   };
 
   return (
-    <div className="flex flex-col gap-4 p-8">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-[13px] font-semibold text-(--text)">{t("launcher.settings.appearance.title")}</h2>
-          <p className="max-w-xl text-[11px] leading-relaxed text-(--muted)">{t("launcher.settings.appearance.description")}</p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
+    <SettingsPage
+      title={t("launcher.settings.appearance.title")}
+      description={t("launcher.settings.appearance.description")}
+      actions={
+        <>
           <button
-            className="flex items-center gap-2 rounded-lg border border-(--border-strong) bg-(--bg-elevated) px-3 py-2 text-[12.5px] font-medium text-(--text-soft) hover:bg-(--bg-hover) hover:text-(--text) cursor-pointer"
+            className="ghost-btn flex items-center gap-2 rounded-[7px] px-3 py-2 text-[13px] font-medium cursor-pointer"
             onClick={() => void openFolder()}
           >
             <i className="fa-solid fa-folder-open text-[12px]" />
             {t("launcher.settings.appearance.openFolder")}
           </button>
           <button
-            className="play-btn flex items-center gap-2 rounded-lg px-4 py-2 text-[12.5px] font-semibold text-white disabled:opacity-50 cursor-pointer"
+            className="play-btn flex items-center gap-2 rounded-[7px] px-4 py-2 text-[13px] font-semibold disabled:opacity-50 cursor-pointer"
             onClick={() => void handleImport()}
             disabled={busy}
           >
             <i className="fa-solid fa-file-zipper text-[11px]" />
             {t("launcher.settings.appearance.import")}
           </button>
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-2">
+        </>
+      }
+    >
+      <SettingsGroup>
         {[builtIn, ...themes].map((theme) => {
           const active = theme.id === activeId;
           const valid = theme.error === null;
           const usable = valid && theme.compatible;
+          const detail = theme.description.trim() || theme.author.trim();
           return (
-            <div
-              key={theme.id}
-              className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${
-                active ? "border-(--primary) bg-(--primary-soft)" : "border-(--border-strong) bg-(--bg-card)"
-              }`}
-            >
+            <div key={theme.id} className={`relative flex items-center gap-3.5 px-4.5 py-3.25 ${active ? "bg-(--primary-soft)" : ""}`}>
+              {active ? <span className="absolute inset-y-0 left-0 w-0.5 bg-(--primary)" /> : null}
               {theme.icon ? (
-                <img src={toDisplaySrc(theme.icon)} alt="" className="h-9 w-9 shrink-0 rounded-lg object-cover" />
+                <img src={toDisplaySrc(theme.icon)} alt="" className="h-9 w-9 shrink-0 rounded-[7px] object-cover" />
               ) : (
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-(--border-strong) bg-(--bg-elevated)">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[7px] bg-(--bg-elevated)">
                   <i className={`fa-solid ${theme.id === BUILT_IN_THEME ? "fa-moon" : "fa-palette"} text-[13px] text-(--muted)`} />
                 </span>
               )}
               <button
-                className={`flex min-w-0 flex-1 flex-col text-left ${valid && theme.id !== BUILT_IN_THEME ? "cursor-pointer" : "cursor-default"}`}
+                className={`flex min-w-0 flex-1 flex-col gap-0.75 text-left ${valid && theme.id !== BUILT_IN_THEME ? "cursor-pointer" : "cursor-default"}`}
                 onClick={() => {
                   if (valid && theme.id !== BUILT_IN_THEME) setViewing(theme);
                 }}
               >
-                <span className="truncate text-[12.5px] font-semibold text-(--text)">
+                <span className="truncate text-[13.5px] font-[550] text-(--text)">
                   {theme.name}
-                  {theme.version ? <span className="ml-2 text-[10.5px] font-normal text-(--muted-2)">v{theme.version}</span> : null}
+                  {theme.version ? <span className="ml-2 text-[12px] font-normal text-(--muted-2)">v{theme.version}</span> : null}
                 </span>
                 {theme.error ? (
-                  <span className="text-[11px] leading-snug text-(--danger)">{problemText(theme.error)}</span>
+                  <span className="text-[12.5px] leading-snug text-(--danger)">{problemText(theme.error)}</span>
                 ) : !theme.compatible ? (
-                  <span className="truncate text-[11px] text-(--danger)">
+                  <span className="truncate text-[12.5px] text-(--danger)">
                     {t("launcher.settings.appearance.requiresLauncher", { requires: theme.requires ?? "" })}
                   </span>
-                ) : (
-                  <span className="truncate text-[11px] text-(--muted)">
-                    {[theme.author, theme.description].filter((part) => part.trim() !== "").join(" · ")}
-                  </span>
-                )}
+                ) : detail ? (
+                  <span className="truncate text-[12.5px] text-(--muted)">{detail}</span>
+                ) : null}
               </button>
               {active ? (
-                <span className="rounded-md bg-(--primary-dim) px-2 py-0.5 text-[10px] font-semibold text-(--primary-hover)">
+                <span className="rounded-md bg-(--primary-dim) px-2 py-0.5 text-[11.5px] font-semibold text-(--primary)">
                   {t("launcher.settings.appearance.active")}
                 </span>
               ) : usable ? (
                 <button
-                  className="rounded-lg border border-(--border-strong) bg-(--bg-elevated) px-3 py-1.5 text-[12px] text-(--text-soft) hover:bg-(--bg-hover) hover:text-(--text) disabled:opacity-50 cursor-pointer"
+                  className="ghost-btn rounded-[7px] px-3 py-1.5 text-[12.5px] disabled:opacity-50 cursor-pointer"
                   onClick={() => void activate(theme.id)}
                   disabled={busy}
                 >
@@ -217,7 +208,7 @@ export function AppearanceTab() {
               ) : null}
               {theme.id === BUILT_IN_THEME ? null : (
                 <button
-                  className="flex h-7.5 w-7.5 items-center justify-center rounded-lg text-(--muted) transition-colors hover:bg-(--bg-hover) hover:text-(--danger) cursor-pointer"
+                  className="flex h-8 w-8 items-center justify-center rounded-[7px] text-(--muted) transition-colors hover:bg-(--bg-hover) hover:text-(--danger) cursor-pointer"
                   onClick={() => setDeleting(theme)}
                   aria-label={t("common.delete")}
                 >
@@ -227,10 +218,10 @@ export function AppearanceTab() {
             </div>
           );
         })}
-      </div>
+      </SettingsGroup>
 
-      <p className="text-[11px] leading-relaxed text-(--muted-2)">{t("launcher.settings.appearance.help")}</p>
-      {error ? <span className="text-[12px] text-(--danger)">{error}</span> : null}
+      <p className="max-w-[72ch] text-[12.5px] leading-relaxed text-(--muted)">{t("launcher.settings.appearance.help")}</p>
+      {error ? <span className="text-[12.5px] text-(--danger)">{error}</span> : null}
 
       {viewing ? (
         <ThemeDetailsModal
@@ -248,6 +239,7 @@ export function AppearanceTab() {
       <ConfirmDialog
         open={deleting !== null}
         icon="fa-solid fa-trash"
+        destructive
         title={t("launcher.settings.appearance.confirmDelete")}
         description={t("launcher.settings.appearance.confirmDeleteDescription", { name: deleting?.name ?? "" })}
         confirmLabel={t("common.delete")}
@@ -255,6 +247,6 @@ export function AppearanceTab() {
         onConfirm={() => void confirmDelete()}
         onCancel={() => setDeleting(null)}
       />
-    </div>
+    </SettingsPage>
   );
 }

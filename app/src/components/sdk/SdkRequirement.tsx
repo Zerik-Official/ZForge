@@ -1,3 +1,4 @@
+import { Notice } from "@/components/layout/Notice";
 import { TooltipSimple } from "@/components/ui/Tooltip";
 import { useSdkInstall } from "@/hooks/useSdkInstall";
 import { t } from "@/locales/i18n";
@@ -39,7 +40,7 @@ export function SdkRequirement({ status, variant = "banner" }: SdkRequirementPro
   if (variant === "badge") {
     return (
       <TooltipSimple content={reasonText(status)} side="top">
-        <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-500">
+        <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-(--warning)/10 px-2 py-0.5 text-[11px] font-semibold text-(--warning)">
           <i className="fa-solid fa-cube text-[9px]" />
           {title}
         </span>
@@ -48,35 +49,35 @@ export function SdkRequirement({ status, variant = "banner" }: SdkRequirementPro
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3">
-      <div className="flex items-start gap-3">
-        <i className="fa-solid fa-cube mt-0.5 text-[13px] text-amber-500" />
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <span className="text-[12px] font-semibold text-amber-500">{title}</span>
-          <span className="text-[11px] leading-relaxed text-(--muted)">{reasonText(status)}</span>
-        </div>
-        {status.fixable && !installing ? (
+    <Notice
+      tone="warning"
+      icon="fa-solid fa-cube"
+      title={title}
+      description={reasonText(status)}
+      action={
+        status.fixable && !installing ? (
           <button
-            className="flex shrink-0 items-center gap-2 rounded-lg bg-[linear-gradient(160deg,var(--primary-hover),var(--primary-active))] px-3 py-1.5 text-[12px] font-semibold text-white hover:brightness-105 cursor-pointer"
+            className="flex shrink-0 items-center gap-2 rounded-[7px] bg-(--primary) px-3 py-1.5 text-[12.5px] font-semibold text-(--on-primary) transition-colors hover:bg-(--primary-hover) cursor-pointer"
             onClick={() => void install()}
           >
             <i className="fa-solid fa-download text-[11px]" />
             {t(actionKey(status))}
           </button>
-        ) : null}
-      </div>
+        ) : null
+      }
+    >
       {installing ? (
         <div className="flex flex-col gap-1.5">
-          <div className="flex items-center justify-between text-[11px] text-(--muted)">
+          <div className="flex items-center justify-between text-[12px] text-(--muted)">
             <span>{t("capabilities.installing")}</span>
-            <span>{progress ? `${progress.percent}%` : ""}</span>
+            <span className="tabular-nums">{progress ? `${progress.percent}%` : ""}</span>
           </div>
-          <div className="h-1.5 w-full overflow-hidden rounded-full border border-(--border-strong) bg-(--bg-input)">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-(--bg-input)">
             <div className="h-full bg-(--primary) transition-all duration-200" style={{ width: `${progress?.percent ?? 0}%` }} />
           </div>
         </div>
       ) : null}
-      {error ? <span className="text-[11px] text-(--danger)">{error}</span> : null}
-    </div>
+      {error ? <span className="text-[12px] text-(--danger)">{error}</span> : null}
+    </Notice>
   );
 }

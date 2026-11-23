@@ -23,7 +23,6 @@
     "custom": "Personalizado",
     "gameSettings": "Configuración del juego",
     "comingSoon": " — próximamente",
-    "onHome": " · en inicio",
     "errors": {
       "loadGameSettings": "No se pudo cargar la configuración del juego.",
       "applyGameSettings": "No se pudo aplicar al juego.",
@@ -72,7 +71,8 @@
       "description": "\"{realmlist}\" no está en el catálogo de servidores. ¿Quieres guardarlo para que se autocomplete en futuros juegos?",
       "confirm": "Sí, guardar",
       "cancel": "Solo este juego"
-    }
+    },
+    "close": "Cerrar"
   },
   "launcher": {
     "home": {
@@ -81,13 +81,28 @@
     },
     "games": {
       "title": "Juegos",
-      "empty": "Aún no tienes juegos. Haz clic para añadir uno."
+      "empty": "Aún no tienes juegos. Haz clic para añadir uno.",
+      "onHome": "Se muestra en Inicio"
     },
     "sidebar": {
       "home": "Inicio",
       "games": "Juegos",
       "addons": "Addons",
-      "settings": "Ajustes"
+      "settings": "Ajustes",
+      "navigation": "Navegación principal",
+      "ready": "Listo para jugar",
+      "phase": {
+        "launching": "Iniciando…",
+        "running": "Abierto",
+        "loading": "Cargando…",
+        "login": "En el login",
+        "character_select": "Eligiendo personaje",
+        "in_world": "En el mundo"
+      },
+      "collapse": "Contraer barra lateral",
+      "expand": "Expandir barra lateral",
+      "hide": "Ocultar barra lateral",
+      "show": "Mostrar barra lateral"
     },
     "settings": {
       "tabs": {
@@ -339,6 +354,10 @@
       "deleted": "Se borró {name}",
       "confirmDelete": "Borrar addon",
       "confirmDeleteDescription": "¿Borrar la carpeta de {name}? Su configuración guardada en WTF se conserva."
+    },
+    "window": {
+      "minimize": "Minimizar",
+      "close": "Cerrar"
     }
   },
   "addGame": {
@@ -663,7 +682,9 @@
       "stayInCharacterSelect": "Quedarse en la selección de personaje",
       "characterSelectShort": "Selección de personaje",
       "headless": "Iniciar en segundo plano",
-      "headlessDescription": "La ventana del juego permanece oculta hasta que el personaje está en el mundo. Se recomienda el modo ventana."
+      "headlessDescription": "La ventana del juego permanece oculta hasta que el personaje está en el mundo. Se recomienda el modo ventana.",
+      "accountOnRealm": "{account} en {realm}",
+      "pickAccount": "Elige una cuenta para entrar"
     }
   }
 }

@@ -178,7 +178,7 @@ export function AccountModal({ open, account, servers, onClose, onSaved }: Accou
           {t("common.cancel")}
         </button>
         <button
-          className="play-btn rounded-lg px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-40 cursor-pointer"
+          className="play-btn rounded-lg px-4 py-2 text-[13px] font-semibold disabled:opacity-40 cursor-pointer"
           onClick={() => void handleSave()}
           disabled={!canSave}
         >

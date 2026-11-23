@@ -42,14 +42,14 @@ export function GamesView() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-5 p-8">
+    <div className="flex h-full flex-col gap-6 overflow-y-auto px-12 pt-12 pb-10">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-(--text)">{t("launcher.games.title")}</h1>
+        <h1 className="text-[26px] leading-[1.15] font-[650] text-(--text)">{t("launcher.games.title")}</h1>
       </div>
 
       {games.length === 0 ? (
         <button
-          className="flex w-full max-w-sm flex-col items-center gap-3 rounded-2xl border border-dashed border-(--border-strong) bg-(--bg-card) py-12 text-(--muted) transition-colors hover:border-(--accent) hover:text-(--text) cursor-pointer"
+          className="flex w-full max-w-sm flex-col items-center gap-3 rounded-(--radius) border border-dashed border-(--border-strong) py-12 text-(--muted) transition-colors hover:border-(--muted-2) hover:bg-(--bg-card) hover:text-(--text) cursor-pointer"
           onClick={openCreate}
         >
           <i className="fa-solid fa-gamepad text-3xl" />
@@ -61,11 +61,11 @@ export function GamesView() {
             <GameCard key={game.id} game={game} onEdit={openEdit} onRemove={handleRemove} />
           ))}
           <button
-            className="flex h-53.75 w-37 flex-col items-center justify-center gap-2 rounded-[10px] border border-dashed border-(--border-strong) bg-(--bg-card) text-(--muted) transition-colors hover:border-(--accent) hover:text-(--text) cursor-pointer"
+            className="flex h-53.75 w-37 flex-col items-center justify-center gap-2 rounded-[10px] border border-dashed border-(--border-strong) text-(--muted) transition-colors hover:border-(--muted-2) hover:bg-(--bg-card) hover:text-(--text) cursor-pointer"
             onClick={openCreate}
           >
             <i className="fa-solid fa-plus text-2xl" />
-            <span className="text-[12px]">{t("common.add")}</span>
+            <span className="text-[13px]">{t("common.addGame")}</span>
           </button>
         </div>
       )}
@@ -75,6 +75,7 @@ export function GamesView() {
       <ConfirmDialog
         open={pendingRemove !== null}
         icon="fa-solid fa-trash"
+        destructive
         title={t("common.confirmDeleteGame")}
         description={
           pendingRemove ? t("common.confirmDeleteGameDescription", { name: pendingRemove.name }) : ""

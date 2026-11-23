@@ -43,7 +43,7 @@ export function LanguageSelector({ onSelect }: LanguageSelectorProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-(--bg) px-6">
+    <div data-tauri-drag-region className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-(--bg) px-6">
       <img
         src="/assets/app/logo.svg"
         alt="ZForge"
@@ -65,12 +65,12 @@ export function LanguageSelector({ onSelect }: LanguageSelectorProps) {
               key={opt.locale}
               disabled={isBusy}
               onClick={() => handlePick(opt.locale)}
-              className={`group flex w-42 flex-col items-center gap-3 rounded-2xl border bg-(--bg-card) px-6 py-7 transition-all duration-200 cursor-pointer
-                ${pending === opt.locale ? "border-(--primary) bg-(--primary-dim) scale-[0.98]" : "border-(--border-strong) hover:border-(--primary) hover:bg-(--bg-elevated) hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(0,0,0,0.35)]"}
+              className={`group flex w-42 flex-col items-center gap-3 rounded-(--radius-lg) border bg-(--bg-card) px-6 py-7 transition-all duration-200 cursor-pointer
+                ${pending === opt.locale ? "border-(--primary) bg-(--primary-dim) scale-[0.98]" : "border-(--border-strong) hover:border-(--muted-2) hover:bg-(--bg-elevated)"}
                 ${isBusy && !isPending ? "opacity-60 cursor-not-allowed" : ""}
               `}
             >
-              <span className="flex h-12 w-18 items-center justify-center overflow-hidden rounded-lg bg-(--bg-elevated) shadow-inner ring-1 ring-(--border-strong) transition-transform duration-200 group-hover:scale-110">
+              <span className="flex h-12 w-18 items-center justify-center overflow-hidden rounded-lg bg-(--bg-elevated) shadow-inner ring-1 ring-(--border-strong)">
                 <opt.Flag title={opt.label} className="h-full w-full object-cover" />
               </span>
               <span className="flex flex-col items-center">

@@ -65,7 +65,7 @@ A theme whose requirement the running launcher does not meet is listed as not su
 
 ### Colors
 
-Keys are the launcher tokens without `--`: `bg`, `bg-soft`, `bg-card`, `bg-elevated`, `bg-hover`, `bg-input`, `border`, `border-soft`, `border-strong`, `primary`, `primary-hover`, `primary-active`, `primary-dim`, `primary-soft`, `primary-glow`, `accent`, `accent-dim`, `accent-glow`, `success`, `warning`, `danger`, `info`, `text`, `text-soft`, `muted`, `muted-2`, `muted-3`, `scroll-track`, `scroll-thumb`, `scroll-thumb-hover`.
+Keys are the launcher tokens without `--`: `bg`, `bg-soft`, `bg-card`, `bg-elevated`, `bg-hover`, `bg-input`, `border`, `border-soft`, `border-strong`, `primary`, `primary-hover`, `primary-active`, `on-primary` (text and icons drawn on `primary`), `primary-dim`, `primary-soft`, `primary-glow`, `accent`, `accent-dim`, `accent-glow`, `success`, `warning`, `danger`, `info`, `text`, `text-soft`, `muted`, `muted-2`, `muted-3`, `scroll-track`, `scroll-thumb`, `scroll-thumb-hover`.
 
 Values are CSS colors such as `#c8a24a` or `rgba(200, 162, 74, 0.25)`; `url(...)` is not accepted.
 

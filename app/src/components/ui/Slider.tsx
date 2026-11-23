@@ -94,7 +94,7 @@ export function Slider({ value, onChange, min = 0, max = 100, step = 1, options,
             <div className="absolute inset-y-0 left-0 bg-(--primary) rounded-full" style={{ width: `${ratio * 100}%` }} />
           </div>
           <div
-            className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white border-2 border-(--primary) shadow-[0_2px_8px_rgba(0,0,0,0.4)] transition-[left] duration-75"
+            className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-(--primary) bg-(--text) shadow-(--shadow-sm) transition-[left] duration-75"
             style={{ left: `${ratio * 100}%` }}
           />
         </>
