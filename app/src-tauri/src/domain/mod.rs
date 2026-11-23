@@ -1,6 +1,7 @@
 //! Domain models shared by storage, services and IPC commands.
 
 pub mod account;
+pub mod addon;
 pub mod app_config;
 pub mod game;
 pub mod game_settings;
