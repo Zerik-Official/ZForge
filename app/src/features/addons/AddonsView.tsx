@@ -7,35 +7,46 @@ import { t, useLocale } from "@/locales/i18n";
 import { addonsApi, errorCode } from "@/services/api";
 import { useGamesStore } from "@/store/gamesStore";
 import type { Addon, AddonAccount, AddonTarget } from "@/types/domains/addon";
+import { SearchSelect, type SearchSelectOption } from "./SearchSelect";
 
 type Filter = "all" | "enabled" | "disabled" | "problems";
 
-const NO_TARGET = "";
+const WHOLE_ACCOUNT = "";
 
-/** Encode a target as a select value; account, realm and character are folder names. */
-function targetKey(target: AddonTarget): string {
-  return JSON.stringify([target.account, target.realm, target.character]);
+/** Encode a character as a select value; realm and character are folder names. */
+function characterKey(realm: string, character: string): string {
+  return JSON.stringify([realm, character]);
 }
 
-function parseTargetKey(key: string): AddonTarget | null {
-  if (key === NO_TARGET) return null;
-  const [account, realm, character] = JSON.parse(key) as [string, string | null, string | null];
+function buildTarget(account: string, characterValue: string): AddonTarget | null {
+  if (!account) return null;
+  if (characterValue === WHOLE_ACCOUNT) return { account, realm: null, character: null };
+  const [realm, character] = JSON.parse(characterValue) as [string, string];
   return { account, realm, character };
 }
 
-function targetOptions(accounts: AddonAccount[]): SelectOption[] {
-  return accounts.flatMap((account) => [
-    {
-      value: targetKey({ account: account.name, realm: null, character: null }),
-      label: t("launcher.addons.wholeAccount", { account: account.name }),
-    },
-    ...account.realms.flatMap((realm) =>
-      realm.characters.map((character) => ({
-        value: targetKey({ account: account.name, realm: realm.name, character }),
-        label: `${account.name} · ${character} (${realm.name})`,
-      })),
-    ),
-  ]);
+function characterCount(account: AddonAccount): number {
+  return account.realms.reduce((total, realm) => total + realm.characters.length, 0);
+}
+
+function accountOptions(accounts: AddonAccount[]): SearchSelectOption[] {
+  return accounts.map((account) => ({
+    value: account.name,
+    label: account.name,
+    badge: t("launcher.addons.characterCount", { count: characterCount(account) }),
+  }));
+}
+
+function characterOptions(account: AddonAccount | undefined): SearchSelectOption[] {
+  const characters = (account?.realms ?? []).flatMap((realm) =>
+    realm.characters.map((character) => ({
+      value: characterKey(realm.name, character),
+      label: character,
+      sublabel: realm.name,
+    })),
+  );
+  characters.sort((left, right) => left.label.localeCompare(right.label));
+  return [{ value: WHOLE_ACCOUNT, label: t("launcher.addons.wholeAccount") }, ...characters];
 }
 
 function hasProblem(addon: Addon): boolean {
@@ -58,7 +69,8 @@ export function AddonsView() {
 
   const [chosenGameId, setGameId] = useState<string>("");
   const [accounts, setAccounts] = useState<AddonAccount[]>([]);
-  const [targetValue, setTargetValue] = useState<string>(NO_TARGET);
+  const [accountName, setAccountName] = useState<string>("");
+  const [characterValue, setCharacterValue] = useState<string>(WHOLE_ACCOUNT);
   const [addons, setAddons] = useState<Addon[] | null>(null);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
@@ -68,7 +80,8 @@ export function AddonsView() {
   const [notice, setNotice] = useState<string | null>(null);
 
   const gameId = games.some((game) => game.id === chosenGameId) ? chosenGameId : (activeId ?? games[0]?.id ?? "");
-  const target = useMemo(() => parseTargetKey(targetValue), [targetValue]);
+  const target = useMemo(() => buildTarget(accountName, characterValue), [accountName, characterValue]);
+  const selectedAccount = accounts.find((account) => account.name === accountName);
   const gameRunning = session !== null && session.phase !== "idle" && session.game_id === gameId;
 
   useEffect(() => {
@@ -79,7 +92,8 @@ export function AddonsView() {
       .then((list) => {
         if (cancelled) return;
         setAccounts(list);
-        setTargetValue(list.length > 0 ? targetKey({ account: list[0].name, realm: null, character: null }) : NO_TARGET);
+        setAccountName(list[0]?.name ?? "");
+        setCharacterValue(WHOLE_ACCOUNT);
       })
       .catch((e: unknown) => {
         if (!cancelled) setError(errorText(e));
@@ -217,21 +231,45 @@ export function AddonsView() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <div className="flex flex-col gap-1">
           <span className="text-[11px] text-(--muted)">{t("launcher.addons.game")}</span>
           <Select value={gameId} options={gameOptions} onChange={setGameId} />
         </div>
-        <div className="flex flex-col gap-1">
-          <span className="text-[11px] text-(--muted)">{t("launcher.addons.target")}</span>
-          {accounts.length > 0 ? (
-            <Select value={targetValue} options={targetOptions(accounts)} onChange={setTargetValue} />
-          ) : (
+        {accounts.length > 0 ? (
+          <>
+            <div className="flex flex-col gap-1">
+              <span className="text-[11px] text-(--muted)">{t("launcher.addons.account")}</span>
+              <SearchSelect
+                value={accountName}
+                options={accountOptions(accounts)}
+                onChange={(name) => {
+                  setAccountName(name);
+                  setCharacterValue(WHOLE_ACCOUNT);
+                }}
+                searchPlaceholder={t("launcher.addons.searchAccount")}
+                emptyText={t("launcher.addons.noAccountMatches")}
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-[11px] text-(--muted)">{t("launcher.addons.character")}</span>
+              <SearchSelect
+                value={characterValue}
+                options={characterOptions(selectedAccount)}
+                onChange={setCharacterValue}
+                searchPlaceholder={t("launcher.addons.searchCharacter")}
+                emptyText={t("launcher.addons.noCharacterMatches")}
+              />
+            </div>
+          </>
+        ) : (
+          <div className="col-span-2 flex flex-col gap-1">
+            <span className="text-[11px] text-(--muted)">{t("launcher.addons.account")}</span>
             <span className="rounded-lg border border-(--border-strong) bg-(--bg-card) px-3 py-2 text-[11.5px] text-(--muted)">
               {t("launcher.addons.noAccounts")}
             </span>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {gameRunning ? (
