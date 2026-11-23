@@ -1,0 +1,105 @@
+/* ── Boot rune (RuneLoader) ─────────────────────────────────────────────── */
+
+.rune-loader {
+  width: 340px;
+  height: 340px;
+  overflow: visible;
+  color: var(--primary);
+}
+
+.rune-stroke {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.rune-dim {
+  stroke: var(--muted-2);
+  opacity: 0.55;
+}
+
+.rune-spin {
+  transform-box: view-box;
+  transform-origin: 200px 200px;
+}
+.rune-spin--slow    { animation: rune-turn 72s linear infinite; }
+.rune-spin--reverse { animation: rune-turn 31s linear infinite reverse; }
+.rune-spin--ring    { animation: rune-turn 46s linear infinite; }
+
+@keyframes rune-turn {
+  to { transform: rotate(360deg); }
+}
+
+.rune-ghost {
+  opacity: 0.13;
+}
+
+.rune-ink {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 0.7s cubic-bezier(0.6, 0, 0.3, 1);
+}
+
+.rune-glyph.is-lit .rune-ink {
+  stroke-dashoffset: 0;
+  animation: rune-flicker var(--flicker, 3.4s) ease-in-out infinite;
+  animation-delay: var(--flicker-delay, 0s);
+}
+
+@keyframes rune-flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.62; }
+}
+
+.rune-progress {
+  transition: stroke-dashoffset 0.5s ease-out;
+}
+
+.rune-ray {
+  stroke: currentColor;
+  stroke-linecap: round;
+  opacity: 0;
+  animation: rune-ray var(--ray-duration, 3s) ease-in-out infinite;
+  animation-delay: var(--ray-delay, 0s);
+}
+
+@keyframes rune-ray {
+  0%, 100% { opacity: 0; }
+  45% { opacity: 0.55; }
+}
+
+.rune-core-ghost {
+  opacity: 0.12;
+}
+
+.rune-core-ink {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 1s cubic-bezier(0.6, 0, 0.3, 1);
+}
+
+.rune-core.is-lit .rune-core-ink {
+  stroke-dashoffset: 0;
+}
+
+.rune-core.is-lit {
+  animation: rune-flare 1.1s ease-out both;
+}
+
+@keyframes rune-flare {
+  30% { filter: brightness(1.8); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rune-spin--slow,
+  .rune-spin--reverse,
+  .rune-spin--ring,
+  .rune-glyph.is-lit .rune-ink {
+    animation: none;
+  }
+  .rune-ray {
+    animation: none;
+    opacity: 0.3;
+  }
+}
