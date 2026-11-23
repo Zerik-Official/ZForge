@@ -30,6 +30,7 @@ pub const COLOR_TOKENS: &[&str] = &[
     "primary",
     "primary-hover",
     "primary-active",
+    "on-primary",
     "primary-dim",
     "primary-soft",
     "primary-glow",
