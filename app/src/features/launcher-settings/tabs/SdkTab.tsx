@@ -1,3 +1,6 @@
+import { Notice } from "@/components/layout/Notice";
+import { PageState } from "@/components/layout/PageState";
+import { SettingsGroup, SettingsPage, SettingsRow } from "@/components/layout/SettingsPage";
 import { useCallback, useEffect, useState } from "react";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { featureStatus, useCapabilities } from "@/hooks/useCapabilities";
@@ -68,11 +71,7 @@ export function SdkTab() {
   }
 
   if (!status) {
-    return (
-      <div className="flex flex-1 items-center justify-center text-(--muted)">
-        {error ? <span className="text-[12px] text-(--danger)">{error}</span> : <i className="fa-solid fa-spinner fa-spin text-[18px]" />}
-      </div>
-    );
+    return <PageState error={error} />;
   }
 
   const lastError = status.sdk_last_error && status.sdk_ever_installed ? status.sdk_last_error : null;
@@ -86,118 +85,117 @@ export function SdkTab() {
   const stateKey = status.needs_repair ? "corrupted" : status.needs_install ? "missing" : status.update_available ? "outdated" : "upToDate";
 
   return (
-    <div className="flex flex-col gap-4 p-8">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-[13px] font-semibold text-(--text)">{t("launcher.settings.sdk.title")}</h2>
-          <p className="max-w-xl text-[11px] leading-relaxed text-(--muted)">{t("launcher.settings.sdk.description")}</p>
-        </div>
+    <SettingsPage
+      title={t("launcher.settings.sdk.title")}
+      description={t("launcher.settings.sdk.description")}
+      actions={
         <button
-          className="flex shrink-0 items-center gap-2 rounded-lg border border-(--border-strong) bg-(--bg-elevated) px-3 py-2 text-[12.5px] font-medium text-(--text-soft) hover:bg-(--bg-hover) hover:text-(--text) cursor-pointer"
+          className="ghost-btn flex items-center gap-2 rounded-[7px] px-3 py-2 text-[13px] font-medium cursor-pointer"
           onClick={() => setShowInfo(true)}
         >
           <i className="fa-solid fa-circle-info text-[12px]" />
           {t("launcher.settings.richPresence.moreInfo")}
         </button>
-      </div>
-
+      }
+    >
       {lastError ? (
-        <div className="flex items-center gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3">
-          <i className="fa-solid fa-triangle-exclamation text-[13px] text-amber-500" />
-          <span className="text-[12px] font-semibold text-amber-500">
-            {lastError === "sdk_corrupted" ? t("launcher.settings.sdk.corruptionError") : t(`common.errors.codes.${lastError}`)}
-          </span>
-        </div>
+        <Notice
+          tone="warning"
+          icon="fa-solid fa-triangle-exclamation"
+          title={lastError === "sdk_corrupted" ? t("launcher.settings.sdk.corruptionError") : t(`common.errors.codes.${lastError}`)}
+        />
       ) : null}
 
-      <div className="flex flex-col gap-4 rounded-xl border border-(--border-strong) bg-(--bg-card) p-5">
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-(--border-strong) bg-(--bg-elevated)">
-            <i className="fa-solid fa-cube text-[14px] text-(--muted)" />
-          </div>
-          <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <h3 className="text-[13px] font-semibold text-(--text)">{t(`launcher.settings.sdk.state.${stateKey}.title`)}</h3>
-            <p className="max-w-xl text-[12px] leading-relaxed text-(--muted)">{t(`launcher.settings.sdk.state.${stateKey}.description`)}</p>
-            <span className="text-[11px] text-(--muted-2)">
-              {status.version ? t("launcher.settings.sdk.version.installed", { version: cleanVersion(status.version) }) : t("launcher.settings.sdk.version.none")}
-              {status.latest_version ? ` · ${t("launcher.settings.sdk.version.latest", { version: cleanVersion(status.latest_version) })}` : ""}
+      <SettingsGroup>
+        <div className="flex flex-col gap-4 px-4.5 py-4">
+          <div className="flex items-start gap-3.5">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[7px] bg-(--bg-elevated)">
+              <i className={`fa-solid fa-cube text-[15px] ${stateKey === "upToDate" ? "text-(--success)" : "text-(--muted)"}`} />
             </span>
-            {status.missing_files.length > 0 ? (
-              <span className="text-[11px] text-(--danger)">{t("launcher.settings.sdk.missingFiles", { files: status.missing_files.join(", ") })}</span>
-            ) : null}
-          </div>
-        </div>
-
-        {installing ? (
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between text-[11px] text-(--muted)">
-              <span>{t("capabilities.installing")}</span>
-              <span>{progress ? `${progress.percent}%` : ""}</span>
-            </div>
-            <div className="h-2 w-full overflow-hidden rounded-full border border-(--border-strong) bg-(--bg-input)">
-              <div className="h-full bg-(--primary) transition-all duration-200" style={{ width: `${progress?.percent ?? 0}%` }} />
-            </div>
-            {progress ? (
-              <div className="flex items-center justify-between text-[11px] text-(--muted-2)">
-                <span>{t("launcher.settings.sdk.progress.downloaded", { downloaded: formatBytes(progress.downloaded), total: progress.total ? formatBytes(progress.total) : "—" })}</span>
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <h3 className="text-[14px] font-semibold text-(--text)">{t(`launcher.settings.sdk.state.${stateKey}.title`)}</h3>
+              <p className="max-w-[64ch] text-[12.5px] leading-relaxed text-(--muted)">{t(`launcher.settings.sdk.state.${stateKey}.description`)}</p>
+              <span className="flex flex-wrap gap-x-4 gap-y-0.5 text-[12px] text-(--muted-2)">
                 <span>
-                  {t("launcher.settings.sdk.progress.speed", { speed: formatSpeed(progress.speed) })}
-                  {" · "}
-                  {t("launcher.settings.sdk.progress.remaining", { time: formatEta(progress.eta) })}
+                  {status.version ? t("launcher.settings.sdk.version.installed", { version: cleanVersion(status.version) }) : t("launcher.settings.sdk.version.none")}
                 </span>
-              </div>
+                {status.latest_version ? <span>{t("launcher.settings.sdk.version.latest", { version: cleanVersion(status.latest_version) })}</span> : null}
+              </span>
+              {status.missing_files.length > 0 ? (
+                <span className="text-[12px] text-(--danger)">{t("launcher.settings.sdk.missingFiles", { files: status.missing_files.join(", ") })}</span>
+              ) : null}
+            </div>
+            {action && !installing ? (
+              <button
+                className="play-btn flex shrink-0 items-center gap-2 rounded-[7px] px-4 py-2 text-[13px] font-semibold cursor-pointer"
+                onClick={() => void handleInstall()}
+              >
+                <i className={`fa-solid ${action.icon} text-[12px]`} />
+                {action.label}
+              </button>
             ) : null}
           </div>
-        ) : action ? (
-          <button
-            className="flex w-fit items-center gap-2 rounded-lg bg-[linear-gradient(160deg,var(--primary-hover),var(--primary-active))] px-4 py-2 text-[13px] font-semibold text-white shadow-[0_0_20px_var(--primary-glow)] hover:brightness-105 cursor-pointer"
-            onClick={() => void handleInstall()}
-          >
-            <i className={`fa-solid ${action.icon} text-[12px]`} />
-            {action.label}
-          </button>
-        ) : null}
-        {installError ? <span className="text-[12px] text-(--danger)">{installError}</span> : null}
-      </div>
 
-      <div className="flex flex-col gap-3 rounded-xl border border-(--border-strong) bg-(--bg-card) p-5">
+          {installing ? (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between text-[12px] text-(--muted)">
+                <span>{t("capabilities.installing")}</span>
+                <span className="tabular-nums">{progress ? `${progress.percent}%` : ""}</span>
+              </div>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-(--bg-input)">
+                <div className="h-full bg-(--primary) transition-all duration-200" style={{ width: `${progress?.percent ?? 0}%` }} />
+              </div>
+              {progress ? (
+                <div className="flex items-center justify-between gap-4 text-[12px] text-(--muted-2) tabular-nums">
+                  <span>{t("launcher.settings.sdk.progress.downloaded", { downloaded: formatBytes(progress.downloaded), total: progress.total ? formatBytes(progress.total) : "—" })}</span>
+                  <span className="flex gap-4">
+                    <span>{t("launcher.settings.sdk.progress.speed", { speed: formatSpeed(progress.speed) })}</span>
+                    <span>{t("launcher.settings.sdk.progress.remaining", { time: formatEta(progress.eta) })}</span>
+                  </span>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+          {installError ? <span className="text-[12.5px] text-(--danger)">{installError}</span> : null}
+        </div>
         <Checkbox
+          layout="row"
           checked={status.discord_auto_update}
           onChange={(value) => void handleToggleAutoUpdate(value)}
           label={t("launcher.settings.sdk.autoUpdate")}
           description={t("launcher.settings.sdk.autoUpdateDescription")}
         />
-      </div>
+      </SettingsGroup>
 
-      <div className="flex flex-col gap-3 rounded-xl border border-(--border-strong) bg-(--bg-card) p-5">
-        <h3 className="text-[12px] font-semibold text-(--text-soft)">{t("launcher.settings.sdk.featuresTitle")}</h3>
+      <SettingsGroup title={t("launcher.settings.sdk.featuresTitle")}>
         {FEATURES.map(({ feature, icon }) => {
           const current = featureStatus(capabilities, feature);
           return (
-            <div key={feature} className="flex items-start gap-3">
-              <i className={`fa-solid ${icon} mt-1 w-4 text-center text-[12px] text-(--muted)`} />
-              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className="text-[12.5px] font-medium text-(--text)">{t(`capabilities.features.${feature}.label`)}</span>
-                <span className="text-[11px] leading-relaxed text-(--muted)">{t(`capabilities.features.${feature}.description`)}</span>
-              </div>
-              {current ? (
-                current.available ? (
-                  <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-(--success)/10 px-2 py-0.5 text-[10px] font-semibold text-(--success)">
-                    <i className="fa-solid fa-check text-[9px]" />
-                    {t("capabilities.available")}
-                  </span>
-                ) : (
-                  <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-500">
-                    {t("capabilities.requires", { version: current.required_version })}
-                  </span>
-                )
-              ) : null}
-            </div>
+            <SettingsRow
+              key={feature}
+              icon={`fa-solid ${icon}`}
+              label={t(`capabilities.features.${feature}.label`)}
+              description={t(`capabilities.features.${feature}.description`)}
+              control={
+                current ? (
+                  current.available ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-md bg-(--success)/10 px-2 py-0.5 text-[11.5px] font-semibold text-(--success)">
+                      <i className="fa-solid fa-check text-[10px]" />
+                      {t("capabilities.available")}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center rounded-md bg-(--warning)/10 px-2 py-0.5 text-[11.5px] font-semibold text-(--warning)">
+                      {t("capabilities.requires", { version: current.required_version })}
+                    </span>
+                  )
+                ) : null
+              }
+            />
           );
         })}
-      </div>
+      </SettingsGroup>
 
       <SdkInfoModal open={showInfo} onClose={() => setShowInfo(false)} />
-    </div>
+    </SettingsPage>
   );
 }
