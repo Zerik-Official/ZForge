@@ -296,7 +296,7 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
                   </div>
                 </div>
                 <Checkbox checked={settings.windowed} onChange={(value) => update("windowed", value)} label={t("settings.graphics.windowed")} />
-                <div className="flex flex-col gap-3 rounded-xl border border-(--border-strong) bg-(--bg-input) p-3">
+                <div className="flex flex-col gap-3 rounded-(--radius) border border-(--border-strong) bg-(--bg-input) p-3">
                   <Checkbox
                     checked={settings.window_resize_lock}
                     disabled={!settings.windowed}
@@ -338,8 +338,8 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="flex flex-col gap-4">
-                    <div className="rounded-xl border border-(--border-strong) bg-(--bg-input) p-3">
-                      <span className="mb-3 block text-[11px] font-semibold uppercase tracking-wide text-(--muted)">{t("settings.sound.sections.playback")}</span>
+                    <div className="rounded-(--radius) border border-(--border-strong) bg-(--bg-input) p-3">
+                      <span className="mb-3 block text-[12.5px] font-semibold text-(--text-soft)">{t("settings.sound.sections.playback")}</span>
                       <div className="flex flex-col gap-2">
                         <Checkbox checked={settings.sound_enable_sfx} onChange={(v) => update("sound_enable_sfx", v)} label={t("settings.sound.enable_sfx")} />
                         <Checkbox checked={settings.sound_enable_error_speech} onChange={(v) => update("sound_enable_error_speech", v)} label={t("settings.sound.enable_error_speech")} disabled={!settings.sound_enable_sfx} />
@@ -363,8 +363,8 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
                   </div>
 
                   <div className="flex flex-col gap-4">
-                    <div className="rounded-xl border border-(--border-strong) bg-(--bg-input) p-3">
-                      <span className="mb-3 block text-[11px] font-semibold uppercase tracking-wide text-(--muted)">{t("settings.sound.sections.hardware")}</span>
+                    <div className="rounded-(--radius) border border-(--border-strong) bg-(--bg-input) p-3">
+                      <span className="mb-3 block text-[12.5px] font-semibold text-(--text-soft)">{t("settings.sound.sections.hardware")}</span>
                       <div className="flex flex-col gap-3">
                         <div className="flex flex-col gap-1.5">
                           <label className="field-label">{t("settings.sound.output_driver")}</label>
@@ -383,8 +383,8 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
                       </div>
                     </div>
 
-                    <div className="rounded-xl border border-(--border-strong) bg-(--bg-input) p-3">
-                      <span className="mb-3 block text-[11px] font-semibold uppercase tracking-wide text-(--muted)">{t("settings.sound.sections.volume")}</span>
+                    <div className="rounded-(--radius) border border-(--border-strong) bg-(--bg-input) p-3">
+                      <span className="mb-3 block text-[12.5px] font-semibold text-(--text-soft)">{t("settings.sound.sections.volume")}</span>
                       <div className="flex flex-col gap-3">
                         <div className="flex flex-col gap-1.5">
                           <label className="field-label">{t("settings.sound.master_volume")}</label>
@@ -434,7 +434,7 @@ export function GameSettingsModal({ open, game, onClose }: GameSettingsModalProp
           {t("common.save")}
         </button>
         <button
-          className="play-btn rounded-lg px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-40 cursor-pointer"
+          className="play-btn rounded-lg px-4 py-2 text-[13px] font-semibold disabled:opacity-40 cursor-pointer"
           onClick={() => handleSave(true)}
           disabled={busy || loading}
         >
