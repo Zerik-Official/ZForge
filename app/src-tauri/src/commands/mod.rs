@@ -4,6 +4,7 @@
 //! live in [`crate::services`].
 
 pub mod accounts;
+pub mod addons;
 pub mod app_config;
 pub mod assets;
 pub mod boot;
