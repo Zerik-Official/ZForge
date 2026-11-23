@@ -1,3 +1,4 @@
+import { Notice } from "@/components/layout/Notice";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -206,22 +207,22 @@ export function AddonsView() {
   const enabledCount = (addons ?? []).filter((addon) => addon.enabled).length;
 
   return (
-    <div className="flex h-full flex-col gap-4 p-8 pb-18">
+    <div className="flex h-full flex-col gap-4 px-12 pt-12 pb-8">
       <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-semibold text-(--text)">{t("launcher.addons.title")}</h1>
-          <p className="max-w-xl text-[11px] leading-relaxed text-(--muted)">{t("launcher.addons.description")}</p>
+        <div className="flex flex-col gap-2.5">
+          <h1 className="text-[26px] leading-[1.15] font-[650] text-(--text)">{t("launcher.addons.title")}</h1>
+          <p className="max-w-[64ch] text-[13.5px] leading-relaxed text-(--muted)">{t("launcher.addons.description")}</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <button
-            className="flex items-center gap-2 rounded-lg border border-(--border-strong) bg-(--bg-elevated) px-3 py-2 text-[12.5px] font-medium text-(--text-soft) hover:bg-(--bg-hover) hover:text-(--text) cursor-pointer"
+            className="ghost-btn flex items-center gap-2 rounded-[7px] px-3 py-2 text-[13px] font-medium cursor-pointer"
             onClick={() => void openFolder()}
           >
             <i className="fa-solid fa-folder-open text-[12px]" />
             {t("launcher.addons.openFolder")}
           </button>
           <button
-            className="play-btn flex items-center gap-2 rounded-lg px-4 py-2 text-[12.5px] font-semibold text-white disabled:opacity-50 cursor-pointer"
+            className="play-btn flex items-center gap-2 rounded-[7px] px-4 py-2 text-[13px] font-semibold disabled:opacity-50 cursor-pointer"
             onClick={() => void install()}
             disabled={busy}
           >
@@ -233,13 +234,13 @@ export function AddonsView() {
 
       <div className="grid grid-cols-3 gap-3">
         <div className="flex flex-col gap-1">
-          <span className="text-[11px] text-(--muted)">{t("launcher.addons.game")}</span>
+          <span className="field-label mb-0!">{t("launcher.addons.game")}</span>
           <Select value={gameId} options={gameOptions} onChange={setGameId} />
         </div>
         {accounts.length > 0 ? (
           <>
             <div className="flex flex-col gap-1">
-              <span className="text-[11px] text-(--muted)">{t("launcher.addons.account")}</span>
+              <span className="field-label mb-0!">{t("launcher.addons.account")}</span>
               <SearchSelect
                 value={accountName}
                 options={accountOptions(accounts)}
@@ -252,7 +253,7 @@ export function AddonsView() {
               />
             </div>
             <div className="flex flex-col gap-1">
-              <span className="text-[11px] text-(--muted)">{t("launcher.addons.character")}</span>
+              <span className="field-label mb-0!">{t("launcher.addons.character")}</span>
               <SearchSelect
                 value={characterValue}
                 options={characterOptions(selectedAccount)}
@@ -264,8 +265,8 @@ export function AddonsView() {
           </>
         ) : (
           <div className="col-span-2 flex flex-col gap-1">
-            <span className="text-[11px] text-(--muted)">{t("launcher.addons.account")}</span>
-            <span className="rounded-lg border border-(--border-strong) bg-(--bg-card) px-3 py-2 text-[11.5px] text-(--muted)">
+            <span className="field-label mb-0!">{t("launcher.addons.account")}</span>
+            <span className="rounded-(--radius-sm) border border-(--border-strong) bg-(--bg-card) px-3 py-2 text-[12.5px] text-(--muted)">
               {t("launcher.addons.noAccounts")}
             </span>
           </div>
@@ -273,10 +274,7 @@ export function AddonsView() {
       </div>
 
       {gameRunning ? (
-        <div className="flex items-center gap-2 rounded-lg border border-(--border-strong) bg-(--bg-card) px-3 py-2 text-[11.5px] text-(--text-soft)">
-          <i className="fa-solid fa-triangle-exclamation text-(--danger)" />
-          {t("launcher.addons.gameRunning")}
-        </div>
+        <Notice tone="warning" icon="fa-solid fa-triangle-exclamation" title={t("launcher.addons.gameRunning")} />
       ) : null}
 
       <div className="flex items-center gap-2">
@@ -286,12 +284,14 @@ export function AddonsView() {
           onChange={(event) => setQuery(event.target.value)}
           placeholder={t("launcher.addons.search")}
         />
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 rounded-(--radius-sm) border border-(--border) bg-(--bg-card) p-0.5" role="tablist">
           {filters.map((option) => (
             <button
               key={option}
-              className={`rounded-lg px-3 py-1.5 text-[11.5px] cursor-pointer ${
-                filter === option ? "bg-(--primary-soft) text-(--text)" : "text-(--muted) hover:bg-(--bg-hover) hover:text-(--text)"
+              role="tab"
+              aria-selected={filter === option}
+              className={`rounded-[5px] px-3 py-1.5 text-[12.5px] transition-colors cursor-pointer ${
+                filter === option ? "bg-(--bg-hover) text-(--text)" : "text-(--muted) hover:text-(--text-soft)"
               }`}
               onClick={() => setFilter(option)}
             >
@@ -301,7 +301,7 @@ export function AddonsView() {
         </div>
       </div>
 
-      <div className="flex items-center justify-between text-[11px] text-(--muted)">
+      <div className="flex items-center justify-between text-[12.5px] text-(--muted)">
         <span>{addons ? t("launcher.addons.count", { enabled: enabledCount, total: addons.length }) : ""}</span>
         <div className="flex items-center gap-3">
           <button
@@ -321,49 +321,52 @@ export function AddonsView() {
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1 will-change-transform">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto rounded-(--radius) border border-(--border) bg-(--bg-card) will-change-transform [&>*+*]:border-t [&>*+*]:border-(--border)">
         {addons === null ? (
           <div className="flex flex-1 items-center justify-center text-(--muted)">
             <i className="fa-solid fa-spinner fa-spin text-[18px]" />
           </div>
         ) : visible.length === 0 ? (
-          <div className="flex flex-1 items-center justify-center text-[12px] text-(--muted)">
+          <div className="flex flex-1 items-center justify-center text-[13px] text-(--muted)">
             {addons.length === 0 ? t("launcher.addons.empty") : t("launcher.addons.noMatches")}
           </div>
         ) : (
           visible.map((addon) => (
-            <div
-              key={addon.folder}
-              className="flex items-start gap-3 rounded-xl border border-(--border-strong) bg-(--bg-card) px-4 py-3"
-            >
+            <div key={addon.folder} className="flex items-start gap-3 px-4.5 py-3">
               <div className="min-w-0 flex-1">
                 <Checkbox
                   checked={addon.enabled}
                   onChange={(checked) => void setEnabled([addon.folder], checked)}
                   label={addon.version ? `${addon.title}  v${addon.version}` : addon.title}
-                  description={[addon.author, addon.notes].filter((part) => part.trim() !== "").join(" · ")}
+                  description={addon.notes.trim() || undefined}
                   disabled={!target || busy}
                 />
-                <div className="mt-1.5 flex flex-wrap gap-1.5 pl-6">
+                <div className="mt-1.5 flex flex-wrap gap-1.5 pl-7.5 empty:hidden">
+                  {addon.author.trim() ? (
+                    <span className="flex items-center gap-1.5 px-0.5 py-0.5 text-[11.5px] text-(--muted-2)">
+                      <i className="fa-solid fa-user-pen text-[10px]" />
+                      {addon.author}
+                    </span>
+                  ) : null}
                   {addon.loadOnDemand ? (
-                    <span className="rounded-md bg-(--bg-elevated) px-2 py-0.5 text-[10px] text-(--muted)">
+                    <span className="rounded-md bg-(--bg-elevated) px-2 py-0.5 text-[11px] text-(--muted)">
                       {t("launcher.addons.loadOnDemand")}
                     </span>
                   ) : null}
                   {addon.outdated ? (
-                    <span className="rounded-md bg-(--bg-elevated) px-2 py-0.5 text-[10px] text-(--danger)">
+                    <span className="rounded-md bg-(--danger)/10 px-2 py-0.5 text-[11px] text-(--danger)">
                       {t("launcher.addons.outdated", { interface: addon.interface ?? "" })}
                     </span>
                   ) : null}
                   {addon.missingDependencies.length > 0 ? (
-                    <span className="rounded-md bg-(--bg-elevated) px-2 py-0.5 text-[10px] text-(--danger)">
+                    <span className="rounded-md bg-(--danger)/10 px-2 py-0.5 text-[11px] text-(--danger)">
                       {t("launcher.addons.missingDependencies", { names: addon.missingDependencies.join(", ") })}
                     </span>
                   ) : null}
                 </div>
               </div>
               <button
-                className="flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-lg text-(--muted) transition-colors hover:bg-(--bg-hover) hover:text-(--danger) cursor-pointer"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[7px] text-(--muted) transition-colors hover:bg-(--bg-hover) hover:text-(--danger) cursor-pointer"
                 onClick={() => setDeleting(addon)}
                 aria-label={t("common.delete")}
               >
@@ -374,12 +377,13 @@ export function AddonsView() {
         )}
       </div>
 
-      {notice ? <span className="text-[12px] text-(--text-soft)">{notice}</span> : null}
-      {error ? <span className="text-[12px] text-(--danger)">{error}</span> : null}
+      {notice ? <span className="text-[12.5px] text-(--text-soft)">{notice}</span> : null}
+      {error ? <span className="text-[12.5px] text-(--danger)">{error}</span> : null}
 
       <ConfirmDialog
         open={deleting !== null}
         icon="fa-solid fa-trash"
+        destructive
         title={t("launcher.addons.confirmDelete")}
         description={t("launcher.addons.confirmDeleteDescription", { name: deleting?.title ?? "" })}
         confirmLabel={t("common.delete")}
