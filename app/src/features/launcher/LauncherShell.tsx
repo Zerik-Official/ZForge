@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Sidebar, type View } from "@/components/layout/Sidebar";
 import { HomeStage } from "@/features/home/HomeStage";
 import { GamesView } from "@/features/games/GamesView";
-import { Placeholder } from "@/components/ui/Placeholder";
+import { AddonsView } from "@/features/addons/AddonsView";
 import { LauncherSettingsView } from "@/features/launcher-settings/LauncherSettingsView";
-import { t, useLocale } from "@/locales/i18n";
+import { useLocale } from "@/locales/i18n";
 import "@/styles/launcher.css";
 
 export function LauncherShell() {
@@ -17,7 +17,7 @@ export function LauncherShell() {
       <main className="flex-1 overflow-hidden">
         {view === "home" ? <HomeStage onGoGames={() => setView("games")} /> : null}
         {view === "games" ? <GamesView /> : null}
-        {view === "addons" ? <Placeholder title={t("launcher.sidebar.addons")} /> : null}
+        {view === "addons" ? <AddonsView /> : null}
         {view === "settings" ? <LauncherSettingsView /> : null}
       </main>
     </div>

@@ -55,7 +55,10 @@
         "account_requires_sdk": "Launching with an account or in the background needs a newer SDK. Update it in the SDK tab.",
         "account_exists": "That server already has an account with this login name.",
         "account_invalid": "An account needs a server and a login name.",
-        "theme_invalid": "The theme is not valid. Check its theme.json and files."
+        "theme_invalid": "The theme is not valid. Check its theme.json and files.",
+        "addon_name_invalid": "That name cannot be used as a folder name.",
+        "addon_archive_empty": "The zip has no addon: no folder contains a .toc file with its own name.",
+        "addon_archive_too_large": "The zip is too large or has too many files."
       }
     },
     "configConflict": {
@@ -299,6 +302,43 @@
         "confirmDelete": "Delete this account?",
         "confirmDeleteDescription": "\"{name}\" and its saved characters will be removed, and its password deleted from the Windows Credential Manager."
       }
+    },
+    "addons": {
+      "title": "Addons",
+      "description": "Addons installed in the game's Interface\\AddOns folder. Turning one on or off writes the AddOns.txt of the selected account or character, the same file the game's addon list uses.",
+      "openFolder": "Open folder",
+      "install": "Install zip",
+      "game": "Game",
+      "account": "Account",
+      "character": "Character",
+      "characterCount": "{count} characters",
+      "searchAccount": "Search account",
+      "searchCharacter": "Search character or realm",
+      "noAccountMatches": "No account matches",
+      "noCharacterMatches": "No character matches",
+      "wholeAccount": "Whole account",
+      "noAccounts": "Log in once with this game so it creates the account folders",
+      "noGames": "Add a game to manage its addons.",
+      "gameRunning": "The game is open: it writes the addon list again when it closes, so make the changes with the game closed.",
+      "search": "Search by name, folder or author",
+      "filters": {
+        "all": "All",
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "problems": "With problems"
+      },
+      "count": "{enabled} of {total} enabled",
+      "enableAll": "Enable shown",
+      "disableAll": "Disable shown",
+      "empty": "This game has no addons installed.",
+      "noMatches": "No addon matches the search.",
+      "loadOnDemand": "Loads on demand",
+      "outdated": "Made for interface {interface}",
+      "missingDependencies": "Missing: {names}",
+      "installed": "Installed: {names}",
+      "deleted": "{name} was deleted",
+      "confirmDelete": "Delete addon",
+      "confirmDeleteDescription": "Delete the folder of {name}? Its saved settings in WTF are kept."
     }
   },
   "addGame": {

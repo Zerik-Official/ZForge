@@ -55,7 +55,10 @@
         "account_requires_sdk": "Lanzar con una cuenta o en segundo plano requiere un SDK más reciente. Actualízalo en la pestaña SDK.",
         "account_exists": "Ese servidor ya tiene una cuenta con este nombre de usuario.",
         "account_invalid": "Una cuenta necesita servidor y nombre de usuario.",
-        "theme_invalid": "El tema no es válido. Revisa su theme.json y sus archivos."
+        "theme_invalid": "El tema no es válido. Revisa su theme.json y sus archivos.",
+        "addon_name_invalid": "Ese nombre no se puede usar como nombre de carpeta.",
+        "addon_archive_empty": "El zip no tiene ningún addon: ninguna carpeta contiene un archivo .toc con su mismo nombre.",
+        "addon_archive_too_large": "El zip es demasiado grande o tiene demasiados archivos."
       }
     },
     "configConflict": {
@@ -299,6 +302,43 @@
         "confirmDelete": "¿Eliminar esta cuenta?",
         "confirmDeleteDescription": "Se eliminarán \"{name}\" y sus personajes guardados, y su contraseña se borrará del Administrador de credenciales de Windows."
       }
+    },
+    "addons": {
+      "title": "Addons",
+      "description": "Addons instalados en la carpeta Interface\\AddOns del juego. Activar o desactivar uno escribe el AddOns.txt de la cuenta o el personaje elegido, el mismo archivo que usa la lista de addons del juego.",
+      "openFolder": "Abrir carpeta",
+      "install": "Instalar zip",
+      "game": "Juego",
+      "account": "Cuenta",
+      "character": "Personaje",
+      "characterCount": "{count} personajes",
+      "searchAccount": "Buscar cuenta",
+      "searchCharacter": "Buscar personaje o reino",
+      "noAccountMatches": "Ninguna cuenta coincide",
+      "noCharacterMatches": "Ningún personaje coincide",
+      "wholeAccount": "Toda la cuenta",
+      "noAccounts": "Inicia sesión una vez con este juego para que cree las carpetas de la cuenta",
+      "noGames": "Añade un juego para gestionar sus addons.",
+      "gameRunning": "El juego está abierto: vuelve a escribir la lista de addons al cerrarse, así que haz los cambios con el juego cerrado.",
+      "search": "Buscar por nombre, carpeta o autor",
+      "filters": {
+        "all": "Todos",
+        "enabled": "Activados",
+        "disabled": "Desactivados",
+        "problems": "Con problemas"
+      },
+      "count": "{enabled} de {total} activados",
+      "enableAll": "Activar los mostrados",
+      "disableAll": "Desactivar los mostrados",
+      "empty": "Este juego no tiene addons instalados.",
+      "noMatches": "Ningún addon coincide con la búsqueda.",
+      "loadOnDemand": "Se carga bajo demanda",
+      "outdated": "Hecho para la interfaz {interface}",
+      "missingDependencies": "Falta: {names}",
+      "installed": "Instalados: {names}",
+      "deleted": "Se borró {name}",
+      "confirmDelete": "Borrar addon",
+      "confirmDeleteDescription": "¿Borrar la carpeta de {name}? Su configuración guardada en WTF se conserva."
     }
   },
   "addGame": {
