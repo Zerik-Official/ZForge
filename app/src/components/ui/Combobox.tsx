@@ -125,7 +125,7 @@ export function Combobox<T = unknown>({ value, onChange, options, onSelect, plac
                 <span className="flex items-center gap-1.5 truncate">
                   {option.label}
                   {option.badge ? (
-                    <span className="shrink-0 rounded-full bg-(--accent-dim) px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-(--accent)">
+                    <span className="shrink-0 rounded-md bg-(--accent-dim) px-1.5 py-0.5 text-[11px] font-semibold text-(--accent)">
                       {option.badge}
                     </span>
                   ) : null}
