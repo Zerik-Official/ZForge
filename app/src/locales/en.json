@@ -23,7 +23,6 @@
     "custom": "Custom",
     "gameSettings": "Game settings",
     "comingSoon": " — coming soon",
-    "onHome": " · on home",
     "errors": {
       "loadGameSettings": "Failed to load game settings.",
       "applyGameSettings": "Failed to apply to game.",
@@ -72,7 +71,8 @@
       "description": "\"{realmlist}\" is not in the server catalog. Do you want to save it so it auto-completes in future games?",
       "confirm": "Yes, save",
       "cancel": "This game only"
-    }
+    },
+    "close": "Close"
   },
   "launcher": {
     "home": {
@@ -81,13 +81,28 @@
     },
     "games": {
       "title": "Games",
-      "empty": "You don't have any games yet. Click to add one."
+      "empty": "You don't have any games yet. Click to add one.",
+      "onHome": "Shown on Home"
     },
     "sidebar": {
       "home": "Home",
       "games": "Games",
       "addons": "Addons",
-      "settings": "Settings"
+      "settings": "Settings",
+      "navigation": "Main navigation",
+      "ready": "Ready to play",
+      "phase": {
+        "launching": "Starting…",
+        "running": "Open",
+        "loading": "Loading…",
+        "login": "At the login screen",
+        "character_select": "Choosing a character",
+        "in_world": "In the world"
+      },
+      "collapse": "Collapse sidebar",
+      "expand": "Expand sidebar",
+      "hide": "Hide sidebar",
+      "show": "Show sidebar"
     },
     "settings": {
       "tabs": {
@@ -339,6 +354,10 @@
       "deleted": "{name} was deleted",
       "confirmDelete": "Delete addon",
       "confirmDeleteDescription": "Delete the folder of {name}? Its saved settings in WTF are kept."
+    },
+    "window": {
+      "minimize": "Minimize",
+      "close": "Close"
     }
   },
   "addGame": {
@@ -663,7 +682,9 @@
       "stayInCharacterSelect": "Stay in character selection",
       "characterSelectShort": "Character selection",
       "headless": "Start in the background",
-      "headlessDescription": "The game window stays hidden until the character is in the world. Windowed mode is recommended."
+      "headlessDescription": "The game window stays hidden until the character is in the world. Windowed mode is recommended.",
+      "accountOnRealm": "{account} on {realm}",
+      "pickAccount": "Choose an account to log in"
     }
   }
 }
