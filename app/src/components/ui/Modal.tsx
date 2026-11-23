@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { t } from "@/locales/i18n";
 
 /**
  * Properties for the {@link Modal} component.
@@ -51,11 +52,11 @@ export function Modal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6 animate-[fadeIn_0.18s_ease_both]"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-6 animate-[fadeIn_0.16s_ease_both]"
       onClick={closeOnBackdropClick ? onClose : undefined}
     >
       <div
-        className={`flex flex-col overflow-hidden rounded-2xl border border-(--border-strong) bg-(--bg-elevated) shadow-2xl animate-[popIn_0.22s_cubic-bezier(0.34,1.56,0.64,1)_both] ${className}`}
+        className={`flex flex-col overflow-hidden rounded-(--radius-lg) border border-(--border-strong) bg-(--bg-card) shadow-(--shadow-lg) animate-[popIn_0.18s_ease-out_both] ${className}`}
         onClick={(event) => event.stopPropagation()}
       >
         {children}
@@ -84,17 +85,18 @@ export function ModalHeader({ icon, title, subtitle, onClose }: ModalHeaderProps
   return (
     <div className="flex shrink-0 items-center justify-between border-b border-(--border) px-6 py-4">
       <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-(--border-strong) bg-(--primary-soft)">
-          <i className={`${icon} text-[13px] text-(--primary-hover)`} />
+        <div className="flex h-9 w-9 items-center justify-center rounded-[7px] bg-(--bg-elevated)">
+          <i className={`${icon} text-[14px] text-(--primary)`} />
         </div>
-        <div className="flex flex-col">
-          <h2 className="text-[14.5px] font-semibold text-(--text)">{title}</h2>
-          {subtitle ? <span className="text-[11px] text-(--muted)">{subtitle}</span> : null}
+        <div className="flex flex-col gap-0.5">
+          <h2 className="text-[17px] leading-tight font-[650] text-(--text)">{title}</h2>
+          {subtitle ? <span className="text-[12.5px] text-(--muted)">{subtitle}</span> : null}
         </div>
       </div>
       <button
-        className="flex h-8.5 w-8.5 shrink-0 items-center justify-center rounded-lg border border-(--border-strong) bg-(--bg-elevated) text-(--muted) transition-colors hover:bg-(--bg-hover) hover:text-(--text-soft) cursor-pointer"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[7px] text-(--muted) transition-colors hover:bg-(--bg-hover) hover:text-(--text) cursor-pointer"
         onClick={onClose}
+        aria-label={t("common.close")}
       >
         <i className="fa-solid fa-xmark text-[13px]" />
       </button>
