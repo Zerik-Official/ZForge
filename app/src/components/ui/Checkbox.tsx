@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useThemeControls } from "@/store/themeStore";
 import { imageStyle } from "@/utils/theme";
 
@@ -19,6 +19,16 @@ interface CheckboxProps {
   description?: string;
   /** Disables interaction and visually dims the component when true. */
   disabled?: boolean;
+  /**
+   * `inline` puts the box before the label. `row` fills a settings panel row: label on the
+   * left, box on the right, and the whole row is clickable.
+   * @default "inline"
+   */
+  layout?: "inline" | "row";
+  /** Font Awesome class of an icon tile shown before the label in the `row` layout. */
+  icon?: string;
+  /** Extra content placed before the box in the `row` layout, such as a badge. */
+  trailing?: ReactNode;
 }
 
 /**
@@ -26,6 +36,7 @@ interface CheckboxProps {
  *
  * Renders a custom-styled box driven by the `checked` prop while keeping
  * a hidden native input (`sr-only`) intact for screen readers and accessibility.
+ * A theme can replace the box and the check with its own images.
  *
  * @example
  * ```tsx
@@ -37,34 +48,69 @@ interface CheckboxProps {
  * />
  * ```
  */
-export function Checkbox({ checked, onChange, label, description, disabled }: CheckboxProps) {
+export function Checkbox({ checked, onChange, label, description, disabled, layout = "inline", icon, trailing }: CheckboxProps) {
   const skin = useThemeControls()?.checkbox ?? null;
   const [hovered, setHovered] = useState(false);
 
+  let box: ReactNode;
   if (skin) {
-    const box = hovered && !disabled && skin.hover ? skin.hover : skin.box;
+    const image = hovered && !disabled && skin.hover ? skin.hover : skin.box;
     const check = disabled && skin.checkDisabled ? skin.checkDisabled : skin.check;
-    const size = box.width ?? SKIN_SIZE;
+    const size = image.width ?? SKIN_SIZE;
+    box = (
+      <span className="relative flex shrink-0 items-center justify-center" style={imageStyle(image, size, size)}>
+        {checked ? <span className="absolute" style={imageStyle(check, size, size)} /> : null}
+      </span>
+    );
+  } else {
+    box = (
+      <span
+        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-[5px] border-[1.5px] transition-colors duration-150 ${
+          checked
+            ? "border-(--primary) bg-(--primary)"
+            : `border-(--border-strong) bg-(--bg-input) ${disabled ? "" : "group-hover:border-(--muted-2)"}`
+        }`}
+      >
+        <i
+          className={`fa-solid fa-check text-[11px] text-(--on-primary) transition-opacity duration-100 ${
+            checked ? "opacity-100" : "opacity-0"
+          }`}
+        />
+      </span>
+    );
+  }
+
+  const input = (
+    <input
+      type="checkbox"
+      checked={checked}
+      disabled={disabled}
+      onChange={(event) => onChange(event.target.checked)}
+      className="peer sr-only"
+    />
+  );
+
+  if (layout === "row") {
     return (
       <label
-        className={`flex items-start gap-2 text-[13px] text-(--text-soft) ${disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}
+        className={`group flex items-center gap-3.5 px-4.5 py-3.25 transition-colors has-focus-visible:bg-(--bg-hover) ${
+          disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:bg-(--bg-elevated)/50"
+        }`}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
-        <input
-          type="checkbox"
-          checked={checked}
-          disabled={disabled}
-          onChange={(event) => onChange(event.target.checked)}
-          className="sr-only"
-        />
-        <span className="relative -mt-0.5 flex shrink-0 items-center justify-center" style={imageStyle(box, size, size)}>
-          {checked ? <span className="absolute" style={imageStyle(check, size, size)} /> : null}
+        {input}
+        {icon ? (
+          <span className="flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-[7px] bg-(--bg-elevated) text-[13px] text-(--muted)">
+            <i className={icon} />
+          </span>
+        ) : null}
+        <span className="flex min-w-0 flex-1 flex-col gap-0.75">
+          <span className="text-[13.5px] font-[550] text-(--text)">{label}</span>
+          {description ? <span className="text-[12.5px] leading-snug text-(--muted)">{description}</span> : null}
         </span>
-        <span className="flex flex-col gap-0.5">
-          <span>{label}</span>
-          {description ? <span className="text-[11px] text-(--muted)">{description}</span> : null}
-        </span>
+        {trailing}
+        {box}
       </label>
     );
   }
@@ -72,32 +118,16 @@ export function Checkbox({ checked, onChange, label, description, disabled }: Ch
   return (
     <label
       className={`group flex items-start gap-2.5 text-[13px] text-(--text-soft) ${
-        disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer"
+        disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
       }`}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
-      <input
-        type="checkbox"
-        checked={checked}
-        disabled={disabled}
-        onChange={(event) => onChange(event.target.checked)}
-        className="sr-only"
-      />
-      <span
-        className={`mt-0.5 flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-[5px] border transition-all duration-150 ${
-          checked
-            ? "border-(--primary) bg-[linear-gradient(160deg,var(--primary-hover),var(--primary-active))]"
-            : `border-(--border-strong) bg-(--bg-input) ${disabled ? "" : "group-hover:border-(--primary)"}`
-        }`}
-      >
-        <i
-          className={`fa-solid fa-check text-[10px] text-white transition-opacity duration-100 ${
-            checked ? "opacity-100" : "opacity-0"
-          }`}
-        />
-      </span>
+      {input}
+      <span className="mt-px">{box}</span>
       <span className="flex flex-col gap-0.5">
         <span>{label}</span>
-        {description ? <span className="text-[11px] text-(--muted)">{description}</span> : null}
+        {description ? <span className="text-[12px] text-(--muted)">{description}</span> : null}
       </span>
     </label>
   );
