@@ -93,27 +93,30 @@ export function HomeStage({ onGoGames }: HomeStageProps) {
     <div className="relative h-full w-full overflow-hidden bg-(--bg)">
       <video
         key={active.bg_video}
-        className="absolute inset-0 h-full w-full object-cover opacity-90"
+        className="absolute inset-0 h-full w-full object-cover"
         src={toDisplaySrc(active.bg_video)}
         autoPlay
         muted
         loop
         playsInline
       />
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,7,11,0.35)_0%,rgba(7,7,11,0.15)_40%,rgba(7,7,11,0.55)_78%,rgba(7,7,11,0.92)_100%),linear-gradient(90deg,rgba(7,7,11,0.55)_0%,transparent_35%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--bg)_45%,transparent)_0%,transparent_26%,transparent_58%,color-mix(in_srgb,var(--bg)_75%,transparent)_84%,var(--bg)_100%),linear-gradient(90deg,color-mix(in_srgb,var(--bg)_50%,transparent)_0%,transparent_36%)]" />
 
-      <div className="absolute right-6 top-6 h-22.5 w-47.5 overflow-hidden rounded-xl drop-shadow-[0_12px_26px_rgba(0,0,0,0.55)]">
-        <img src={toDisplaySrc(active.poster)} alt={active.name} className="h-full w-full rounded-xl object-cover" />
-      </div>
+      <img
+        src={toDisplaySrc(active.poster)}
+        alt={active.name}
+        className="absolute top-12 left-10 h-37.5 w-85 object-contain object-center drop-shadow-[0_10px_24px_rgba(0,0,0,0.6)]"
+        draggable={false}
+      />
 
       {errorText ? (
-        <div className="absolute bottom-34 right-6 flex max-w-90 items-start gap-2 rounded-xl border border-(--danger)/30 bg-(--bg-elevated)/85 px-3.5 py-2.5 text-[11.5px] text-(--danger) shadow-xl backdrop-blur-xl">
+        <div className="absolute right-12 bottom-25 flex max-w-100 items-start gap-2.5 rounded-(--radius) border border-(--danger)/30 bg-(--bg-elevated)/90 px-3.5 py-2.5 text-[12.5px] text-(--danger) backdrop-blur-md" role="alert">
           <i className="fa-solid fa-circle-exclamation mt-0.5 text-[12px]" />
           <span>{errorText}</span>
         </div>
       ) : null}
 
-      <div className="absolute bottom-15 right-6 flex items-center gap-2 rounded-2xl border border-(--border-strong) bg-(--bg-elevated)/70 p-2.5 shadow-2xl backdrop-blur-xl">
+      <div className="absolute inset-x-12 bottom-8 flex items-center gap-3">
         <LaunchSelector
           accounts={accounts ?? []}
           choice={launchChoice}
@@ -125,28 +128,25 @@ export function HomeStage({ onGoGames }: HomeStageProps) {
         <button
           disabled={launching}
           onClick={handlePlay}
-          className={`flex items-center gap-2.5 rounded-xl bg-[linear-gradient(160deg,var(--primary-hover),var(--primary-active))] px-6 py-3 text-[13.5px] font-bold text-white shadow-[0_0_30px_var(--primary-glow),0_6px_20px_rgba(0,0,0,0.35)] transition-[transform,filter] duration-150 hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 disabled:hover:brightness-100 ${launching ? "cursor-wait" : "cursor-pointer"}`}
+          className={`flex h-13 items-center gap-3 rounded-(--radius) bg-(--primary) px-9 text-[16px] font-[650] text-(--on-primary) transition-colors [font-stretch:118%] hover:bg-(--primary-hover) active:bg-(--primary-active) disabled:cursor-not-allowed disabled:opacity-75 ${launching ? "cursor-wait" : "cursor-pointer"}`}
         >
-          {launching ? (
-            <i className="fa-solid fa-spinner fa-spin text-[12px]" />
-          ) : (
-            <i className="fa-solid fa-play text-[12px] cursor-pointer" />
-          )}
+          {launching ? <i className="fa-solid fa-spinner fa-spin text-[13px]" /> : <i className="fa-solid fa-play text-[13px]" />}
           {sessionActive ? t(`session.phase.${session.phase}`) : launching ? t("common.playing") : t("common.play")}
         </button>
         <TooltipSimple content={t("common.gameSettings")} side="top" align="center">
           <button
-            className="flex h-11 w-11 items-center justify-center rounded-xl border border-(--border-strong) bg-(--bg-elevated) text-(--text-soft) transition-all duration-150 hover:rotate-20 hover:border-(--primary) hover:bg-(--bg-hover) cursor-pointer"
+            className="flex h-13 w-13 items-center justify-center rounded-(--radius) border border-(--border-strong) bg-(--bg-card)/90 text-(--text-soft) backdrop-blur-md transition-colors hover:bg-(--bg-elevated) hover:text-(--text) cursor-pointer"
             onClick={() => setSettingsOpen(true)}
+            aria-label={t("common.gameSettings")}
           >
-            <i className="fa-solid fa-gear text-[15px] cursor-pointer" />
+            <i className="fa-solid fa-gear text-[16px]" />
           </button>
         </TooltipSimple>
+
+        <HomeDock dock={dock} activeId={active.id} onSelect={setActive} onReorder={reorderDock} />
       </div>
 
       <GameSettingsModal open={settingsOpen} game={active} onClose={() => setSettingsOpen(false)} />
-
-      <HomeDock dock={dock} activeId={active.id} onSelect={setActive} onReorder={reorderDock} />
     </div>
   );
 }
