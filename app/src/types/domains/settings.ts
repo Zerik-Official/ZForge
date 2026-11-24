@@ -11,6 +11,27 @@ export interface AppConfig {
   sdk_last_error: string | null;
   sdk_ever_installed?: boolean;
   notifications: NotificationSettings;
+  /** Whether the games in the home dock can be reordered by dragging them. */
+  dock_reorder: boolean;
+  /** Whether closing the window keeps the launcher running in the notification area. */
+  close_to_tray: boolean;
+  /** What Discord Rich Presence reveals about the game. */
+  presence: PresenceOptions;
+}
+
+/** How much of the character location Rich Presence shows. */
+export type LocationPrivacy = "exact" | "zone" | "random" | "hidden";
+
+/** What Discord Rich Presence reveals about the game. */
+export interface PresenceOptions {
+  show_name: boolean;
+  show_level: boolean;
+  show_xp: boolean;
+  show_class: boolean;
+  location: LocationPrivacy;
+  show_status: boolean;
+  show_group: boolean;
+  show_elapsed: boolean;
 }
 
 export interface GameSettings {
