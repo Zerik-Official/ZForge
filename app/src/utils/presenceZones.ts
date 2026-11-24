@@ -1,0 +1,62 @@
+/**
+ * @module utils/presenceZones
+ * Open world zones Rich Presence can show instead of the real one. The keys are the zone
+ * images uploaded to the Discord application; the names are translated in `presence.zones`.
+ */
+
+import type { RandomZone } from "@/types/domains/presence";
+
+/** Image key and first expansion of each zone. */
+export const RANDOM_ZONES: Omit<RandomZone, "name">[] = [
+  { image: "elwynn-forest", expansion: "classic" },
+  { image: "westfall", expansion: "classic" },
+  { image: "duskwood", expansion: "classic" },
+  { image: "redridge-mountains", expansion: "classic" },
+  { image: "dun-morogh", expansion: "classic" },
+  { image: "loch-modan", expansion: "classic" },
+  { image: "wetlands", expansion: "classic" },
+  { image: "arathi-highlands", expansion: "classic" },
+  { image: "the-hinterlands", expansion: "classic" },
+  { image: "badlands", expansion: "classic" },
+  { image: "searing-gorge", expansion: "classic" },
+  { image: "burning-steppes", expansion: "classic" },
+  { image: "swamp-of-sorrows", expansion: "classic" },
+  { image: "blasted-lands", expansion: "classic" },
+  { image: "tirisfal-glades", expansion: "classic" },
+  { image: "silverpine-forest", expansion: "classic" },
+  { image: "western-plaguelands", expansion: "classic" },
+  { image: "eastern-plaguelands", expansion: "classic" },
+  { image: "durotar", expansion: "classic" },
+  { image: "mulgore", expansion: "classic" },
+  { image: "ashenvale", expansion: "classic" },
+  { image: "darkshore", expansion: "classic" },
+  { image: "stonetalon-mountains", expansion: "classic" },
+  { image: "desolace", expansion: "classic" },
+  { image: "feralas", expansion: "classic" },
+  { image: "thousand-needles", expansion: "classic" },
+  { image: "tanaris", expansion: "classic" },
+  { image: "un_goro-crater", expansion: "classic" },
+  { image: "felwood", expansion: "classic" },
+  { image: "winterspring", expansion: "classic" },
+  { image: "silithus", expansion: "classic" },
+  { image: "moonglade", expansion: "classic" },
+  { image: "eversong-woods", expansion: "tbc" },
+  { image: "ghostlands", expansion: "tbc" },
+  { image: "azuremyst-isle", expansion: "tbc" },
+  { image: "bloodmyst-isle", expansion: "tbc" },
+  { image: "zangarmarsh", expansion: "tbc" },
+  { image: "terokkar-forest", expansion: "tbc" },
+  { image: "nagrand", expansion: "tbc" },
+  { image: "blade_s-edge-mountains", expansion: "tbc" },
+  { image: "netherstorm", expansion: "tbc" },
+  { image: "shadowmoon-valley", expansion: "tbc" },
+  { image: "borean-tundra", expansion: "wotlk" },
+  { image: "howling-fjord", expansion: "wotlk" },
+  { image: "dragonblight", expansion: "wotlk" },
+  { image: "grizzly-hills", expansion: "wotlk" },
+  { image: "zul-drak", expansion: "wotlk" },
+  { image: "sholazar-basin", expansion: "wotlk" },
+  { image: "the-storm-peaks", expansion: "wotlk" },
+  { image: "icecrown", expansion: "wotlk" },
+  { image: "crystalsong-forest", expansion: "wotlk" },
+];
