@@ -1,9 +1,12 @@
 //! Mapping from the game session to a Discord activity.
 
-use crate::services::presence::strings::{PresenceStrings, fill};
+use serde::Serialize;
+
+use crate::domain::app_config::{LocationPrivacy, PresenceOptions};
+use crate::services::presence::strings::{PresenceStrings, RandomZone, fill};
 use crate::services::presence::zones::zone_image;
 use crate::services::session::{
-    GroupKind, InstanceInfo, InstanceKind, SessionPhase, SessionSnapshot,
+    CharacterInfo, GroupKind, InstanceInfo, InstanceKind, SessionPhase, SessionSnapshot,
 };
 
 /// Image shown when no better one is known.
@@ -21,7 +24,8 @@ const HEROIC_DUNGEON: u32 = 2;
 const FIRST_HEROIC_RAID: u32 = 3;
 
 /// What Discord should show; owned so it can cross threads.
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PresenceActivity {
     /// First line.
     pub details: Option<String>,
@@ -91,13 +95,46 @@ fn text(value: String) -> Option<String> {
     Some(trimmed.chars().take(MAX_TEXT_CHARS).collect())
 }
 
-fn simple(details: &str, snapshot: &SessionSnapshot, image: &str) -> PresenceActivity {
+fn simple(
+    details: &str,
+    snapshot: &SessionSnapshot,
+    image: &str,
+    options: &PresenceOptions,
+) -> PresenceActivity {
     PresenceActivity {
         details: text(details.to_owned()),
         large_image: image.to_owned(),
-        start: snapshot.started_at.map(|millis| millis / 1000),
+        start: snapshot
+            .started_at
+            .filter(|_| options.show_elapsed)
+            .map(|millis| millis / 1000),
         ..PresenceActivity::default()
     }
+}
+
+/// First line in the world, with the parts of the character the options allow.
+fn character_line(
+    character: &CharacterInfo,
+    strings: &PresenceStrings,
+    options: &PresenceOptions,
+) -> Option<String> {
+    let level = character.level.to_string();
+    let percent = (character.xp.min(character.max_xp) * 100)
+        .checked_div(character.max_xp)
+        .filter(|_| options.show_xp && options.show_level)
+        .map(|percent| percent.to_string());
+    let name = character.name.as_str();
+    text(match (options.show_name, options.show_level, percent) {
+        (true, true, Some(xp)) => fill(
+            &strings.character_xp,
+            &[("name", name), ("level", &level), ("xp", &xp)],
+        ),
+        (true, true, None) => fill(&strings.character, &[("name", name), ("level", &level)]),
+        (true, false, _) => fill(&strings.name_only, &[("name", name)]),
+        (false, true, Some(xp)) => fill(&strings.level_xp, &[("level", &level), ("xp", &xp)]),
+        (false, true, None) => fill(&strings.level_only, &[("level", &level)]),
+        (false, false, _) => strings.in_world.clone(),
+    })
 }
 
 fn status_word<'a>(snapshot: &SessionSnapshot, strings: &'a PresenceStrings) -> Option<&'a str> {
@@ -115,42 +152,32 @@ fn status_word<'a>(snapshot: &SessionSnapshot, strings: &'a PresenceStrings) -> 
     }
 }
 
-fn in_world(snapshot: &SessionSnapshot, strings: &PresenceStrings) -> PresenceActivity {
-    let mut activity = simple("", snapshot, DEFAULT_IMAGE);
+fn in_world(
+    snapshot: &SessionSnapshot,
+    strings: &PresenceStrings,
+    options: &PresenceOptions,
+    decoy: Option<&RandomZone>,
+) -> PresenceActivity {
+    let mut activity = simple(&strings.in_world, snapshot, DEFAULT_IMAGE, options);
 
     if let Some(character) = &snapshot.character {
-        let level = character.level.to_string();
-        let percent = (character.xp.min(character.max_xp) * 100).checked_div(character.max_xp);
-        activity.details = if let Some(percent) = percent {
-            let percent = percent.to_string();
-            text(fill(
-                &strings.character_xp,
-                &[
-                    ("name", &character.name),
-                    ("level", &level),
-                    ("xp", &percent),
-                ],
-            ))
-        } else {
-            text(fill(
-                &strings.character,
-                &[("name", &character.name), ("level", &level)],
-            ))
-        };
-        activity.small_image = class_image(character.class_id).map(str::to_owned);
-        let race = strings
-            .races
-            .get(&character.race_id)
-            .map_or("", String::as_str);
-        let class = strings
-            .classes
-            .get(&character.class_id)
-            .map_or("", String::as_str);
-        if !race.is_empty() || !class.is_empty() {
-            activity.small_text = text(fill(
-                &strings.race_class,
-                &[("race", race), ("class", class)],
-            ));
+        activity.details = character_line(character, strings, options);
+        if options.show_class {
+            activity.small_image = class_image(character.class_id).map(str::to_owned);
+            let race = strings
+                .races
+                .get(&character.race_id)
+                .map_or("", String::as_str);
+            let class = strings
+                .classes
+                .get(&character.class_id)
+                .map_or("", String::as_str);
+            if !race.is_empty() || !class.is_empty() {
+                activity.small_text = text(fill(
+                    &strings.race_class,
+                    &[("race", race), ("class", class)],
+                ));
+            }
         }
     }
 
@@ -159,34 +186,47 @@ fn in_world(snapshot: &SessionSnapshot, strings: &PresenceStrings) -> PresenceAc
         .as_ref()
         .and_then(|location| location.instance.as_ref());
 
-    if let Some(location) = &snapshot.location {
-        activity.large_image = location
-            .map_area_id
-            .and_then(zone_image)
-            .unwrap_or_else(|| continent_image(Some(i64::from(location.map_id))))
-            .to_owned();
-        let place = if location.sub_zone.is_empty() || location.sub_zone == location.zone {
-            location.zone.clone()
-        } else {
-            fill(
-                &strings.zone_sub_zone,
-                &[("zone", &location.zone), ("subZone", &location.sub_zone)],
-            )
-        };
-        activity.large_text = match instance.and_then(|instance| difficulty_text(instance, strings))
-        {
-            Some(difficulty) => text(fill(
-                &strings.zone_difficulty,
-                &[("zone", &place), ("difficulty", &difficulty)],
-            )),
-            None => text(place),
-        };
+    match (options.location, &snapshot.location) {
+        (LocationPrivacy::Exact | LocationPrivacy::Zone, Some(location)) => {
+            activity.large_image = location
+                .map_area_id
+                .and_then(zone_image)
+                .unwrap_or_else(|| continent_image(Some(i64::from(location.map_id))))
+                .to_owned();
+            let exact = options.location == LocationPrivacy::Exact;
+            let place =
+                if !exact || location.sub_zone.is_empty() || location.sub_zone == location.zone {
+                    location.zone.clone()
+                } else {
+                    fill(
+                        &strings.zone_sub_zone,
+                        &[("zone", &location.zone), ("subZone", &location.sub_zone)],
+                    )
+                };
+            let difficulty = instance
+                .filter(|_| exact)
+                .and_then(|instance| difficulty_text(instance, strings));
+            activity.large_text = match difficulty {
+                Some(difficulty) => text(fill(
+                    &strings.zone_difficulty,
+                    &[("zone", &place), ("difficulty", &difficulty)],
+                )),
+                None => text(place),
+            };
+        }
+        (LocationPrivacy::Random, Some(_)) => {
+            if let Some(zone) = decoy {
+                activity.large_image = zone.image.clone();
+                activity.large_text = text(zone.name.clone());
+            }
+        }
+        _ => {}
     }
 
     let instance_max = instance
-        .filter(|instance| instance.max_players > 0)
+        .filter(|instance| instance.max_players > 0 && options.location == LocationPrivacy::Exact)
         .map(|instance| i32::try_from(instance.max_players).unwrap_or(RAID_MAX));
-    let group = snapshot.group.map(|group| {
+    let group = snapshot.group.filter(|_| options.show_group).map(|group| {
         let (label, max) = match group.kind {
             GroupKind::Solo => (&strings.solo, None),
             GroupKind::Party => (&strings.party, Some(instance_max.unwrap_or(PARTY_MAX))),
@@ -197,7 +237,8 @@ fn in_world(snapshot: &SessionSnapshot, strings: &PresenceStrings) -> PresenceAc
     });
     let group_label = group.map_or("", |(label, _)| label);
     activity.party = group.and_then(|(_, party)| party);
-    activity.state = match status_word(snapshot, strings) {
+    let status = status_word(snapshot, strings).filter(|_| options.show_status);
+    activity.state = match status {
         Some(status) if !group_label.is_empty() => text(fill(
             &strings.status_group,
             &[("status", status), ("group", group_label)],
@@ -209,36 +250,49 @@ fn in_world(snapshot: &SessionSnapshot, strings: &PresenceStrings) -> PresenceAc
 }
 
 /// The activity to show for a session, or `None` to clear the presence.
-pub fn build(snapshot: &SessionSnapshot, strings: &PresenceStrings) -> Option<PresenceActivity> {
+///
+/// `decoy` is the zone shown instead of the real one when the location is random.
+pub fn build(
+    snapshot: &SessionSnapshot,
+    strings: &PresenceStrings,
+    options: &PresenceOptions,
+    decoy: Option<&RandomZone>,
+) -> Option<PresenceActivity> {
     Some(match snapshot.phase {
         SessionPhase::Idle => return None,
-        SessionPhase::Launching => simple(&strings.launching, snapshot, DEFAULT_IMAGE),
-        SessionPhase::Running => simple(&strings.running, snapshot, DEFAULT_IMAGE),
-        SessionPhase::Login => simple(&strings.login, snapshot, DEFAULT_IMAGE),
-        SessionPhase::CharacterSelect => simple(&strings.character_select, snapshot, DEFAULT_IMAGE),
+        SessionPhase::Launching => simple(&strings.launching, snapshot, DEFAULT_IMAGE, options),
+        SessionPhase::Running => simple(&strings.running, snapshot, DEFAULT_IMAGE, options),
+        SessionPhase::Login => simple(&strings.login, snapshot, DEFAULT_IMAGE, options),
+        SessionPhase::CharacterSelect => {
+            simple(&strings.character_select, snapshot, DEFAULT_IMAGE, options)
+        }
         SessionPhase::Loading => {
+            let reveals = matches!(
+                options.location,
+                LocationPrivacy::Exact | LocationPrivacy::Zone
+            );
             let map_id = snapshot
                 .loading_screen
                 .as_ref()
-                .and_then(|screen| screen.map_id);
-            let mut activity = simple(&strings.loading, snapshot, continent_image(map_id));
+                .and_then(|screen| screen.map_id)
+                .filter(|_| reveals);
+            let mut activity = simple(&strings.loading, snapshot, continent_image(map_id), options);
             activity.large_text = snapshot
                 .loading_screen
                 .as_ref()
+                .filter(|_| reveals)
                 .and_then(|screen| screen.background.as_ref())
                 .and_then(|background| text(background.name.clone()));
             activity
         }
-        SessionPhase::InWorld => in_world(snapshot, strings),
+        SessionPhase::InWorld => in_world(snapshot, strings, options, decoy),
     })
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::services::session::{
-        CharacterInfo, GroupInfo, LocationInfo, PlayerStatus, SessionSnapshot,
-    };
+    use crate::services::session::{GroupInfo, LocationInfo, PlayerStatus, SessionSnapshot};
 
     fn strings() -> PresenceStrings {
         PresenceStrings {
@@ -299,7 +353,7 @@ mod tests {
 
     #[test]
     fn builds_the_in_world_activity() {
-        let activity = build(&playing(), &strings());
+        let activity = build(&playing(), &strings(), &PresenceOptions::default(), None);
         assert_eq!(
             activity,
             Some(PresenceActivity {
@@ -335,7 +389,8 @@ mod tests {
                 max_players: 25,
             }),
         });
-        let activity = build(&snapshot, &strings()).unwrap_or_default();
+        let activity =
+            build(&snapshot, &strings(), &PresenceOptions::default(), None).unwrap_or_default();
         assert_eq!(activity.large_image, "dalaran");
         assert_eq!(
             activity.large_text.as_deref(),
@@ -352,7 +407,8 @@ mod tests {
                 max_players: 3,
             });
         }
-        let arena = build(&snapshot, &strings()).unwrap_or_default();
+        let arena =
+            build(&snapshot, &strings(), &PresenceOptions::default(), None).unwrap_or_default();
         assert_eq!(arena.large_image, "wow-icon");
         assert_eq!(
             arena.large_text.as_deref(),
@@ -362,16 +418,64 @@ mod tests {
 
     #[test]
     fn clears_when_idle_and_shows_glue_screens() {
-        assert_eq!(build(&SessionSnapshot::default(), &strings()), None);
+        assert_eq!(
+            build(
+                &SessionSnapshot::default(),
+                &strings(),
+                &PresenceOptions::default(),
+                None
+            ),
+            None
+        );
         let login = SessionSnapshot {
             phase: SessionPhase::Login,
             ..SessionSnapshot::default()
         };
-        let activity = build(&login, &strings());
+        let activity = build(&login, &strings(), &PresenceOptions::default(), None);
         assert_eq!(
             activity.and_then(|activity| activity.details),
             Some("En el login".to_owned())
         );
+    }
+
+    #[test]
+    fn hides_what_the_options_turn_off() {
+        let options = PresenceOptions {
+            show_name: false,
+            show_xp: false,
+            show_class: false,
+            location: LocationPrivacy::Random,
+            show_status: false,
+            show_group: false,
+            show_elapsed: false,
+            ..PresenceOptions::default()
+        };
+        let strings = PresenceStrings {
+            level_only: "Nivel {level}".to_owned(),
+            ..strings()
+        };
+        let decoy = RandomZone {
+            image: "tanaris".to_owned(),
+            name: "Tanaris".to_owned(),
+            expansion: "classic".to_owned(),
+        };
+        let activity = build(&playing(), &strings, &options, Some(&decoy)).unwrap_or_default();
+        assert_eq!(
+            activity,
+            PresenceActivity {
+                details: Some("Nivel 70".to_owned()),
+                large_image: "tanaris".to_owned(),
+                large_text: Some("Tanaris".to_owned()),
+                ..PresenceActivity::default()
+            }
+        );
+
+        let zone_only = PresenceOptions {
+            location: LocationPrivacy::Zone,
+            ..PresenceOptions::default()
+        };
+        let activity = build(&playing(), &strings, &zone_only, None).unwrap_or_default();
+        assert_eq!(activity.large_text.as_deref(), Some("Dalaran"));
     }
 
     #[test]
