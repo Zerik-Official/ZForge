@@ -2,16 +2,18 @@ import { useEffect, useState } from "react";
 import { ES, US } from "country-flag-icons/react/3x2";
 import { PageState } from "@/components/layout/PageState";
 import { SettingsGroup, SettingsPage, SettingsRow } from "@/components/layout/SettingsPage";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { Select, type SelectOption } from "@/components/ui/Select";
 import { t, useLocale, setLocale, type Locale, SUPPORTED_LOCALES } from "@/locales/i18n";
-import { api } from "@/services/api";
+import { api, errorCode } from "@/services/api";
+import { useGamesStore } from "@/store/gamesStore";
 import type { AppConfig } from "@/types/domains/settings";
 
 /**
  * General launcher preferences tab.
  *
- * Currently exposes the display language selector (`Bandera | String`).
- * Persisted via `AppConfig.language` and applied instantly with `setLocale`.
+ * Display language (applied instantly with `setLocale`), whether the home dock can be
+ * reordered, and what closing the window does.
  *
  * @example
  * ```tsx
@@ -23,6 +25,8 @@ export function GeneralTab() {
   const [config, setConfig] = useState<AppConfig | null>(null);
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const saveConfig = useGamesStore((state) => state.saveConfig);
 
   useEffect(() => {
     let cancelled = false;
@@ -59,16 +63,30 @@ export function GeneralTab() {
     }
   }
 
+  async function savePreference(patch: Partial<AppConfig>) {
+    try {
+      setConfig(await saveConfig(patch));
+      setError(null);
+    } catch (e) {
+      setError(t(`common.errors.codes.${errorCode(e)}`));
+    }
+  }
+
+  const closeOptions: SelectOption[] = [
+    { value: "tray", label: t("launcher.settings.general.closeToTray") },
+    { value: "quit", label: t("launcher.settings.general.closeQuit") },
+  ];
+
   const languageOptions: SelectOption[] = [
     {
       value: "en",
       label: "English",
-      thumb: <US title="English" className="h-full w-full object-cover" />,
+      thumb: <US aria-hidden className="h-full w-full object-cover" />,
     },
     {
       value: "es",
       label: "Español",
-      thumb: <ES title="Español" className="h-full w-full object-cover" />,
+      thumb: <ES aria-hidden className="h-full w-full object-cover" />,
     },
   ];
 
@@ -97,6 +115,31 @@ export function GeneralTab() {
           }
         />
       </SettingsGroup>
+
+      <SettingsGroup title={t("launcher.settings.general.behavior")}>
+        <Checkbox
+          layout="row"
+          checked={config?.dock_reorder ?? true}
+          onChange={(value) => void savePreference({ dock_reorder: value })}
+          label={t("launcher.settings.general.dockReorder")}
+          description={t("launcher.settings.general.dockReorderDescription")}
+        />
+        <SettingsRow
+          label={t("launcher.settings.general.closeAction")}
+          description={t("launcher.settings.general.closeActionDescription")}
+          control={
+            <div className="w-56">
+              <Select
+                value={config?.close_to_tray ? "tray" : "quit"}
+                options={closeOptions}
+                onChange={(value) => void savePreference({ close_to_tray: value === "tray" })}
+              />
+            </div>
+          }
+        />
+      </SettingsGroup>
+
+      {error ? <span className="text-[12.5px] text-(--danger)">{error}</span> : null}
     </SettingsPage>
   );
 }
