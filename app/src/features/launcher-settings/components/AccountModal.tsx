@@ -6,6 +6,8 @@ import { t } from "@/locales/i18n";
 import { accountsApi, errorCode } from "@/services/api";
 import type { AccountDraft, AccountSummary } from "@/types/domains/accounts";
 import type { ServerEntry } from "@/types/domains/server";
+import { portraitSrc } from "@/utils/characters";
+import { CORE_REALMS, isLocalRealmlist, LOCAL_SERVER_ICON } from "@/utils/servers";
 
 interface AccountModalProps {
   open: boolean;
@@ -42,8 +44,8 @@ export function AccountModal({ open, account, servers, onClose, onSaved }: Accou
   const [error, setError] = useState<string | null>(null);
 
   const serverOptions = useMemo<ComboboxOption[]>(
-    () =>
-      servers.flatMap((server) =>
+    () => [
+      ...servers.flatMap((server) =>
         server.realmlists.map((realmlist) => ({
           value: realmlist,
           label: realmlist,
@@ -51,13 +53,23 @@ export function AccountModal({ open, account, servers, onClose, onSaved }: Accou
           thumb: server.logo ?? undefined,
         })),
       ),
+      { value: "localhost", label: "localhost", sublabel: t("launcher.settings.accounts.localServer"), thumb: LOCAL_SERVER_ICON },
+    ],
     [servers],
   );
 
   const realmOptions = useMemo<ComboboxOption[]>(() => {
-    const server = servers.find((entry) => entry.realmlists.includes(form.realmlist.trim()));
+    const realmlist = form.realmlist.trim();
+    const server = servers.find((entry) => entry.realmlists.includes(realmlist));
     const known = account ? accountRealms(account) : [];
-    return [...new Set([...(server?.realms ?? []), ...known])].map((realm) => ({ value: realm, label: realm }));
+    const cores = isLocalRealmlist(realmlist) ? CORE_REALMS : [];
+    const plain = [...new Set([...(server?.realms ?? []), ...known])].filter(
+      (realm) => !cores.some((entry) => entry.realm === realm),
+    );
+    return [
+      ...cores.map((entry) => ({ value: entry.realm, label: entry.realm, sublabel: entry.core, thumb: entry.logo })),
+      ...plain.map((realm) => ({ value: realm, label: realm })),
+    ];
   }, [servers, form.realmlist, account]);
 
   const characterOptions = useMemo<ComboboxOption[]>(
@@ -68,6 +80,7 @@ export function AccountModal({ open, account, servers, onClose, onSaved }: Accou
           value: character.name,
           label: character.name,
           sublabel: `${t("launcher.settings.accounts.level", { level: character.level })} · ${t(`presence.classes.${character.class_id}`)}`,
+          thumb: portraitSrc(character.race_id, character.gender),
         })),
     [account, form.default_realm],
   );

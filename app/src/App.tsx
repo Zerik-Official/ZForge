@@ -8,6 +8,7 @@ import { useBoot } from "@/hooks/useBoot";
 import { useConfigConflict } from "@/hooks/useConfigConflict";
 import { useNotificationStrings } from "@/hooks/useNotificationStrings";
 import { usePresenceStrings } from "@/hooks/usePresenceStrings";
+import { useTrayStrings } from "@/hooks/useTrayStrings";
 import { useGamesStore } from "@/store/gamesStore";
 import { useThemeStore } from "@/store/themeStore";
 import { api } from "@/services/api";
@@ -17,6 +18,7 @@ export default function App() {
   const { conflicts, push: pushConflicts, resolve } = useConfigConflict();
   const { step, done: bootDone } = useBoot(pushConflicts);
   usePresenceStrings();
+  useTrayStrings();
   useNotificationStrings();
   const hydrate = useGamesStore((state) => state.hydrate);
   const loadTheme = useThemeStore((state) => state.load);

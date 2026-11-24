@@ -130,7 +130,7 @@ export function Sidebar({ view, settingsTab, width, onSelect, onSelectSettings, 
             item.label,
             <button
               key={item.key}
-              className={`${itemBase} ${rowSize} text-[13.5px] font-medium ${itemState(view === item.key)} ${collapsed ? "before:-left-3" : ""}`}
+              className={`${itemBase} ${rowSize} text-[13.5px] font-medium ${itemState(view === item.key)}`}
               aria-current={view === item.key ? "page" : undefined}
               aria-label={collapsed ? item.label : undefined}
               onClick={() => onSelect(item.key)}

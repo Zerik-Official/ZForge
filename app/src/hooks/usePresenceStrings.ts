@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { t, useLocale } from "@/locales/i18n";
 import { presenceApi } from "@/services/api";
 import type { PresenceStrings } from "@/types/domains/presence";
+import { RANDOM_ZONES } from "@/utils/presenceZones";
 
 const RACE_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 10, 11];
 const CLASS_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 11];
@@ -24,6 +25,10 @@ function buildStrings(): PresenceStrings {
     loading: t("presence.loading"),
     character: t("presence.character"),
     characterXp: t("presence.characterXp"),
+    nameOnly: t("presence.nameOnly"),
+    levelOnly: t("presence.levelOnly"),
+    levelXp: t("presence.levelXp"),
+    inWorld: t("presence.inWorld"),
     solo: t("presence.solo"),
     party: t("presence.party"),
     raid: t("presence.raid"),
@@ -41,6 +46,7 @@ function buildStrings(): PresenceStrings {
     raidHeroic: t("presence.raidHeroic"),
     races: byId("presence.races", RACE_IDS),
     classes: byId("presence.classes", CLASS_IDS),
+    randomZones: RANDOM_ZONES.map((zone) => ({ ...zone, name: t(`presence.zones.${zone.image}`) })),
   };
 }
 

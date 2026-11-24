@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { TooltipSimple } from "@/components/ui/Tooltip";
+import { useGamesStore } from "@/store/gamesStore";
 import { toDisplaySrc } from "@/utils/asset";
 import type { Game } from "@/types/domains/game";
 
@@ -11,7 +12,8 @@ interface HomeDockProps {
 }
 
 export function HomeDock({ dock, activeId, onSelect, onReorder }: HomeDockProps) {
-  const canReorder = dock.length > 1;
+  const reorderEnabled = useGamesStore((state) => state.config?.dock_reorder ?? true);
+  const canReorder = reorderEnabled && dock.length > 1;
   const [draggedId, setDraggedId] = useState<string | null>(null);
 
   function handleDragStart(event: React.DragEvent, id: string) {

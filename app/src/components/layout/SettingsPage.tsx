@@ -16,7 +16,7 @@ interface SettingsPageProps {
  */
 export function SettingsPage({ title, description, actions, children }: SettingsPageProps) {
   return (
-    <div className="flex max-w-190 flex-col gap-7 px-12 pt-12 pb-12">
+    <div className="mx-auto flex w-full max-w-190 flex-col gap-7 px-12 pt-12 pb-12">
       <header className="flex items-start justify-between gap-6">
         <div className="flex min-w-0 flex-col gap-2.5">
           <h1 className="text-[26px] leading-[1.15] font-[650] text-(--text)">{title}</h1>
@@ -51,7 +51,7 @@ export function SettingsGroup({ title, aside, children }: SettingsGroupProps) {
           {aside}
         </div>
       ) : null}
-      <div className="overflow-hidden rounded-(--radius) border border-(--border) bg-(--bg-card) [&>*+*]:border-t [&>*+*]:border-(--border)">
+      <div className="rounded-(--radius) border border-(--border) bg-(--bg-card) [&>*+*]:border-t [&>*+*]:border-(--border) [&>*:first-child]:rounded-t-[inherit] [&>*:last-child]:rounded-b-[inherit]">
         {children}
       </div>
     </section>

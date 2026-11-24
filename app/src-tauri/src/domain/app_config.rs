@@ -36,6 +36,64 @@ pub struct AppConfig {
     pub sdk_ever_installed: bool,
     /// Windows notifications about the game (SDK 2.1+).
     pub notifications: NotificationSettings,
+    /// Whether the games in the home dock can be reordered by dragging them.
+    pub dock_reorder: bool,
+    /// Whether closing the window keeps the launcher running in the notification area.
+    pub close_to_tray: bool,
+    /// What Discord Rich Presence reveals about the game.
+    pub presence: PresenceOptions,
+}
+
+/// How much of the character location Rich Presence shows.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum LocationPrivacy {
+    /// Zone, sub-zone and instance difficulty.
+    #[default]
+    Exact,
+    /// Only the zone.
+    Zone,
+    /// A random zone that changes whenever the real zone changes.
+    Random,
+    /// No location.
+    Hidden,
+}
+
+/// What Discord Rich Presence reveals about the game.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct PresenceOptions {
+    /// Character name.
+    pub show_name: bool,
+    /// Character level.
+    pub show_level: bool,
+    /// Experience percentage below the level cap.
+    pub show_xp: bool,
+    /// Class icon with the race and class.
+    pub show_class: bool,
+    /// How much of the location to show.
+    pub location: LocationPrivacy,
+    /// In combat, dead, ghost or away.
+    pub show_status: bool,
+    /// Party or raid and its size.
+    pub show_group: bool,
+    /// Time since the game started.
+    pub show_elapsed: bool,
+}
+
+impl Default for PresenceOptions {
+    fn default() -> Self {
+        Self {
+            show_name: true,
+            show_level: true,
+            show_xp: true,
+            show_class: true,
+            location: LocationPrivacy::Exact,
+            show_status: true,
+            show_group: true,
+            show_elapsed: true,
+        }
+    }
 }
 
 /// Which Windows notifications the launcher shows while a game runs (SDK 2.1+).
@@ -107,6 +165,12 @@ pub struct AppConfigPatch {
     pub sdk_ever_installed: Option<bool>,
     /// New notification settings.
     pub notifications: Option<NotificationSettings>,
+    /// New dock reordering flag.
+    pub dock_reorder: Option<bool>,
+    /// New close-to-tray flag.
+    pub close_to_tray: Option<bool>,
+    /// New Rich Presence options.
+    pub presence: Option<PresenceOptions>,
 }
 
 /// Mark a field as present (including an explicit `null`).
@@ -154,6 +218,15 @@ impl AppConfig {
         if let Some(notifications) = patch.notifications {
             self.notifications = notifications;
         }
+        if let Some(dock_reorder) = patch.dock_reorder {
+            self.dock_reorder = dock_reorder;
+        }
+        if let Some(close_to_tray) = patch.close_to_tray {
+            self.close_to_tray = close_to_tray;
+        }
+        if let Some(presence) = patch.presence {
+            self.presence = presence;
+        }
     }
 }
 
@@ -176,6 +249,9 @@ impl Default for AppConfig {
             sdk_last_error: None,
             sdk_ever_installed: false,
             notifications: NotificationSettings::default(),
+            dock_reorder: true,
+            close_to_tray: false,
+            presence: PresenceOptions::default(),
         }
     }
 }

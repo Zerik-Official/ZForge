@@ -26,6 +26,14 @@ pub struct PresenceStrings {
     pub character: String,
     /// Character line below the level cap; placeholders `{name}`, `{level}`, `{xp}`.
     pub character_xp: String,
+    /// Character line without the level; placeholder `{name}`.
+    pub name_only: String,
+    /// Character line without the name; placeholder `{level}`.
+    pub level_only: String,
+    /// Character line without the name, below the level cap; placeholders `{level}`, `{xp}`.
+    pub level_xp: String,
+    /// Character line when neither the name nor the level is shown.
+    pub in_world: String,
     /// Playing alone.
     pub solo: String,
     /// In a party.
@@ -60,6 +68,43 @@ pub struct PresenceStrings {
     pub races: BTreeMap<u32, String>,
     /// Class names by class id.
     pub classes: BTreeMap<u32, String>,
+    /// Zones a random location is picked from.
+    pub random_zones: Vec<RandomZone>,
+}
+
+/// A zone that can be shown instead of the real one.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
+#[serde(default)]
+pub struct RandomZone {
+    /// Image key uploaded to the Discord application.
+    pub image: String,
+    /// Translated zone name.
+    pub name: String,
+    /// First expansion the zone exists in: `classic`, `tbc` or `wotlk`.
+    pub expansion: String,
+}
+
+impl RandomZone {
+    /// Whether the zone exists in a game of this expansion; unknown expansions allow every zone.
+    pub fn exists_in(&self, expansion: Option<&str>) -> bool {
+        match (
+            expansion_rank(&self.expansion),
+            expansion.and_then(expansion_rank),
+        ) {
+            (Some(zone), Some(game)) => zone <= game,
+            _ => true,
+        }
+    }
+}
+
+/// Order of the supported expansions.
+fn expansion_rank(expansion: &str) -> Option<u8> {
+    match expansion {
+        "classic" => Some(0),
+        "tbc" => Some(1),
+        "wotlk" => Some(2),
+        _ => None,
+    }
 }
 
 /// Replace `{key}` placeholders with their values.
@@ -93,5 +138,17 @@ mod tests {
             Some("Caballero de la Muerte")
         );
         Ok(())
+    }
+
+    #[test]
+    fn keeps_random_zones_of_the_game_expansion() {
+        let zone = RandomZone {
+            expansion: "tbc".to_owned(),
+            ..RandomZone::default()
+        };
+        assert!(!zone.exists_in(Some("classic")));
+        assert!(zone.exists_in(Some("tbc")));
+        assert!(zone.exists_in(Some("wotlk")));
+        assert!(zone.exists_in(None));
     }
 }

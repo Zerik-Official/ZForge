@@ -10,7 +10,7 @@ pub mod paths;
 pub mod services;
 pub mod storage;
 
-use tauri::{AppHandle, Emitter, Manager, Runtime};
+use tauri::{AppHandle, Emitter, Manager, Runtime, WindowEvent};
 use tokio::sync::broadcast::error::RecvError;
 
 use crate::commands::boot::BootState;
@@ -19,10 +19,12 @@ use crate::paths::AppPaths;
 use crate::services::accounts;
 use crate::services::notifications::NotificationService;
 use crate::services::presence::PresenceService;
+use crate::services::presence::assets::PresenceAssets;
 use crate::services::sdk::installer::SdkInstaller;
 use crate::services::sdk::release::ReleaseClient;
 use crate::services::session::GameSession;
 use crate::services::settings_schema::SchemaRegistry;
+use crate::services::tray;
 use crate::storage::Database;
 use crate::storage::app_config::AppConfigStore;
 
@@ -67,6 +69,15 @@ fn store_seen_characters<R: Runtime>(app: &AppHandle<R>, session: &GameSession) 
     });
 }
 
+/// Whether closing the main window should hide it in the notification area instead.
+fn closes_to_tray<R: Runtime>(app: &AppHandle<R>) -> bool {
+    let enabled = app
+        .try_state::<AppConfigStore>()
+        .and_then(|store| store.get().ok())
+        .is_some_and(|config| config.close_to_tray);
+    enabled && tray::exists(app)
+}
+
 /// Build and run the Tauri application until the main window closes.
 ///
 /// # Errors
@@ -106,6 +117,9 @@ pub fn run() -> tauri::Result<()> {
             commands::session::get_session,
             commands::session::launch_game,
             commands::presence::set_presence_strings,
+            commands::presence::preview_presence,
+            commands::presence::get_presence_assets,
+            commands::tray::set_tray_strings,
             commands::notifications::set_notification_strings,
             commands::settings::get_settings_schema,
             commands::settings::list_settings_versions,
@@ -147,6 +161,7 @@ pub fn run() -> tauri::Result<()> {
             app.manage(schemas);
             app.manage(ReleaseClient::new()?);
             app.manage(SdkInstaller::default());
+            app.manage(PresenceAssets::default());
             app.manage(BootState::default());
             let session = GameSession::new();
             forward_session_changes(app.handle(), &session);
@@ -154,6 +169,7 @@ pub fn run() -> tauri::Result<()> {
             app.manage(PresenceService::start(
                 DISCORD_CLIENT_ID,
                 startup_config.discord_enabled,
+                startup_config.presence,
                 session.subscribe(),
             ));
             app.manage(session);
@@ -162,6 +178,17 @@ pub fn run() -> tauri::Result<()> {
                 startup_config.notifications,
             ));
             Ok(())
+        })
+        .on_window_event(|window, event| {
+            if let WindowEvent::CloseRequested { api, .. } = event
+                && tray::is_main_window(window.label())
+                && closes_to_tray(window.app_handle())
+            {
+                api.prevent_close();
+                if let Err(error) = window.hide() {
+                    tracing::warn!(%error, "Could not hide the launcher window");
+                }
+            }
         })
         .run(tauri::generate_context!())
 }

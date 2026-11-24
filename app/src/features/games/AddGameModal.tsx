@@ -152,13 +152,8 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
 
   const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
 
-  const expansionOptions: SelectOption[] = assets
-    ? Object.entries(assets.expansions).map(([key, value]) => ({
-        value: key,
-        label: value.name,
-        thumb: toDisplaySrc((value as { box: string }).box || value.poster),
-      }))
-    : [];
+  const expansions = assets ? Object.entries(assets.expansions) : [];
+  const expansionName = assets?.expansions?.[form.expansion]?.name ?? form.expansion;
 
   const videoOptions: SelectOption[] = [...new Set([form.bgVideo, ...(assets?.available_videos ?? [])])]
     .filter(Boolean)
@@ -173,165 +168,211 @@ export function AddGameModal({ open, initial, onClose }: AddGameModalProps) {
     .map((path) => ({ value: path, label: fileName(path), thumb: toDisplaySrc(path) }));
 
   return (
-    <Modal open={open} onClose={onClose} className="h-135 w-full max-w-3xl">
-      <ModalHeader
-        icon="fa-solid fa-gamepad"
-        title={initial ? t("common.editGame") : t("common.addGame")}
-        onClose={onClose}
-      />
+    <Modal open={open} onClose={onClose} className="h-[min(620px,92vh)] w-full max-w-265 flex-row!">
+      <section
+        className="relative hidden min-w-0 flex-1 overflow-hidden bg-black md:block"
+        aria-label={t("addGame.preview")}
+      >
+        {form.bgVideo ? (
+          <video
+            key={form.bgVideo}
+            className="absolute inset-0 h-full w-full object-cover animate-[fadeIn_0.45s_ease_both]"
+            src={toDisplaySrc(form.bgVideo)}
+            autoPlay
+            muted
+            loop
+            playsInline
+          />
+        ) : null}
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--bg)_55%,transparent)_0%,transparent_30%,transparent_48%,color-mix(in_srgb,var(--bg)_82%,transparent)_80%,var(--bg-card)_100%)]" />
 
-      <div className="flex min-h-0 flex-1">
-        <div className="flex w-72 shrink-0 flex-col gap-5 overflow-y-auto border-r border-(--border) p-6">
-          <div className="flex flex-col gap-3">
-            <span className="section-label">
-              <i className="fa-solid fa-circle-info" />
-              {t("addGame.basicInfo")}
+        {form.poster ? (
+          <img
+            key={form.poster}
+            src={toDisplaySrc(form.poster)}
+            alt=""
+            draggable={false}
+            className="absolute top-6 left-7 max-h-27 max-w-70 object-contain drop-shadow-[0_6px_18px_rgba(0,0,0,0.55)] animate-[fadeIn_0.35s_ease_both]"
+          />
+        ) : null}
+        <span className="absolute top-6 right-6 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-medium text-white/75 backdrop-blur-sm">
+          {t("addGame.previewHint")}
+        </span>
+
+        <div className="absolute inset-x-7 bottom-6 flex items-end gap-5">
+          {form.box ? (
+            <img
+              key={form.box}
+              src={toDisplaySrc(form.box)}
+              alt=""
+              draggable={false}
+              className="h-40 w-auto shrink-0 rounded-md shadow-[0_14px_32px_rgba(0,0,0,0.6)] animate-[popIn_0.3s_ease-out_both]"
+            />
+          ) : null}
+          <div className="flex min-w-0 flex-col gap-2 pb-1">
+            <span className="text-[12px] font-medium text-(--text-soft)">{expansionName}</span>
+            <h3 className="truncate text-[26px] leading-[1.1] font-[650] text-(--text) [font-family:var(--font-heading,inherit)] [font-stretch:115%]">
+              {form.name.trim() || t("addGame.previewGame")}
+            </h3>
+            <span className="flex items-center gap-2 text-[12px] text-(--muted)">
+              <span className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-[7px] border border-(--border-strong) bg-(--bg-elevated)">
+                {form.icon ? <img src={toDisplaySrc(form.icon)} alt="" className="h-5 w-5 object-contain" /> : null}
+              </span>
+              {form.showOnMain ? t("addGame.onHome") : t("addGame.notOnHome")}
             </span>
+          </div>
+        </div>
+      </section>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="field-label">{t("addGame.name")}</label>
-              <input
-                className="field-input"
-                value={form.name}
-                onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
-                placeholder={t("addGame.namePlaceholder")}
-              />
-            </div>
+      <div className="flex w-full shrink-0 flex-col border-l border-(--border) md:w-95">
+        <ModalHeader
+          icon="fa-solid fa-gamepad"
+          title={initial ? t("common.editGame") : t("common.addGame")}
+          onClose={onClose}
+        />
 
-            <div className="flex flex-col gap-1.5">
-              <label className="field-label">{t("addGame.expansion")}</label>
-              <Select value={form.expansion} options={expansionOptions} onChange={handleExpansionChange} />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="field-label">{t("addGame.executable")}</label>
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-(--border-strong) bg-(--bg-input)">
-                    <i className="fa-solid fa-file-invoice text-[13px] text-(--muted)" />
-                  </div>
-                  {form.exePath ? (
-                    <TooltipSimple content={form.exePath} side="top" align="center" sideOffset={6}>
-                      <input
-                        className="field-input flex-1 truncate cursor-default"
-                        value={form.exePath}
-                        readOnly
-                        placeholder={t("addGame.selectExe")}
+        <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-6 py-5 will-change-transform">
+          <div className="flex flex-col gap-2">
+            <span className="field-label">{t("addGame.expansion")}</span>
+            <div role="radiogroup" aria-label={t("addGame.expansion")} className="grid grid-cols-3 gap-2">
+              {expansions.map(([key, media]) => {
+                const selected = form.expansion === key;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    onClick={() => handleExpansionChange(key)}
+                    className={`group flex flex-col gap-1.5 rounded-lg p-1.5 text-left transition-colors cursor-pointer ${
+                      selected ? "bg-(--bg-hover) ring-2 ring-(--primary)" : "hover:bg-(--bg-elevated)"
+                    }`}
+                  >
+                    <span className="flex aspect-[3/4] items-center justify-center overflow-hidden rounded-md bg-black">
+                      <img
+                        src={toDisplaySrc(media.box || media.poster)}
+                        alt=""
+                        draggable={false}
+                        className={`h-full w-full object-cover transition-[opacity,scale] duration-200 ${
+                          selected ? "opacity-100" : "opacity-65 group-hover:scale-[1.03] group-hover:opacity-90"
+                        }`}
                       />
-                    </TooltipSimple>
-                  ) : (
-                    <input
-                      className="field-input flex-1 truncate"
-                      value={form.exePath}
-                      readOnly
-                      placeholder={t("addGame.selectExe")}
-                    />
-                  )}
-                </div>
-                <button className="ghost-btn w-full rounded-lg px-3 py-2 text-[12px] cursor-pointer" onClick={pickExe}>
-                  <i className="fa-solid fa-folder-open mr-1.5" />
-                  {t("common.search")}
-                </button>
-              </div>
+                    </span>
+                    <span className={`line-clamp-2 text-[11px] leading-tight ${selected ? "text-(--text)" : "text-(--muted)"}`}>
+                      {media.name}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
-        </div>
 
-        <div className="min-w-0 flex-1 overflow-y-auto p-6">
-          <div className="flex flex-col gap-5">
-            <div className="flex flex-col gap-3">
-              <span className="section-label">
-                <i className="fa-solid fa-photo-film" />
-                {t("addGame.multimedia")}
-              </span>
+          <div className="flex flex-col gap-1.5">
+            <label className="field-label" htmlFor="add-game-name">{t("addGame.name")}</label>
+            <input
+              id="add-game-name"
+              className="field-input"
+              value={form.name}
+              onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
+              placeholder={t("addGame.namePlaceholder")}
+            />
+          </div>
 
-              <div className="flex flex-col gap-2">
-                <label className="field-label">{t("addGame.videoBg")}</label>
-                <div className="flex items-center gap-2">
-                  <div className="min-w-0 flex-1">
-                    <Select value={form.bgVideo} options={videoOptions} onChange={(val) => setForm((prev) => ({ ...prev, bgVideo: val }))} placeholder={t("addGame.selectVideo")} />
-                  </div>
-                  <TooltipSimple content={t("addGame.useCustom")} side="top">
-                    <button className="icon-btn cursor-pointer" onClick={() => pickCustom("scenes")}>
-                      <i className="fa-solid fa-upload text-[12px]" />
-                    </button>
-                  </TooltipSimple>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label className="field-label">{t("addGame.icon")}</label>
-                <div className="flex items-center gap-2">
-                  <div className="min-w-0 flex-1">
-                    <Select value={form.icon} options={iconOptions} onChange={(val) => setForm((prev) => ({ ...prev, icon: val }))} placeholder={t("addGame.selectIcon")} />
-                  </div>
-                  <TooltipSimple content={t("addGame.useCustom")} side="top">
-                    <button className="icon-btn cursor-pointer" onClick={() => pickCustom("icos")}>
-                      <i className="fa-solid fa-upload text-[12px]" />
-                    </button>
-                  </TooltipSimple>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label className="field-label">{t("addGame.poster")}</label>
-                <div className="flex items-center gap-2">
-                  <div className="min-w-0 flex-1">
-                    <Select value={form.poster} options={posterOptions} onChange={(val) => setForm((prev) => ({ ...prev, poster: val }))} placeholder={t("addGame.selectPoster")} />
-                  </div>
-                  <TooltipSimple content={t("addGame.useCustom")} side="top">
-                    <button className="icon-btn cursor-pointer" onClick={() => pickCustom("logos")}>
-                      <i className="fa-solid fa-upload text-[12px]" />
-                    </button>
-                  </TooltipSimple>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-3">
-              <span className="section-label">
-                <i className="fa-solid fa-eye" />
-                {t("addGame.preview")}
-              </span>
-
-            <div className="flex items-center gap-3 rounded-(--radius) border border-(--border-strong) bg-(--bg-input) p-3">
-              <div className="flex h-19 w-13 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-(--border-strong) bg-black">
-                {form.box ? (
-                  <img src={toDisplaySrc(form.box)} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  <i className="fa-solid fa-gamepad text-(--muted-2)" />
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[13px] font-semibold text-(--text)">{form.name || t("addGame.previewGame")}</p>
-                <p className="text-[12px] text-(--muted)">{assets?.expansions?.[form.expansion]?.name ?? form.expansion}</p>
-                <p className="mt-1 flex items-center gap-1.5 text-[10px] text-(--muted-2)">
-                  <span className="h-4 w-4 overflow-hidden rounded bg-(--bg-card) p-0.5">
-                    {form.icon ? <img src={toDisplaySrc(form.icon)} alt="" className="h-full w-full object-contain" /> : null}
-                  </span>
-                  icono
-                </p>
-              </div>
-            </div>
-
-              <Checkbox checked={form.showOnMain} onChange={(val) => setForm((prev) => ({ ...prev, showOnMain: val }))} label={t("addGame.showOnHome")} />
+          <div className="flex flex-col gap-1.5">
+            <span className="field-label">{t("addGame.executable")}</span>
+            <div className="flex items-center gap-2">
+              <TooltipSimple content={form.exePath || t("addGame.selectExe")} side="top" align="center" sideOffset={6}>
+                <input
+                  className="field-input min-w-0 flex-1 truncate cursor-pointer"
+                  value={form.exePath ? fileName(form.exePath) : ""}
+                  readOnly
+                  onClick={pickExe}
+                  placeholder={t("addGame.selectExe")}
+                />
+              </TooltipSimple>
+              <button className="ghost-btn shrink-0 rounded-lg px-3 py-2 text-[12px] cursor-pointer" onClick={pickExe}>
+                <i className="fa-solid fa-folder-open mr-1.5" />
+                {t("common.search")}
+              </button>
             </div>
           </div>
+
+          <div className="flex flex-col gap-3">
+            <span className="text-[13px] font-semibold text-(--text-soft)">{t("addGame.multimedia")}</span>
+            <MediaField
+              label={t("addGame.videoBg")}
+              value={form.bgVideo}
+              options={videoOptions}
+              placeholder={t("addGame.selectVideo")}
+              onChange={(val) => setForm((prev) => ({ ...prev, bgVideo: val }))}
+              onUpload={() => void pickCustom("scenes")}
+            />
+            <MediaField
+              label={t("addGame.poster")}
+              value={form.poster}
+              options={posterOptions}
+              placeholder={t("addGame.selectPoster")}
+              onChange={(val) => setForm((prev) => ({ ...prev, poster: val }))}
+              onUpload={() => void pickCustom("logos")}
+            />
+            <MediaField
+              label={t("addGame.icon")}
+              value={form.icon}
+              options={iconOptions}
+              placeholder={t("addGame.selectIcon")}
+              onChange={(val) => setForm((prev) => ({ ...prev, icon: val }))}
+              onUpload={() => void pickCustom("icos")}
+            />
+          </div>
+
+          <Checkbox
+            checked={form.showOnMain}
+            onChange={(val) => setForm((prev) => ({ ...prev, showOnMain: val }))}
+            label={t("addGame.showOnHome")}
+          />
         </div>
+
+        <ModalFooter>
+          <button className="ghost-btn rounded-lg px-4 py-2 text-[13px] cursor-pointer" onClick={onClose}>
+            {t("common.cancel")}
+          </button>
+          <button
+            className="play-btn rounded-lg px-4 py-2 text-[13px] font-semibold disabled:opacity-40 cursor-pointer"
+            onClick={handleSave}
+            disabled={busy || !form.name.trim() || !form.exePath.trim()}
+          >
+            {busy ? t("common.saving") : initial ? t("common.save") : t("common.add")}
+          </button>
+        </ModalFooter>
       </div>
-
-      <ModalFooter>
-        <button className="ghost-btn rounded-lg px-4 py-2 text-[13px] cursor-pointer" onClick={onClose}>
-          {t("common.cancel")}
-        </button>
-        <button
-          className="play-btn rounded-lg px-4 py-2 text-[13px] font-semibold disabled:opacity-40 cursor-pointer"
-          onClick={handleSave}
-          disabled={busy || !form.name.trim() || !form.exePath.trim()}
-        >
-          {busy ? t("common.saving") : initial ? t("common.save") : t("common.add")}
-        </button>
-      </ModalFooter>
     </Modal>
+  );
+}
+
+interface MediaFieldProps {
+  label: string;
+  value: string;
+  options: SelectOption[];
+  placeholder: string;
+  onChange: (value: string) => void;
+  onUpload: () => void;
+}
+
+/** A media picker: the bundled files in a dropdown and a button to use a file of the user. */
+function MediaField({ label, value, options, placeholder, onChange, onUpload }: MediaFieldProps) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="field-label">{label}</span>
+      <div className="flex items-center gap-2">
+        <div className="min-w-0 flex-1">
+          <Select value={value} options={options} onChange={onChange} placeholder={placeholder} />
+        </div>
+        <TooltipSimple content={t("addGame.useCustom")} side="top">
+          <button className="icon-btn cursor-pointer" onClick={onUpload} aria-label={t("addGame.useCustom")}>
+            <i className="fa-solid fa-upload text-[12px]" />
+          </button>
+        </TooltipSimple>
+      </div>
+    </div>
   );
 }

@@ -28,6 +28,8 @@ interface GamesState {
   removeGame: (id: string) => Promise<void>;
   setActive: (id: string) => Promise<void>;
   reorderDock: (orderedIds: string[]) => Promise<void>;
+  /** Save launcher preferences and keep the copy in the store current. */
+  saveConfig: (patch: Partial<AppConfig>) => Promise<AppConfig>;
 }
 
 export const useGamesStore = create<GamesState>((set, get) => ({
@@ -73,11 +75,14 @@ export const useGamesStore = create<GamesState>((set, get) => ({
   },
 
   async setActive(id) {
-    const config = get().config ??
-      ({ theme: "dark", last_active_game: null, language: null, discord_enabled: false, discord_auto_update: true, sdk_last_error: null } as AppConfig);
-    const next: AppConfig = { ...config, last_active_game: id };
-    await settingsApi.saveAppConfig(next);
-    set({ activeId: id, config: next });
+    const config = await settingsApi.saveAppConfig({ last_active_game: id });
+    set({ activeId: id, config });
+  },
+
+  async saveConfig(patch) {
+    const config = await settingsApi.saveAppConfig(patch);
+    set({ config });
+    return config;
   },
 
   async reorderDock(orderedIds) {
