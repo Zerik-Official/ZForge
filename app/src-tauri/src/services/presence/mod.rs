@@ -6,9 +6,12 @@
 //! limit and reconnects when Discord is closed or restarted.
 
 pub mod activity;
+pub mod assets;
 pub mod strings;
 pub mod zones;
 
+use std::collections::hash_map::RandomState;
+use std::hash::BuildHasher;
 use std::sync::mpsc::{self, Receiver, RecvTimeoutError};
 use std::thread;
 use std::time::{Duration, Instant};
@@ -17,8 +20,9 @@ use discord_rich_presence::activity::{Activity, Assets, Party, Timestamps};
 use discord_rich_presence::{DiscordIpc, DiscordIpcClient};
 use tokio::sync::watch;
 
+use crate::domain::app_config::{LocationPrivacy, PresenceOptions};
 use crate::services::presence::activity::PresenceActivity;
-use crate::services::presence::strings::PresenceStrings;
+use crate::services::presence::strings::{PresenceStrings, RandomZone};
 use crate::services::session::SessionSnapshot;
 
 /// Minimum time between two updates (Discord allows about five per 20 seconds).
@@ -32,8 +36,77 @@ const RECONNECT_DELAY: Duration = Duration::from_secs(15);
 pub struct PresenceSettings {
     /// Rich Presence is enabled in the launcher.
     pub enabled: bool,
+    /// What the presence reveals.
+    pub options: PresenceOptions,
     /// Translated texts; nothing is shown until the frontend sends them.
     pub strings: Option<PresenceStrings>,
+}
+
+/// Picks the zone shown instead of the real one and keeps it until the real zone changes,
+/// so the presence does not jump between zones on every update.
+#[derive(Debug, Default)]
+struct DecoyPicker {
+    /// Real zone the current pick was made for.
+    real_zone: Option<u32>,
+    /// Index in the list of random zones.
+    index: Option<usize>,
+}
+
+impl DecoyPicker {
+    fn pick<'a>(
+        &mut self,
+        snapshot: &SessionSnapshot,
+        zones: &'a [RandomZone],
+    ) -> Option<&'a RandomZone> {
+        let zones = zones_for(snapshot, zones);
+        let real_zone = snapshot.location.as_ref().map(|location| location.zone_id);
+        let stale = self.index.is_none_or(|index| index >= zones.len());
+        if real_zone != self.real_zone || stale {
+            self.real_zone = real_zone;
+            self.index = random_index(zones.len(), self.index);
+        }
+        self.index.and_then(|index| zones.get(index).copied())
+    }
+}
+
+/// The random zones that exist in the expansion of the running game.
+fn zones_for<'a>(snapshot: &SessionSnapshot, zones: &'a [RandomZone]) -> Vec<&'a RandomZone> {
+    zones
+        .iter()
+        .filter(|zone| zone.exists_in(snapshot.expansion.as_deref()))
+        .collect()
+}
+
+/// A random index below `len`, different from `previous` when there is a choice.
+fn random_index(len: usize, previous: Option<usize>) -> Option<usize> {
+    if len == 0 {
+        return None;
+    }
+    let random = usize::try_from(RandomState::new().hash_one(len)).unwrap_or_default();
+    let mut index = random % len;
+    if len > 1 && Some(index) == previous {
+        index = (index + 1) % len;
+    }
+    Some(index)
+}
+
+/// The activity a snapshot would show with these options, for the settings preview.
+///
+/// The random location uses a zone picked from the character name, so the preview stays
+/// the same while the options change.
+pub fn preview(
+    snapshot: &SessionSnapshot,
+    strings: &PresenceStrings,
+    options: &PresenceOptions,
+) -> Option<PresenceActivity> {
+    let seed = snapshot.character.as_ref().map_or(0, |character| {
+        character.name.bytes().map(usize::from).sum::<usize>()
+    });
+    let zones = zones_for(snapshot, &strings.random_zones);
+    let decoy = (!zones.is_empty())
+        .then(|| zones.get(seed % zones.len()).copied())
+        .flatten();
+    activity::build(snapshot, strings, options, decoy)
 }
 
 /// Handle to the running Rich Presence service.
@@ -47,10 +120,12 @@ impl PresenceService {
     pub fn start(
         client_id: &str,
         enabled: bool,
+        options: PresenceOptions,
         mut session: watch::Receiver<SessionSnapshot>,
     ) -> Self {
         let (settings, mut settings_changes) = watch::channel(PresenceSettings {
             enabled,
+            options,
             strings: None,
         });
         let service = Self { settings };
@@ -72,12 +147,17 @@ impl PresenceService {
 
         tauri::async_runtime::spawn(async move {
             let mut last: Option<PresenceActivity> = None;
+            let mut decoys = DecoyPicker::default();
             loop {
                 let desired = {
                     let settings = settings_changes.borrow_and_update();
                     match (&settings.strings, settings.enabled) {
                         (Some(strings), true) => {
-                            activity::build(&session.borrow_and_update(), strings)
+                            let snapshot = session.borrow_and_update();
+                            let decoy = (settings.options.location == LocationPrivacy::Random)
+                                .then(|| decoys.pick(&snapshot, &strings.random_zones))
+                                .flatten();
+                            activity::build(&snapshot, strings, &settings.options, decoy)
                         }
                         _ => None,
                     }
@@ -104,6 +184,20 @@ impl PresenceService {
             settings.enabled = enabled;
             changed
         });
+    }
+
+    /// Use new privacy options.
+    pub fn set_options(&self, options: PresenceOptions) {
+        self.settings.send_if_modified(|settings| {
+            let changed = settings.options != options;
+            settings.options = options;
+            changed
+        });
+    }
+
+    /// Current translated texts, once the frontend has sent them.
+    pub fn strings(&self) -> Option<PresenceStrings> {
+        self.settings.borrow().strings.clone()
     }
 
     /// Use new translated texts.
