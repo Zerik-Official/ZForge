@@ -117,7 +117,14 @@
         "title": "Ajustes generales",
         "description": "Gestiona las preferencias generales del launcher.",
         "language": "Idioma",
-        "languageDescription": "Selecciona el idioma de la interfaz del launcher."
+        "languageDescription": "Selecciona el idioma de la interfaz del launcher.",
+        "behavior": "Comportamiento",
+        "dockReorder": "Reordenar el dock de juegos",
+        "dockReorderDescription": "Arrastra los juegos del dock del inicio para cambiar su orden.",
+        "closeAction": "Al cerrar el launcher",
+        "closeActionDescription": "Mantenerlo en el área de notificación para volver a abrirlo desde su icono, o cerrarlo por completo.",
+        "closeToTray": "Minimizar a la bandeja",
+        "closeQuit": "Cerrar por completo"
       },
       "appearance": {
         "title": "Apariencia",
@@ -245,6 +252,52 @@
               "stateChanges": "Indicar cambios realizados"
             }
           }
+        },
+        "preview": {
+          "title": "Vista previa",
+          "live": "Tu personaje en el mundo",
+          "sample": "Personaje de ejemplo",
+          "empty": "La vista previa aparece cuando el launcher termina de cargar los textos.",
+          "playing": "Jugando",
+          "party": "({current} de {max})",
+          "gameName": "World of Warcraft",
+          "sampleName": "Valeera",
+          "places": {
+            "stormwind": "Ciudad de Ventormenta",
+            "tradeDistrict": "Distrito de Mercaderes",
+            "shattrath": "Ciudad de Shattrath",
+            "terraceOfLight": "Bancal de la Luz",
+            "dalaran": "Dalaran",
+            "violetCitadel": "La Ciudadela Violeta"
+          }
+        },
+        "privacy": {
+          "title": "Qué muestra Discord",
+          "location": "Ubicación",
+          "show_name": "Nombre del personaje",
+          "show_nameDescription": "Sin él solo se muestra el nivel.",
+          "show_level": "Nivel",
+          "show_levelDescription": "El nivel del personaje junto al nombre.",
+          "show_xp": "Experiencia",
+          "show_xpDescription": "Porcentaje para el siguiente nivel, por debajo del nivel máximo.",
+          "show_class": "Raza y clase",
+          "show_classDescription": "Icono de clase en la esquina de la imagen, con la raza y la clase al pasar el ratón.",
+          "show_status": "Estado",
+          "show_statusDescription": "En combate, muerto, fantasma o ausente.",
+          "show_group": "Grupo",
+          "show_groupDescription": "Si estás en grupo o en banda y su tamaño.",
+          "show_elapsed": "Tiempo de juego",
+          "show_elapsedDescription": "Cuánto tiempo lleva abierto el juego."
+        },
+        "location": {
+          "exact": "Exacta",
+          "exactDescription": "Zona, subzona y dificultad de la instancia.",
+          "zone": "Solo la zona",
+          "zoneDescription": "La zona sin la subzona ni la dificultad.",
+          "random": "Zona aleatoria",
+          "randomDescription": "Otra zona de tu expansión, elegida de nuevo cada vez que cambias de zona, para que nadie pueda encontrarte.",
+          "hidden": "Oculta",
+          "hiddenDescription": "Sin ubicación ni pantalla de carga."
         }
       },
       "notifications": {
@@ -315,7 +368,10 @@
         "noCharacters": "Los personajes aparecen aquí después de entrar con esta cuenta desde el launcher.",
         "empty": "Todavía no has añadido ninguna cuenta.",
         "confirmDelete": "¿Eliminar esta cuenta?",
-        "confirmDeleteDescription": "Se eliminarán \"{name}\" y sus personajes guardados, y su contraseña se borrará del Administrador de credenciales de Windows."
+        "confirmDeleteDescription": "Se eliminarán \"{name}\" y sus personajes guardados, y su contraseña se borrará del Administrador de credenciales de Windows.",
+        "localServer": "Servidor local",
+        "showAll": "Ver los {count} personajes",
+        "showFewer": "Ver menos"
       }
     },
     "addons": {
@@ -361,7 +417,6 @@
     }
   },
   "addGame": {
-    "basicInfo": "Información básica",
     "name": "Nombre",
     "namePlaceholder": "Mi WoW 3.3.5a",
     "expansion": "Expansión",
@@ -377,7 +432,10 @@
     "preview": "Vista previa",
     "previewGame": "Nombre del juego",
     "showOnHome": "Mostrar en la pantalla de inicio",
-    "useCustom": "Usar archivo personalizado"
+    "useCustom": "Usar archivo personalizado",
+    "previewHint": "Vista previa del inicio",
+    "onHome": "Se muestra en el inicio",
+    "notOnHome": "Solo en la lista de juegos"
   },
   "language": {
     "selectTitle": "Elige tu idioma",
@@ -609,7 +667,64 @@
       "8": "Mago",
       "9": "Brujo",
       "11": "Druida"
-    }
+    },
+    "zones": {
+      "elwynn-forest": "Bosque de Elwynn",
+      "westfall": "Páramos de Poniente",
+      "duskwood": "Bosque del Ocaso",
+      "redridge-mountains": "Montañas Crestagrana",
+      "dun-morogh": "Dun Morogh",
+      "loch-modan": "Loch Modan",
+      "wetlands": "Los Humedales",
+      "arathi-highlands": "Tierras Altas de Arathi",
+      "the-hinterlands": "Tierras del Interior",
+      "badlands": "Tierras Inhóspitas",
+      "searing-gorge": "La Garganta de Fuego",
+      "burning-steppes": "Las Estepas Ardientes",
+      "swamp-of-sorrows": "Pantano de las Penas",
+      "blasted-lands": "Las Tierras Devastadas",
+      "tirisfal-glades": "Claros de Tirisfal",
+      "silverpine-forest": "Bosque de Argénteos",
+      "western-plaguelands": "Tierras de la Peste del Oeste",
+      "eastern-plaguelands": "Tierras de la Peste del Este",
+      "durotar": "Durotar",
+      "mulgore": "Mulgore",
+      "ashenvale": "Vallefresno",
+      "darkshore": "Costa Oscura",
+      "stonetalon-mountains": "Sierra Espolón",
+      "desolace": "Desolace",
+      "feralas": "Feralas",
+      "thousand-needles": "Las Mil Agujas",
+      "tanaris": "Tanaris",
+      "un_goro-crater": "Cráter de Un'Goro",
+      "felwood": "Frondavil",
+      "winterspring": "Cuna del Invierno",
+      "silithus": "Silithus",
+      "moonglade": "Claro de la Luna",
+      "eversong-woods": "Bosque Canción Eterna",
+      "ghostlands": "Tierras Fantasma",
+      "azuremyst-isle": "Isla Bruma Azur",
+      "bloodmyst-isle": "Isla Bruma de Sangre",
+      "zangarmarsh": "Marisma de Zangar",
+      "terokkar-forest": "Bosque de Terokkar",
+      "nagrand": "Nagrand",
+      "blade_s-edge-mountains": "Montañas Filospada",
+      "netherstorm": "Tormenta Abisal",
+      "shadowmoon-valley": "Valle Sombraluna",
+      "borean-tundra": "Tundra Boreal",
+      "howling-fjord": "Fiordo Aquilonal",
+      "dragonblight": "Cementerio de Dragones",
+      "grizzly-hills": "Colinas Pardas",
+      "zul-drak": "Zul'Drak",
+      "sholazar-basin": "Cuenca de Sholazar",
+      "the-storm-peaks": "Las Cumbres Tormentosas",
+      "icecrown": "Corona de Hielo",
+      "crystalsong-forest": "Bosque Canto de Cristal"
+    },
+    "nameOnly": "{name}",
+    "levelOnly": "Nivel {level}",
+    "levelXp": "Nivel {level} ({xp}% de XP)",
+    "inWorld": "En el mundo"
   },
   "notifications": {
     "friendOnline": {
@@ -684,7 +799,13 @@
       "headless": "Iniciar en segundo plano",
       "headlessDescription": "La ventana del juego permanece oculta hasta que el personaje está en el mundo. Se recomienda el modo ventana.",
       "accountOnRealm": "{account} en {realm}",
-      "pickAccount": "Elige una cuenta para entrar"
+      "pickAccount": "Elige una cuenta para entrar",
+      "searchCharacter": "Buscar por nombre o clase",
+      "noCharacterMatches": "Ningún personaje coincide"
     }
+  },
+  "tray": {
+    "open": "Abrir ZForge",
+    "quit": "Salir"
   }
 }
