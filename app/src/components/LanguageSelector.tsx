@@ -71,7 +71,7 @@ export function LanguageSelector({ onSelect }: LanguageSelectorProps) {
               `}
             >
               <span className="flex h-12 w-18 items-center justify-center overflow-hidden rounded-lg bg-(--bg-elevated) shadow-inner ring-1 ring-(--border-strong)">
-                <opt.Flag title={opt.label} className="h-full w-full object-cover" />
+                <opt.Flag aria-hidden className="h-full w-full object-cover" />
               </span>
               <span className="flex flex-col items-center">
                 <span className="text-[15px] font-semibold text-(--text)">{opt.label}</span>
