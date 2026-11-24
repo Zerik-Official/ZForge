@@ -22,6 +22,7 @@ export { sdkApi } from "./api/domains/sdk.api";
 export { bootApi } from "./api/domains/boot.api";
 export { sessionApi } from "./api/domains/session.api";
 export { presenceApi } from "./api/domains/presence.api";
+export { trayApi } from "./api/domains/tray.api";
 export { notificationsApi } from "./api/domains/notifications.api";
 export { accountsApi } from "./api/domains/accounts.api";
 export { themesApi } from "./api/domains/themes.api";
