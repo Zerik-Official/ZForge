@@ -9,7 +9,9 @@ import { t, useLocale } from "@/locales/i18n";
 import { api, accountsApi, errorCode } from "@/services/api";
 import type { AccountSummary } from "@/types/domains/accounts";
 import type { ServerEntry } from "@/types/domains/server";
+import { isLocalRealmlist, LOCAL_SERVER_ICON } from "@/utils/servers";
 import { AccountModal } from "../components/AccountModal";
+import { CharacterRoster } from "../components/CharacterRoster";
 
 /**
  * Game accounts settings tab: accounts grouped by server with the
@@ -108,10 +110,12 @@ export function AccountsTab() {
             <span className="flex items-center gap-2">
               {group.server?.logo ? (
                 <img src={group.server.logo} alt="" className="h-5 w-5 rounded object-contain" />
+              ) : isLocalRealmlist(group.realmlist) ? (
+                <img src={LOCAL_SERVER_ICON} alt="" className="h-5 w-5" />
               ) : (
                 <i className="fa-solid fa-server text-[12px] text-(--muted)" />
               )}
-              {group.server?.name ?? group.realmlist}
+              {group.server?.name ?? (isLocalRealmlist(group.realmlist) ? t("launcher.settings.accounts.localServer") : group.realmlist)}
             </span>
           }
           aside={<span className="text-[12px] text-(--muted-2)">{group.realmlist}</span>}
@@ -164,21 +168,7 @@ export function AccountsTab() {
               </div>
 
               {account.characters.length > 0 ? (
-                <div className="flex flex-wrap gap-1.5">
-                  {account.characters.map((character) => (
-                    <span
-                      key={`${character.realm}/${character.name}`}
-                      className="flex items-baseline gap-1.5 rounded-md bg-(--bg-elevated) px-2 py-1 text-[11.5px]"
-                      title={character.realm}
-                    >
-                      <span className="font-semibold text-(--text-soft)">{character.name}</span>
-                      <span className="text-(--muted)">
-                        {t("launcher.settings.accounts.level", { level: character.level })}{" "}
-                        {t(`presence.races.${character.race_id}`)} {t(`presence.classes.${character.class_id}`)}
-                      </span>
-                    </span>
-                  ))}
-                </div>
+                <CharacterRoster characters={account.characters} defaultCharacter={account.default_character} />
               ) : (
                 <span className="text-[12px] text-(--muted-2)">{t("launcher.settings.accounts.noCharacters")}</span>
               )}
