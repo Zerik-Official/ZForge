@@ -117,7 +117,14 @@
         "title": "General settings",
         "description": "Manage general launcher preferences.",
         "language": "Language",
-        "languageDescription": "Select the display language for the launcher."
+        "languageDescription": "Select the display language for the launcher.",
+        "behavior": "Behavior",
+        "dockReorder": "Reorder the games dock",
+        "dockReorderDescription": "Drag the games in the home screen dock to change their order.",
+        "closeAction": "When closing the launcher",
+        "closeActionDescription": "Keep it running in the notification area to bring it back from its icon, or quit it completely.",
+        "closeToTray": "Keep in the notification area",
+        "closeQuit": "Quit completely"
       },
       "appearance": {
         "title": "Appearance",
@@ -245,6 +252,52 @@
               "stateChanges": "State changes"
             }
           }
+        },
+        "preview": {
+          "title": "Preview",
+          "live": "Your character in the world",
+          "sample": "Sample character",
+          "empty": "The preview appears once the launcher has loaded the texts.",
+          "playing": "Playing",
+          "party": "({current} of {max})",
+          "gameName": "World of Warcraft",
+          "sampleName": "Valeera",
+          "places": {
+            "stormwind": "Stormwind City",
+            "tradeDistrict": "Trade District",
+            "shattrath": "Shattrath City",
+            "terraceOfLight": "Terrace of Light",
+            "dalaran": "Dalaran",
+            "violetCitadel": "The Violet Citadel"
+          }
+        },
+        "privacy": {
+          "title": "What Discord shows",
+          "location": "Location",
+          "show_name": "Character name",
+          "show_nameDescription": "Without it only the level is shown.",
+          "show_level": "Level",
+          "show_levelDescription": "The character level next to the name.",
+          "show_xp": "Experience",
+          "show_xpDescription": "Percentage to the next level, below the level cap.",
+          "show_class": "Race and class",
+          "show_classDescription": "Class icon in the corner of the image, with the race and class on hover.",
+          "show_status": "Status",
+          "show_statusDescription": "In combat, dead, ghost or away.",
+          "show_group": "Group",
+          "show_groupDescription": "Whether you are in a party or raid and its size.",
+          "show_elapsed": "Elapsed time",
+          "show_elapsedDescription": "How long the game has been running."
+        },
+        "location": {
+          "exact": "Exact",
+          "exactDescription": "Zone, sub-zone and instance difficulty.",
+          "zone": "Zone only",
+          "zoneDescription": "The zone without the sub-zone or the difficulty.",
+          "random": "Random zone",
+          "randomDescription": "A different zone of your expansion, picked again each time you change zone, so nobody can find you.",
+          "hidden": "Hidden",
+          "hiddenDescription": "No location or loading screen."
         }
       },
       "notifications": {
@@ -315,7 +368,10 @@
         "noCharacters": "Characters appear here after logging in with this account from the launcher.",
         "empty": "You have not added any account yet.",
         "confirmDelete": "Delete this account?",
-        "confirmDeleteDescription": "\"{name}\" and its saved characters will be removed, and its password deleted from the Windows Credential Manager."
+        "confirmDeleteDescription": "\"{name}\" and its saved characters will be removed, and its password deleted from the Windows Credential Manager.",
+        "localServer": "Local server",
+        "showAll": "Show all {count} characters",
+        "showFewer": "Show fewer"
       }
     },
     "addons": {
@@ -361,7 +417,6 @@
     }
   },
   "addGame": {
-    "basicInfo": "Basic information",
     "name": "Name",
     "namePlaceholder": "My WoW 3.3.5a",
     "expansion": "Expansion",
@@ -377,7 +432,10 @@
     "preview": "Preview",
     "previewGame": "Game name",
     "showOnHome": "Show on home screen",
-    "useCustom": "Use custom file"
+    "useCustom": "Use custom file",
+    "previewHint": "Home screen preview",
+    "onHome": "Shown on the home screen",
+    "notOnHome": "Only in the games list"
   },
   "language": {
     "selectTitle": "Choose your language",
@@ -609,7 +667,64 @@
       "8": "Mage",
       "9": "Warlock",
       "11": "Druid"
-    }
+    },
+    "zones": {
+      "elwynn-forest": "Elwynn Forest",
+      "westfall": "Westfall",
+      "duskwood": "Duskwood",
+      "redridge-mountains": "Redridge Mountains",
+      "dun-morogh": "Dun Morogh",
+      "loch-modan": "Loch Modan",
+      "wetlands": "Wetlands",
+      "arathi-highlands": "Arathi Highlands",
+      "the-hinterlands": "The Hinterlands",
+      "badlands": "Badlands",
+      "searing-gorge": "Searing Gorge",
+      "burning-steppes": "Burning Steppes",
+      "swamp-of-sorrows": "Swamp of Sorrows",
+      "blasted-lands": "Blasted Lands",
+      "tirisfal-glades": "Tirisfal Glades",
+      "silverpine-forest": "Silverpine Forest",
+      "western-plaguelands": "Western Plaguelands",
+      "eastern-plaguelands": "Eastern Plaguelands",
+      "durotar": "Durotar",
+      "mulgore": "Mulgore",
+      "ashenvale": "Ashenvale",
+      "darkshore": "Darkshore",
+      "stonetalon-mountains": "Stonetalon Mountains",
+      "desolace": "Desolace",
+      "feralas": "Feralas",
+      "thousand-needles": "Thousand Needles",
+      "tanaris": "Tanaris",
+      "un_goro-crater": "Un'Goro Crater",
+      "felwood": "Felwood",
+      "winterspring": "Winterspring",
+      "silithus": "Silithus",
+      "moonglade": "Moonglade",
+      "eversong-woods": "Eversong Woods",
+      "ghostlands": "Ghostlands",
+      "azuremyst-isle": "Azuremyst Isle",
+      "bloodmyst-isle": "Bloodmyst Isle",
+      "zangarmarsh": "Zangarmarsh",
+      "terokkar-forest": "Terokkar Forest",
+      "nagrand": "Nagrand",
+      "blade_s-edge-mountains": "Blade's Edge Mountains",
+      "netherstorm": "Netherstorm",
+      "shadowmoon-valley": "Shadowmoon Valley",
+      "borean-tundra": "Borean Tundra",
+      "howling-fjord": "Howling Fjord",
+      "dragonblight": "Dragonblight",
+      "grizzly-hills": "Grizzly Hills",
+      "zul-drak": "Zul'Drak",
+      "sholazar-basin": "Sholazar Basin",
+      "the-storm-peaks": "The Storm Peaks",
+      "icecrown": "Icecrown",
+      "crystalsong-forest": "Crystalsong Forest"
+    },
+    "nameOnly": "{name}",
+    "levelOnly": "Level {level}",
+    "levelXp": "Level {level} ({xp}% XP)",
+    "inWorld": "In the world"
   },
   "notifications": {
     "friendOnline": {
@@ -684,7 +799,13 @@
       "headless": "Start in the background",
       "headlessDescription": "The game window stays hidden until the character is in the world. Windowed mode is recommended.",
       "accountOnRealm": "{account} on {realm}",
-      "pickAccount": "Choose an account to log in"
+      "pickAccount": "Choose an account to log in",
+      "searchCharacter": "Search by name or class",
+      "noCharacterMatches": "No character matches"
     }
+  },
+  "tray": {
+    "open": "Open ZForge",
+    "quit": "Quit"
   }
 }
