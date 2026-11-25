@@ -79,6 +79,14 @@ const MIGRATIONS: &[&str] = &[
         headless   INTEGER NOT NULL
     );
     ",
+    // v3: the background videos moved from the bundle to the downloaded resources.
+    "
+    UPDATE games SET bg_video = 'resource:videos/wow-classic-portal.mp4' WHERE bg_video = '/assets/games/scenes/classic/wow_classic_portal.mp4';
+    UPDATE games SET bg_video = 'resource:videos/wow-bc-dark-portal.mp4' WHERE bg_video = '/assets/games/scenes/burning/wow_bc_dark_portal.mp4';
+    UPDATE games SET bg_video = 'resource:videos/wow-lich-king-sword.mp4' WHERE bg_video = '/assets/games/scenes/wotlk/wow_lich_king_sword.mp4';
+    UPDATE games SET bg_video = 'resource:videos/wow-shadowlands-shattered-sky.mp4' WHERE bg_video = '/assets/games/scenes/extra/wow_shadowlands_shattered_sky.mp4';
+    UPDATE games SET bg_video = 'resource:videos/wow-teldrassil-burning.mp4' WHERE bg_video = '/assets/games/scenes/extra/wow_teldrassil_burning.mp4';
+    ",
 ];
 
 /// Apply every migration newer than the database's current version.
