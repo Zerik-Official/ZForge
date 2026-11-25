@@ -11,6 +11,7 @@ use crate::error::AppResult;
 use crate::events;
 use crate::paths::AppPaths;
 use crate::services::game_settings::{ConfigConflict, SettingsContext};
+use crate::services::resources;
 use crate::services::sdk::installer::SdkInstaller;
 use crate::services::sdk::manager::SdkContext;
 use crate::services::sdk::release::ReleaseClient;
@@ -74,7 +75,37 @@ pub async fn run_boot<R: Runtime>(
 ) -> AppResult<BootReport> {
     boot.0
         .get_or_try_init(|| async {
-            emit_step(&app, "boot.checkingSdk", 12, &[]);
+            let resources_dir = paths.resources_dir();
+            if !resources::missing(&resources_dir).is_empty() {
+                emit_step(&app, "boot.checkingResources", 2, &[]);
+                let resources_app = app.clone();
+                let downloaded = resources::ensure(releases.http(), &resources_dir, move |progress| {
+                    let fraction = if progress.total > 0 {
+                        progress.downloaded as f64 / progress.total as f64
+                    } else {
+                        progress.files_done as f64 / progress.files_total.max(1) as f64
+                    };
+                    let percent = (2.0 + 38.0 * fraction.clamp(0.0, 1.0)).round() as u8;
+                    emit_step(
+                        &resources_app,
+                        "boot.downloadingResources",
+                        percent,
+                        &[
+                            ("done", progress.files_done.to_string()),
+                            ("total", progress.files_total.to_string()),
+                        ],
+                    );
+                    if let Err(error) = resources_app.emit(events::RESOURCES_PROGRESS, progress) {
+                        tracing::debug!(%error, "Could not emit resources progress");
+                    }
+                })
+                .await;
+                if let Err(error) = downloaded {
+                    tracing::warn!(%error, "Resources check failed");
+                }
+            }
+
+            emit_step(&app, "boot.checkingSdk", 42, &[]);
             let tools_dir = paths.tools_dir();
             let mut sdk_progress = progress_emitter(&app);
             let boot_app = app.clone();
@@ -89,7 +120,7 @@ pub async fn run_boot<R: Runtime>(
                     emit_step(
                         &boot_app,
                         "boot.downloadingSdk",
-                        55,
+                        48,
                         &[
                             ("version", progress.version.clone()),
                             ("percent", progress.percent.to_string()),
@@ -104,7 +135,7 @@ pub async fn run_boot<R: Runtime>(
             emit_capabilities_changed(&app);
 
             let games = database.list_games()?;
-            emit_step(&app, "boot.loadingGames", 22, &[("count", games.len().to_string())]);
+            emit_step(&app, "boot.loadingGames", 55, &[("count", games.len().to_string())]);
             let dynamic = system::dynamic_defaults(&app);
             let settings = SettingsContext {
                 database: &database,
@@ -114,7 +145,7 @@ pub async fn run_boot<R: Runtime>(
             let mut conflicts = Vec::new();
             let total = games.len().max(1);
             for (index, game) in games.iter().enumerate() {
-                let percent = u8::try_from(30 + 55 * (index + 1) / total).unwrap_or(85);
+                let percent = u8::try_from(58 + 30 * (index + 1) / total).unwrap_or(88);
                 emit_step(&app, "boot.scanningGame", percent, &[("name", game.name.clone())]);
                 match settings.reconcile(game) {
                     Ok(Some(conflict)) => conflicts.push(conflict),
