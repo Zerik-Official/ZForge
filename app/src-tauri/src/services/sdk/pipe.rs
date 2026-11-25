@@ -33,8 +33,9 @@ pub enum PipeAccess {
 ///
 /// # Errors
 ///
-/// Returns [`AppError::SdkUnavailable`] when the pipe cannot be opened before
-/// the timeout, or an I/O error for other failures.
+/// Returns [`AppError::SdkBusy`] when the pipe exists but every instance stayed busy until
+/// the timeout, [`AppError::SdkUnavailable`] when the pipe does not exist, or an I/O error
+/// for other failures.
 pub async fn open(name: &str, access: PipeAccess, timeout: Duration) -> AppResult<NamedPipeClient> {
     let deadline = Instant::now() + timeout;
     let mut options = ClientOptions::new();
@@ -47,7 +48,11 @@ pub async fn open(name: &str, access: PipeAccess, timeout: Duration) -> AppResul
                     || error.kind() == ErrorKind::NotFound =>
             {
                 if Instant::now() >= deadline {
-                    return Err(AppError::SdkUnavailable);
+                    return Err(if error.kind() == ErrorKind::NotFound {
+                        AppError::SdkUnavailable
+                    } else {
+                        AppError::SdkBusy
+                    });
                 }
                 sleep(RETRY_DELAY).await;
             }
