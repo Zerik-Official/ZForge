@@ -57,7 +57,8 @@
         "theme_invalid": "The theme is not valid. Check its theme.json and files.",
         "addon_name_invalid": "That name cannot be used as a folder name.",
         "addon_archive_empty": "The zip has no addon: no folder contains a .toc file with its own name.",
-        "addon_archive_too_large": "The zip is too large or has too many files."
+        "addon_archive_too_large": "The zip is too large or has too many files.",
+        "sdk_busy": "The game did not answer the SDK in time. Try again in a moment."
       }
     },
     "configConflict": {
@@ -97,7 +98,9 @@
         "loading": "Loading…",
         "login": "At the login screen",
         "character_select": "Choosing a character",
-        "in_world": "In the world"
+        "in_world": "In the world",
+        "realm_list": "Choosing a realm",
+        "character_create": "Creating a character"
       },
       "collapse": "Collapse sidebar",
       "expand": "Expand sidebar",
@@ -124,7 +127,16 @@
         "closeAction": "When closing the launcher",
         "closeActionDescription": "Keep it running in the notification area to bring it back from its icon, or quit it completely.",
         "closeToTray": "Keep in the notification area",
-        "closeQuit": "Quit completely"
+        "closeQuit": "Quit completely",
+        "launchBehavior": "When a game starts",
+        "launchBehaviorDescription": "Get the launcher out of the way while you play.",
+        "launchBehaviors": {
+          "keep": "Keep the window",
+          "minimize": "Minimize",
+          "tray": "Hide in the notification area"
+        },
+        "restoreAfterGame": "Bring the launcher back when the game closes",
+        "restoreAfterGameDescription": "Shows the window again after it was minimized or hidden for the game."
       },
       "appearance": {
         "title": "Appearance",
@@ -255,20 +267,37 @@
         },
         "preview": {
           "title": "Preview",
-          "live": "Your character in the world",
-          "sample": "Sample character",
+          "live": "Your game right now",
+          "sample": "Sample session",
           "empty": "The preview appears once the launcher has loaded the texts.",
           "playing": "Playing",
           "party": "({current} of {max})",
           "gameName": "World of Warcraft",
-          "sampleName": "Valeera",
           "places": {
             "stormwind": "Stormwind City",
             "tradeDistrict": "Trade District",
-            "shattrath": "Shattrath City",
-            "terraceOfLight": "Terrace of Light",
-            "dalaran": "Dalaran",
-            "violetCitadel": "The Violet Citadel"
+            "hallsOfStone": "Halls of Stone",
+            "icecrownCitadel": "Icecrown Citadel"
+          },
+          "previous": "Previous",
+          "next": "Next",
+          "play": "Play the sequence",
+          "pause": "Pause",
+          "scenes": {
+            "live": "Right now",
+            "launching": "Starting",
+            "login": "Login",
+            "realm_list": "Choosing a realm",
+            "character_select": "Character selection",
+            "character_create": "Creating a character",
+            "loading": "Loading screen",
+            "world": "In the world",
+            "party": "In a party",
+            "raid": "In a raid",
+            "dungeon": "Heroic dungeon",
+            "combat": "In combat",
+            "afk": "Away",
+            "dead": "Dead"
           }
         },
         "privacy": {
@@ -538,7 +567,10 @@
     "scanningGame": "Scanning {name} configuration…",
     "finishing": "Finishing…",
     "ready": "Ready.",
-    "failed": "Startup finished with errors."
+    "failed": "Startup finished with errors.",
+    "checkingResources": "Checking the launcher media…",
+    "downloadingResources": "Downloading the launcher media… {done} of {total}",
+    "speed": "{size} of {total} · {speed}"
   },
   "session": {
     "phase": {
@@ -548,7 +580,9 @@
       "loading": "Loading…",
       "login": "At login",
       "character_select": "Choosing character",
-      "in_world": "Playing"
+      "in_world": "Playing",
+      "realm_list": "Choosing a realm",
+      "character_create": "Creating a character"
     },
     "loginErrors": {
       "not_on_login_screen": "The game did not reach the login screen.",
@@ -618,6 +652,14 @@
       "hidden_start": {
         "label": "Start in the background",
         "description": "Keep the game window out of sight until the character is in the world."
+      },
+      "glue_screens": {
+        "label": "Realms and character creation",
+        "description": "Show when you are choosing a realm or creating a character, also in Rich Presence."
+      },
+      "player_portraits": {
+        "label": "Portraits in notifications",
+        "description": "Show the race portrait of who whispers, invites, summons, trades or duels you."
       }
     }
   },
@@ -724,7 +766,10 @@
     "nameOnly": "{name}",
     "levelOnly": "Level {level}",
     "levelXp": "Level {level} ({xp}% XP)",
-    "inWorld": "In the world"
+    "inWorld": "In the world",
+    "realmList": "Choosing a realm",
+    "characterCreate": "Creating a character",
+    "loadingProgress": "Loading · {percent}%"
   },
   "notifications": {
     "friendOnline": {
