@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
-import type { ReactElement } from "react";
+import { useEffect, useState, type ReactElement } from "react";
 import { TooltipSimple } from "@/components/ui/Tooltip";
 import { t } from "@/locales/i18n";
 import type { PresenceActivity } from "@/types/domains/presence";
 import { classIconSrc } from "@/utils/characters";
+import { localCopy } from "@/utils/presenceImages";
 
 /** Class ids by the class image keys of the Discord application. */
 const CLASS_IDS: Record<string, number> = {
@@ -29,18 +29,7 @@ interface PresencePreviewProps {
   gameName: string;
 }
 
-/** The image with its hover text, as Discord shows it, when there is one. */
-function withTooltip(text: string | null, node: ReactElement): ReactElement {
-  return text ? (
-    <TooltipSimple content={text} side="top">
-      {node}
-    </TooltipSimple>
-  ) : (
-    node
-  );
-}
-
-/** Elapsed time since `start` (Unix seconds) as `h:mm:ss` or `mm:ss`, refreshed every second. */
+/** Elapsed time since `start` (Unix seconds) as Discord writes it: `m:ss` or `h:mm:ss`. */
 function useElapsed(start: number | null): string | null {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -52,87 +41,107 @@ function useElapsed(start: number | null): string | null {
   const total = Math.max(0, Math.floor(now / 1000 - start));
   const hours = Math.floor(total / 3600);
   const minutes = Math.floor((total % 3600) / 60);
-  const seconds = total % 60;
-  const pad = (value: number) => value.toString().padStart(2, "0");
-  return hours > 0 ? `${hours}:${pad(minutes)}:${pad(seconds)}` : `${pad(minutes)}:${pad(seconds)}`;
+  const seconds = (total % 60).toString().padStart(2, "0");
+  return hours > 0 ? `${hours}:${minutes.toString().padStart(2, "0")}:${seconds}` : `${minutes}:${seconds}`;
+}
+
+/** The image with its hover text, as Discord shows it, when there is one. */
+function withTooltip(text: string | null, node: ReactElement): ReactElement {
+  return text ? (
+    <TooltipSimple content={text} side="top">
+      {node}
+    </TooltipSimple>
+  ) : (
+    node
+  );
+}
+
+/** Address of an image key or URL: the Discord application asset, the URL itself or a local copy. */
+function useImage(key: string | null, assets: Record<string, string>, fallback: string) {
+  const [failed, setFailed] = useState<string | null>(null);
+  if (!key) return { src: null, onError: undefined };
+  const isUrl = /^https?:\/\//i.test(key);
+  const remote = isUrl ? key : assets[key];
+  const local = (isUrl ? localCopy(key) : undefined) ?? fallback;
+  const src = remote && failed !== remote ? remote : local;
+  return { src: src || null, onError: remote ? () => setFailed(remote) : undefined };
 }
 
 /**
  * The Rich Presence activity drawn the way Discord shows it on a profile: large image with
- * the class icon in its corner, the game, both text lines, the group size and the time.
+ * the small image in its corner, the game, both text lines, the group size and the time.
  */
 export function PresencePreview({ activity, assets, fallbackImage, gameName }: PresencePreviewProps) {
   const elapsed = useElapsed(activity?.start ?? null);
+  const smallFallback = activity?.smallImage ? (classIconSrc(CLASS_IDS[activity.smallImage] ?? 0) ?? "") : "";
+  const large = useImage(activity?.largeImage ?? null, assets, fallbackImage);
+  const small = useImage(activity?.smallImage ?? null, assets, smallFallback);
 
   if (!activity) {
     return (
-      <div className="flex h-31 items-center justify-center rounded-(--radius) border border-dashed border-(--border-strong) text-[12.5px] text-(--muted)">
+      <div className="flex h-28 items-center justify-center rounded-lg bg-[#1e1f22] text-[12.5px] text-[#b5bac1]">
         {t("launcher.settings.richPresence.preview.empty")}
       </div>
     );
   }
 
-  const largeImage = assets[activity.largeImage] ?? fallbackImage;
-  const smallImage = activity.smallImage
-    ? (assets[activity.smallImage] ?? classIconSrc(CLASS_IDS[activity.smallImage] ?? 0))
+  const party = activity.party
+    ? t("launcher.settings.richPresence.preview.party", { current: activity.party[0], max: activity.party[1] })
     : null;
+  const stateText = [activity.state, party].filter(Boolean).join(" ");
 
   return (
-    <div className="rounded-(--radius) bg-[#232428] p-4 text-[#dbdee1] shadow-(--shadow-lg)">
-      <span className="text-[12px] font-semibold text-[#b5bac1]">{t("launcher.settings.richPresence.preview.playing")}</span>
-      <div className="mt-2.5 flex items-center gap-3.5">
-        <span className="relative shrink-0">
-          {withTooltip(
-            activity.largeText,
-            <img src={largeImage} alt="" draggable={false} className="h-20 w-20 rounded-lg bg-black/40 object-cover" />,
-          )}
-          {smallImage
+    <div className="rounded-lg bg-[#1e1f22] p-3 text-[#dbdee1] [font-family:'gg_sans','Noto_Sans',ui-sans-serif,system-ui,sans-serif]">
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-[12px] font-semibold text-[#f2f3f5]">{t("launcher.settings.richPresence.preview.playing")}</span>
+        <i className="fa-solid fa-ellipsis text-[13px] text-[#b5bac1]" />
+      </div>
+      <div className="flex items-center gap-3">
+        <span className="relative h-15 w-15 shrink-0">
+          {large.src
+            ? withTooltip(
+                activity.largeText,
+                <img
+                  src={large.src}
+                  onError={large.onError}
+                  alt=""
+                  draggable={false}
+                  className="h-15 w-15 rounded-lg bg-black/40 object-cover"
+                />,
+              )
+            : null}
+          {small.src
             ? withTooltip(
                 activity.smallText,
                 <img
-                  src={smallImage}
+                  src={small.src}
+                  onError={small.onError}
                   alt=""
                   draggable={false}
-                  className="absolute -right-1.5 -bottom-1.5 h-7 w-7 rounded-full border-[3px] border-[#232428] bg-[#232428] object-cover"
+                  className="absolute -right-1 -bottom-1 h-5.5 w-5.5 rounded-full border-2 border-[#1e1f22] bg-[#1e1f22] object-cover"
                 />,
               )
             : null}
         </span>
-        <div className="flex min-w-0 flex-col gap-0.5 text-[13px] leading-snug">
-          <span className="truncate font-semibold text-[#f2f3f5]">{gameName}</span>
+        <div className="flex min-w-0 flex-col text-[12px] leading-[1.35]">
+          <span className="truncate text-[14px] font-semibold text-[#f2f3f5]">{gameName}</span>
           {activity.details ? <span className="truncate">{activity.details}</span> : null}
-          {activity.state || activity.party ? (
-            <span className="truncate">
-              {activity.state}
-              {activity.party
-                ? ` ${t("launcher.settings.richPresence.preview.party", { current: activity.party[0], max: activity.party[1] })}`
-                : ""}
-            </span>
-          ) : null}
-          {elapsed ? (
-            <span className="flex items-center gap-1.5 text-[12px] font-medium text-[#23a55a]">
-              <i className="fa-solid fa-gamepad text-[10px]" />
-              {elapsed}
-            </span>
-          ) : null}
+          <span className="flex min-w-0 flex-wrap items-center gap-x-2.5">
+            {stateText ? (
+              <span className="flex min-w-0 items-center gap-1.5 truncate">
+                {activity.party ? <i className="fa-solid fa-user-group text-[9px] text-[#b5bac1]" /> : null}
+                <span className="truncate">{stateText}</span>
+              </span>
+            ) : null}
+            {elapsed ? (
+              <span className="flex items-center gap-1 font-semibold text-[#23a55a] tabular-nums">
+                <i className="fa-solid fa-gamepad text-[10px]" />
+                {elapsed}
+              </span>
+            ) : null}
+          </span>
         </div>
       </div>
-      {activity.largeText || activity.smallText ? (
-        <div className="mt-3 flex flex-col gap-1 border-t border-white/8 pt-2.5 text-[11.5px] text-[#b5bac1]">
-          {activity.largeText ? (
-            <span className="flex items-center gap-2 truncate">
-              <i className="fa-solid fa-image w-3 text-center text-[10px]" />
-              {activity.largeText}
-            </span>
-          ) : null}
-          {activity.smallText ? (
-            <span className="flex items-center gap-2 truncate">
-              <i className="fa-solid fa-circle-user w-3 text-center text-[10px]" />
-              {activity.smallText}
-            </span>
-          ) : null}
-        </div>
-      ) : null}
     </div>
   );
 }
