@@ -1,10 +1,13 @@
 //! Icon in the Windows notification area that keeps the launcher running when its
-//! window is closed with the "close to tray" preference on.
+//! window is closed with the "close to tray" preference on, and the window moves done
+//! when a game starts or closes.
 
 use serde::Deserialize;
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Manager, Runtime};
+
+use crate::domain::app_config::LaunchBehavior;
 
 /// Identifier of the launcher tray icon.
 const TRAY_ID: &str = "main";
@@ -51,7 +54,7 @@ pub fn update<R: Runtime>(
         .tooltip(app.package_info().name.clone())
         .on_menu_event(|app, event| match event.id().as_ref() {
             MENU_OPEN => show_main_window(app),
-            MENU_QUIT => app.exit(0),
+            MENU_QUIT => quit_launcher(app),
             _ => {}
         })
         .on_tray_icon_event(|tray, event| {
@@ -88,6 +91,47 @@ pub fn exists<R: Runtime>(app: &AppHandle<R>) -> bool {
 /// Whether this window is the launcher main window.
 pub fn is_main_window(label: &str) -> bool {
     label == MAIN_WINDOW
+}
+
+/// Apply the launch behavior when a game starts; returns whether the window was moved.
+pub fn on_game_started<R: Runtime>(app: &AppHandle<R>, behavior: LaunchBehavior) -> bool {
+    let Some(window) = app.get_webview_window(MAIN_WINDOW) else {
+        return false;
+    };
+    let result = match behavior {
+        LaunchBehavior::Keep => return false,
+        LaunchBehavior::Minimize => window.minimize(),
+        LaunchBehavior::Tray if exists(app) => {
+            set_visible(app, true);
+            window.hide()
+        }
+        LaunchBehavior::Tray => window.minimize(),
+    };
+    match result {
+        Ok(()) => true,
+        Err(error) => {
+            tracing::warn!(%error, "Could not move the launcher window aside");
+            false
+        }
+    }
+}
+
+/// Bring the window back after the game closed, keeping the tray icon only when
+/// "close to tray" is on.
+pub fn restore_after_game<R: Runtime>(app: &AppHandle<R>, keep_tray_icon: bool) {
+    show_main_window(app);
+    set_visible(app, keep_tray_icon);
+}
+
+/// Quit from the tray. The windows are destroyed first: exiting with a hidden WebView2
+/// window still alive makes Chromium log "Failed to unregister class Chrome_WidgetWin_0".
+fn quit_launcher<R: Runtime>(app: &AppHandle<R>) {
+    for window in app.webview_windows().into_values() {
+        if let Err(error) = window.destroy() {
+            tracing::debug!(%error, "Could not destroy a window before quitting");
+        }
+    }
+    app.exit(0);
 }
 
 /// Bring the main window back from the tray.
