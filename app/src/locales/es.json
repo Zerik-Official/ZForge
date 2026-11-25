@@ -57,7 +57,8 @@
         "theme_invalid": "El tema no es válido. Revisa su theme.json y sus archivos.",
         "addon_name_invalid": "Ese nombre no se puede usar como nombre de carpeta.",
         "addon_archive_empty": "El zip no tiene ningún addon: ninguna carpeta contiene un archivo .toc con su mismo nombre.",
-        "addon_archive_too_large": "El zip es demasiado grande o tiene demasiados archivos."
+        "addon_archive_too_large": "El zip es demasiado grande o tiene demasiados archivos.",
+        "sdk_busy": "El juego no respondió al SDK a tiempo. Inténtalo de nuevo en un momento."
       }
     },
     "configConflict": {
@@ -97,7 +98,9 @@
         "loading": "Cargando…",
         "login": "En el login",
         "character_select": "Eligiendo personaje",
-        "in_world": "En el mundo"
+        "in_world": "En el mundo",
+        "realm_list": "Eligiendo reino",
+        "character_create": "Creando personaje"
       },
       "collapse": "Contraer barra lateral",
       "expand": "Expandir barra lateral",
@@ -124,7 +127,16 @@
         "closeAction": "Al cerrar el launcher",
         "closeActionDescription": "Mantenerlo en el área de notificación para volver a abrirlo desde su icono, o cerrarlo por completo.",
         "closeToTray": "Minimizar a la bandeja",
-        "closeQuit": "Cerrar por completo"
+        "closeQuit": "Cerrar por completo",
+        "launchBehavior": "Al lanzar un juego",
+        "launchBehaviorDescription": "Aparta el launcher mientras juegas.",
+        "launchBehaviors": {
+          "keep": "Mantener la ventana",
+          "minimize": "Minimizar",
+          "tray": "Minimizar a la bandeja"
+        },
+        "restoreAfterGame": "Volver a mostrar el launcher al cerrar el juego",
+        "restoreAfterGameDescription": "Muestra la ventana de nuevo si se minimizó o se ocultó para el juego."
       },
       "appearance": {
         "title": "Apariencia",
@@ -255,20 +267,37 @@
         },
         "preview": {
           "title": "Vista previa",
-          "live": "Tu personaje en el mundo",
-          "sample": "Personaje de ejemplo",
+          "live": "Tu juego ahora mismo",
+          "sample": "Sesión de ejemplo",
           "empty": "La vista previa aparece cuando el launcher termina de cargar los textos.",
           "playing": "Jugando",
           "party": "({current} de {max})",
           "gameName": "World of Warcraft",
-          "sampleName": "Valeera",
           "places": {
             "stormwind": "Ciudad de Ventormenta",
             "tradeDistrict": "Distrito de Mercaderes",
-            "shattrath": "Ciudad de Shattrath",
-            "terraceOfLight": "Bancal de la Luz",
-            "dalaran": "Dalaran",
-            "violetCitadel": "La Ciudadela Violeta"
+            "hallsOfStone": "Cámaras de Piedra",
+            "icecrownCitadel": "Ciudadela de la Corona de Hielo"
+          },
+          "previous": "Anterior",
+          "next": "Siguiente",
+          "play": "Reproducir la secuencia",
+          "pause": "Pausar",
+          "scenes": {
+            "live": "Ahora mismo",
+            "launching": "Iniciando",
+            "login": "Login",
+            "realm_list": "Eligiendo reino",
+            "character_select": "Eligiendo personaje",
+            "character_create": "Creando personaje",
+            "loading": "Pantalla de carga",
+            "world": "En el mundo",
+            "party": "En grupo",
+            "raid": "En banda",
+            "dungeon": "Mazmorra heroica",
+            "combat": "En combate",
+            "afk": "Ausente",
+            "dead": "Muerto"
           }
         },
         "privacy": {
@@ -538,7 +567,10 @@
     "scanningGame": "Escaneando configuración de {name}…",
     "finishing": "Finalizando…",
     "ready": "Listo.",
-    "failed": "El arranque terminó con errores."
+    "failed": "El arranque terminó con errores.",
+    "checkingResources": "Comprobando los recursos del launcher…",
+    "downloadingResources": "Descargando los recursos del launcher… {done} de {total}",
+    "speed": "{size} de {total} · {speed}"
   },
   "session": {
     "phase": {
@@ -548,7 +580,9 @@
       "loading": "Cargando…",
       "login": "En el login",
       "character_select": "Eligiendo personaje",
-      "in_world": "Jugando"
+      "in_world": "Jugando",
+      "realm_list": "Eligiendo reino",
+      "character_create": "Creando personaje"
     },
     "loginErrors": {
       "not_on_login_screen": "El juego no llegó a la pantalla de inicio de sesión.",
@@ -618,6 +652,14 @@
       "hidden_start": {
         "label": "Iniciar en segundo plano",
         "description": "Mantiene la ventana del juego fuera de la vista hasta que el personaje está en el mundo."
+      },
+      "glue_screens": {
+        "label": "Reinos y creación de personajes",
+        "description": "Muestra cuando eliges reino o creas un personaje, también en Rich Presence."
+      },
+      "player_portraits": {
+        "label": "Retratos en las notificaciones",
+        "description": "Muestra el retrato de la raza de quien te susurra, invita, invoca, comercia o reta a duelo."
       }
     }
   },
@@ -724,7 +766,10 @@
     "nameOnly": "{name}",
     "levelOnly": "Nivel {level}",
     "levelXp": "Nivel {level} ({xp}% de XP)",
-    "inWorld": "En el mundo"
+    "inWorld": "En el mundo",
+    "realmList": "Eligiendo reino",
+    "characterCreate": "Creando un personaje",
+    "loadingProgress": "Cargando · {percent}%"
   },
   "notifications": {
     "friendOnline": {
