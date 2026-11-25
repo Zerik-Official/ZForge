@@ -14,7 +14,7 @@ use crate::services::launcher::{self, LaunchOptions};
 use crate::services::sdk::auth::{self, SessionToken};
 use crate::services::sdk::capabilities::Feature;
 use crate::services::sdk::installation;
-use crate::services::session::{GameSession, LaunchMode, SessionSnapshot};
+use crate::services::session::{GameSession, LaunchMode, ServerTarget, SessionSnapshot};
 use crate::services::settings_schema::SchemaRegistry;
 use crate::services::system;
 use crate::storage::Database;
@@ -71,6 +71,24 @@ pub async fn launch_game<R: Runtime>(
         _ => String::new(),
     };
     let auto_login = accounts::auto_login(&database, &choice, &fallback_realm)?;
+    let configured_realmlist = match settings.get("realm_list") {
+        Some(SettingValue::Text(realmlist)) => realmlist.clone(),
+        _ => String::new(),
+    };
+    let server = match &auto_login {
+        Some(login) => ServerTarget {
+            realmlist: if login.realmlist.trim().is_empty() {
+                configured_realmlist
+            } else {
+                login.realmlist.clone()
+            },
+            realm: login.realm.clone(),
+        },
+        None => ServerTarget {
+            realmlist: configured_realmlist,
+            realm: fallback_realm,
+        },
+    };
     let mut options = LaunchOptions::from_settings(&settings);
     let sdk = installation::find_valid(&paths.tools_dir())?;
     let required: Vec<Feature> = [
@@ -98,7 +116,7 @@ pub async fn launch_game<R: Runtime>(
             } else {
                 None
             };
-            session.begin(&game, LaunchMode::Sdk)?;
+            session.begin(&game, LaunchMode::Sdk, server)?;
             if let Err(error) = session
                 .set_token(token.clone())
                 .and_then(|()| session.set_auto_login(auto_login))
@@ -124,7 +142,7 @@ pub async fn launch_game<R: Runtime>(
             });
         }
         None => {
-            session.begin(&game, LaunchMode::Direct)?;
+            session.begin(&game, LaunchMode::Direct, server)?;
             let child = match launcher::launch_direct(&game, &options) {
                 Ok(child) => child,
                 Err(error) => {
