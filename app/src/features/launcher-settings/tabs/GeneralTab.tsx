@@ -7,7 +7,7 @@ import { Select, type SelectOption } from "@/components/ui/Select";
 import { t, useLocale, setLocale, type Locale, SUPPORTED_LOCALES } from "@/locales/i18n";
 import { api, errorCode } from "@/services/api";
 import { useGamesStore } from "@/store/gamesStore";
-import type { AppConfig } from "@/types/domains/settings";
+import type { AppConfig, LaunchBehavior } from "@/types/domains/settings";
 
 /**
  * General launcher preferences tab.
@@ -77,6 +77,12 @@ export function GeneralTab() {
     { value: "quit", label: t("launcher.settings.general.closeQuit") },
   ];
 
+  const launchOptions: SelectOption[] = (["keep", "minimize", "tray"] as LaunchBehavior[]).map((behavior) => ({
+    value: behavior,
+    label: t(`launcher.settings.general.launchBehaviors.${behavior}`),
+  }));
+  const launchBehavior = config?.launch_behavior ?? "keep";
+
   const languageOptions: SelectOption[] = [
     {
       value: "en",
@@ -136,6 +142,27 @@ export function GeneralTab() {
               />
             </div>
           }
+        />
+        <SettingsRow
+          label={t("launcher.settings.general.launchBehavior")}
+          description={t("launcher.settings.general.launchBehaviorDescription")}
+          control={
+            <div className="w-56">
+              <Select
+                value={launchBehavior}
+                options={launchOptions}
+                onChange={(value) => void savePreference({ launch_behavior: value as LaunchBehavior })}
+              />
+            </div>
+          }
+        />
+        <Checkbox
+          layout="row"
+          checked={config?.restore_after_game ?? true}
+          onChange={(value) => void savePreference({ restore_after_game: value })}
+          label={t("launcher.settings.general.restoreAfterGame")}
+          description={t("launcher.settings.general.restoreAfterGameDescription")}
+          disabled={launchBehavior === "keep"}
         />
       </SettingsGroup>
 
