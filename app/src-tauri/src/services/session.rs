@@ -6,11 +6,12 @@
 
 use std::process::Child;
 use std::sync::Mutex;
+use std::sync::atomic::{AtomicU8, Ordering};
 use std::time::Duration;
 
 use serde::Serialize;
 use tokio::sync::{broadcast, watch};
-use tokio::time::{Instant, MissedTickBehavior, interval};
+use tokio::time::{Instant, MissedTickBehavior, interval, sleep_until};
 
 use crate::domain::game::Game;
 use crate::domain::{UnixMillis, now_millis};
@@ -30,6 +31,15 @@ const TICK: Duration = Duration::from_secs(1);
 
 /// State refresh period while in the world, in ticks.
 const REFRESH_EVERY_TICKS: u32 = 5;
+
+/// Wait before reading the world again while the client has not placed the character yet.
+const AREA_RETRY_DELAY: Duration = Duration::from_millis(400);
+
+/// Reads that may wait for the zone after a loading screen before it is shown without one.
+const AREA_RETRIES: u8 = 8;
+
+/// Wait after a game event before reading the state, so a burst is read once.
+const EVENT_REFRESH_DELAY: Duration = Duration::from_millis(250);
 
 /// A loading screen without progress for this long was abandoned. SDK
 /// versions before 1.2 report a loading on logout and drop it after 5 s
@@ -110,10 +120,24 @@ pub enum SessionPhase {
     Loading,
     /// Login screen.
     Login,
+    /// Choosing a realm (SDK 2.4+).
+    RealmList,
     /// Character selection.
     CharacterSelect,
+    /// Creating a character (SDK 2.4+).
+    CharacterCreate,
     /// Playing in the world.
     InWorld,
+}
+
+impl SessionPhase {
+    /// Whether this is a screen before the world: login, realms or characters.
+    pub fn is_glue(self) -> bool {
+        matches!(
+            self,
+            Self::Login | Self::RealmList | Self::CharacterSelect | Self::CharacterCreate
+        )
+    }
 }
 
 /// How the game was started.
@@ -250,6 +274,15 @@ pub struct LoadingScreenInfo {
     pub background: Option<LoadingBackground>,
 }
 
+/// Server and realm a game is started for, as far as the launcher knows them.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct ServerTarget {
+    /// Realm list host; empty when unknown.
+    pub realmlist: String,
+    /// Realm name; empty when unknown.
+    pub realm: String,
+}
+
 /// Log in, pick a realm and enter the world once the login screen appears.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AutoLogin {
@@ -291,7 +324,9 @@ fn login_error_code(error: &AppError) -> String {
                 "unknown_error".to_owned()
             }
         }
-        AppError::SdkUnavailable | AppError::SdkUnauthorized => "sdk_unavailable".to_owned(),
+        AppError::SdkUnavailable | AppError::SdkBusy | AppError::SdkUnauthorized => {
+            "sdk_unavailable".to_owned()
+        }
         _ => "unknown_error".to_owned(),
     }
 }
@@ -328,6 +363,13 @@ pub struct SessionSnapshot {
     pub expansion: Option<String>,
     /// Session start time.
     pub started_at: Option<UnixMillis>,
+    /// Realm list host the game connects to, when known.
+    pub realmlist: Option<String>,
+    /// Realm the launcher logs in to, when known.
+    pub realm: Option<String>,
+    /// Phase to return to when the realm list closes.
+    #[serde(skip)]
+    pub before_realm_list: Option<SessionPhase>,
     /// Loading progress (0–1) while a loading screen is shown.
     pub loading_progress: Option<f64>,
     /// Loading screen details while it is shown.
@@ -369,19 +411,26 @@ impl SessionSnapshot {
     /// Show a screen reported by the SDK, ending any loading screen.
     fn enter_screen(&mut self, screen: ClientScreen) -> FollowUp {
         match screen {
-            ClientScreen::Login | ClientScreen::CharacterSelect => {
-                self.phase = if screen == ClientScreen::Login {
-                    SessionPhase::Login
-                } else {
-                    SessionPhase::CharacterSelect
+            ClientScreen::Login
+            | ClientScreen::CharacterSelect
+            | ClientScreen::CharacterCreate
+            | ClientScreen::RealmWizard => {
+                self.phase = match screen {
+                    ClientScreen::Login => SessionPhase::Login,
+                    ClientScreen::CharacterCreate => SessionPhase::CharacterCreate,
+                    ClientScreen::RealmWizard => SessionPhase::RealmList,
+                    _ => SessionPhase::CharacterSelect,
                 };
+                self.before_realm_list = None;
                 self.clear_loading();
                 self.clear_world();
                 FollowUp::None
             }
             ClientScreen::World => {
+                // The loading screen stays until the first read that knows the zone, so
+                // Rich Presence keeps its image instead of falling back to the continent.
                 self.phase = SessionPhase::InWorld;
-                self.clear_loading();
+                self.loading_progress = None;
                 FollowUp::Refresh
             }
             ClientScreen::Unknown => FollowUp::None,
@@ -396,15 +445,34 @@ impl SessionSnapshot {
     /// `loading.cancelled`.
     fn apply(&mut self, event: &SdkEvent) -> FollowUp {
         match event {
-            SdkEvent::ScreenChanged(ClientScreen::Login | ClientScreen::CharacterSelect)
-                if self.phase == SessionPhase::Loading =>
-            {
+            SdkEvent::ScreenChanged(
+                ClientScreen::Login
+                | ClientScreen::CharacterSelect
+                | ClientScreen::CharacterCreate
+                | ClientScreen::RealmWizard,
+            ) if self.phase == SessionPhase::Loading => FollowUp::None,
+            SdkEvent::ScreenChanged(screen) => self.enter_screen(*screen),
+            SdkEvent::RealmList(true) if self.phase.is_glue() => {
+                if self.phase != SessionPhase::RealmList {
+                    self.before_realm_list = Some(self.phase);
+                }
+                self.phase = SessionPhase::RealmList;
                 FollowUp::None
             }
-            SdkEvent::ScreenChanged(screen) => self.enter_screen(*screen),
+            SdkEvent::RealmList(false) if self.phase == SessionPhase::RealmList => {
+                match self.before_realm_list.take() {
+                    Some(previous) => {
+                        self.phase = previous;
+                        FollowUp::SyncScreen
+                    }
+                    None => FollowUp::SyncScreen,
+                }
+            }
+            SdkEvent::RealmList(_) => FollowUp::None,
             SdkEvent::LoadingFinished => self.enter_screen(ClientScreen::World),
             SdkEvent::LoadingStarted { map_id, background } => {
                 self.phase = SessionPhase::Loading;
+                self.location = None;
                 self.loading_progress = Some(0.0);
                 self.loading_screen = Some(LoadingScreenInfo {
                     map_id: *map_id,
@@ -482,6 +550,8 @@ pub struct GameSession {
     characters: broadcast::Sender<CharactersSeen>,
     game_pid: Mutex<Option<u32>>,
     auto_login: Mutex<Option<AutoLogin>>,
+    /// Reads made since the last loading screen without the zone of the character.
+    area_waits: AtomicU8,
 }
 
 impl Default for GameSession {
@@ -500,6 +570,7 @@ impl GameSession {
             characters: broadcast::Sender::new(SOCIAL_EVENT_BUFFER),
             game_pid: Mutex::new(None),
             auto_login: Mutex::new(None),
+            area_waits: AtomicU8::new(0),
         }
     }
 
@@ -574,7 +645,7 @@ impl GameSession {
     /// # Errors
     ///
     /// Returns [`AppError::GameAlreadyRunning`] when a session is active.
-    pub fn begin(&self, game: &Game, mode: LaunchMode) -> AppResult<()> {
+    pub fn begin(&self, game: &Game, mode: LaunchMode, server: ServerTarget) -> AppResult<()> {
         let mut started = false;
         self.state.send_if_modified(|snapshot| {
             if snapshot.is_active() {
@@ -586,6 +657,8 @@ impl GameSession {
                 game_id: Some(game.id.clone()),
                 expansion: Some(game.expansion.clone()),
                 started_at: Some(now_millis()),
+                realmlist: Some(server.realmlist.clone()).filter(|value| !value.trim().is_empty()),
+                realm: Some(server.realm.clone()).filter(|value| !value.trim().is_empty()),
                 ..SessionSnapshot::default()
             };
             started = true;
@@ -676,6 +749,7 @@ impl GameSession {
         let mut login_done = false;
 
         let mut stalls = StallDetector::default();
+        let mut refresh_at: Option<Instant> = None;
         let mut ticks: u32 = 0;
         let mut tick = interval(TICK);
         tick.set_missed_tick_behavior(MissedTickBehavior::Skip);
@@ -687,9 +761,18 @@ impl GameSession {
                     }
                     Ok(Some(event)) => {
                         stalls.observe(&event, Instant::now());
+                        if matches!(event, SdkEvent::LoadingStarted { .. }) {
+                            self.area_waits.store(0, Ordering::Relaxed);
+                        }
                         let mut follow_up = FollowUp::None;
                         self.update(|snapshot| follow_up = snapshot.apply(&event));
-                        self.follow_up(&api, follow_up).await;
+                        if follow_up == FollowUp::Refresh && matches!(event, SdkEvent::Game { .. }) {
+                            // Game events come in bursts (three zone events per zone change):
+                            // read the state once after the burst.
+                            refresh_at.get_or_insert_with(|| Instant::now() + EVENT_REFRESH_DELAY);
+                        } else if self.follow_up(&api, follow_up).await {
+                            refresh_at.get_or_insert_with(|| Instant::now() + AREA_RETRY_DELAY);
+                        }
                     }
                     Ok(None) => break,
                     Err(error) => {
@@ -698,14 +781,24 @@ impl GameSession {
                     }
                 },
                 () = &mut login_task, if !login_done => login_done = true,
+                () = sleep_until(refresh_at.unwrap_or_else(Instant::now)), if refresh_at.is_some() => {
+                    refresh_at = None;
+                    let in_world = self.state.borrow().phase == SessionPhase::InWorld;
+                    if in_world && self.refresh(&api).await {
+                        refresh_at = Some(Instant::now() + AREA_RETRY_DELAY);
+                    }
+                }
                 _ = tick.tick() => {
                     ticks = ticks.wrapping_add(1);
                     let phase = self.state.borrow().phase;
                     if phase == SessionPhase::Loading && stalls.take_stalled(Instant::now()) {
                         tracing::debug!("Loading never progressed; reading the current screen");
                         self.sync_screen(&api).await;
-                    } else if phase == SessionPhase::InWorld && ticks.is_multiple_of(REFRESH_EVERY_TICKS) {
-                        self.refresh(&api).await;
+                    } else if phase == SessionPhase::InWorld
+                        && ticks.is_multiple_of(REFRESH_EVERY_TICKS)
+                        && self.refresh(&api).await
+                    {
+                        refresh_at.get_or_insert_with(|| Instant::now() + AREA_RETRY_DELAY);
                     }
                 }
             }
@@ -788,9 +881,10 @@ impl GameSession {
         )
     }
 
-    async fn follow_up(&self, api: &SdkApi<'_>, follow_up: FollowUp) {
+    /// Run a follow-up; returns whether the zone is still unknown and must be read again.
+    async fn follow_up(&self, api: &SdkApi<'_>, follow_up: FollowUp) -> bool {
         match follow_up {
-            FollowUp::None => {}
+            FollowUp::None => false,
             FollowUp::Refresh => self.refresh(api).await,
             FollowUp::SyncScreen => self.sync_screen(api).await,
         }
@@ -798,26 +892,35 @@ impl GameSession {
 
     /// Set the phase from the screen the SDK reports now, ending any loading
     /// screen (the event stream only reports changes).
-    async fn sync_screen(&self, api: &SdkApi<'_>) {
+    async fn sync_screen(&self, api: &SdkApi<'_>) -> bool {
         match api.screen().await {
             Ok(screen) => {
                 let screen = ClientScreen::from_name(&screen.screen, screen.in_world);
                 let mut follow_up = FollowUp::None;
                 self.update(|snapshot| follow_up = snapshot.enter_screen(screen));
-                if follow_up == FollowUp::Refresh {
-                    self.refresh(api).await;
-                }
+                follow_up == FollowUp::Refresh && self.refresh(api).await
             }
-            Err(error) => tracing::debug!(%error, "Could not read the current screen"),
+            Err(error) => {
+                tracing::debug!(%error, "Could not read the current screen");
+                false
+            }
         }
     }
 
     /// Read the character, location and flags from the SDK.
-    async fn refresh(&self, api: &SdkApi<'_>) {
-        let player = api.player_state().await;
-        let world = api.world_state().await;
-        let unit = api.unit("player").await;
-        let group = api.group().await;
+    ///
+    /// Right after a loading screen the client may still report no zone, or the map it
+    /// left. The location is then left unknown and `true` is returned so the caller reads
+    /// again shortly, up to [`AREA_RETRIES`] times.
+    async fn refresh(&self, api: &SdkApi<'_>) -> bool {
+        let mut zone_pending = false;
+        let may_wait = self.area_waits.load(Ordering::Relaxed) < AREA_RETRIES;
+        let (player, world, unit, group) = tokio::join!(
+            api.player_state(),
+            api.world_state(),
+            api.unit("player"),
+            api.group()
+        );
         self.update(|snapshot| {
             if snapshot.phase != SessionPhase::InWorld {
                 return;
@@ -852,10 +955,21 @@ impl GameSession {
                     max_xp: player.max_xp,
                 });
             }
-            if let Ok(world) = &world
+            let destination = snapshot
+                .loading_screen
+                .as_ref()
+                .and_then(|screen| screen.map_id)
+                .and_then(|map_id| u32::try_from(map_id).ok());
+            let placed = world.as_ref().is_ok_and(|world| {
+                world.map_area_id != 0 && destination.is_none_or(|map_id| map_id == world.map_id)
+            });
+            if may_wait && !placed && snapshot.location.is_none() {
+                zone_pending = true;
+            } else if let Ok(world) = &world
                 && world.valid
                 && !world.loading
             {
+                snapshot.clear_loading();
                 let instance = world.instance.as_ref().and_then(|instance| {
                     let kind = InstanceKind::from_sdk(&instance.kind)?;
                     instance.in_instance.then(|| InstanceInfo {
@@ -890,12 +1004,27 @@ impl GameSession {
                 });
             }
         });
-        for error in [player.err(), world.err(), unit.err(), group.err()]
-            .into_iter()
-            .flatten()
-        {
-            tracing::debug!(%error, "SDK state refresh incomplete");
+        let failed: Vec<String> = [
+            ("player.getState", player.err()),
+            ("world.getState", world.err()),
+            ("unit.get", unit.err()),
+            ("group.get", group.err()),
+        ]
+        .into_iter()
+        .filter_map(|(method, error)| error.map(|error| format!("{method}: {error}")))
+        .collect();
+        if !failed.is_empty() {
+            tracing::debug!(
+                failed = %failed.join("; "),
+                "SDK state refresh incomplete; the previous values are kept"
+            );
         }
+        if zone_pending {
+            self.area_waits.fetch_add(1, Ordering::Relaxed);
+        } else {
+            self.area_waits.store(0, Ordering::Relaxed);
+        }
+        zone_pending
     }
 }
 
@@ -960,7 +1089,10 @@ mod tests {
         );
         assert_eq!(snapshot.phase, SessionPhase::InWorld);
         assert_eq!(snapshot.loading_progress, None);
-        assert_eq!(snapshot.loading_screen, None);
+        assert!(
+            snapshot.loading_screen.is_some(),
+            "the loading screen stays until the zone is read"
+        );
 
         let zone_change = SdkEvent::Game {
             name: "ZONE_CHANGED".to_owned(),
@@ -1025,10 +1157,10 @@ mod tests {
     fn allows_one_session_at_a_time() -> AppResult<()> {
         let session = GameSession::new();
         let changes = session.subscribe();
-        session.begin(&game(), LaunchMode::Direct)?;
+        session.begin(&game(), LaunchMode::Direct, ServerTarget::default())?;
         assert!(changes.has_changed().unwrap_or(false));
         assert!(matches!(
-            session.begin(&game(), LaunchMode::Sdk),
+            session.begin(&game(), LaunchMode::Sdk, ServerTarget::default()),
             Err(AppError::GameAlreadyRunning)
         ));
 
@@ -1036,7 +1168,7 @@ mod tests {
         let snapshot = session.snapshot();
         assert!(!snapshot.is_active());
         assert_eq!(snapshot.last_error.as_deref(), Some("sdk_unavailable"));
-        session.begin(&game(), LaunchMode::Sdk)?;
+        session.begin(&game(), LaunchMode::Sdk, ServerTarget::default())?;
         assert_eq!(session.snapshot().mode, Some(LaunchMode::Sdk));
         Ok(())
     }
