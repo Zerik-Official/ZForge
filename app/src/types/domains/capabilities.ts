@@ -1,5 +1,12 @@
 /** A launcher feature that needs the SDK. */
-export type Feature = "live_session" | "notifications" | "whisper_reply" | "accounts" | "hidden_start";
+export type Feature =
+  | "live_session"
+  | "notifications"
+  | "whisper_reply"
+  | "accounts"
+  | "hidden_start"
+  | "glue_screens"
+  | "player_portraits";
 
 /** Why a feature cannot be used. */
 export type Unavailable = "sdk_missing" | "sdk_corrupted" | "sdk_outdated";
