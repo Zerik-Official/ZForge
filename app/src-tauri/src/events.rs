@@ -14,3 +14,6 @@ pub const CAPABILITIES_CHANGED: &str = "capabilities://changed";
 
 /// Saved accounts or their characters changed; no payload.
 pub const ACCOUNTS_CHANGED: &str = "accounts://changed";
+
+/// Progress of the media downloaded from the assets CDN during the boot.
+pub const RESOURCES_PROGRESS: &str = "resources://progress";
