@@ -60,7 +60,7 @@
   stroke: currentColor;
   stroke-linecap: round;
   opacity: 0;
-  animation: rune-ray var(--ray-duration, 3s) ease-in-out infinite;
+  animation: rune-ray calc(var(--ray-duration, 3s) * var(--ray-pace, 1)) ease-in-out infinite;
   animation-delay: var(--ray-delay, 0s);
 }
 
@@ -101,5 +101,22 @@
   .rune-ray {
     animation: none;
     opacity: 0.3;
+  }
+}
+
+/* Glint running along the download bar of the splash screen; its speed follows the download. */
+.download-glint {
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--primary) 85%, white), transparent);
+  animation: download-glint 1.6s linear infinite;
+}
+
+@keyframes download-glint {
+  from { left: -2.5rem; }
+  to { left: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .download-glint {
+    animation: none;
   }
 }
