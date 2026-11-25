@@ -39,6 +39,12 @@ pub(crate) async fn pick_file<R: Runtime>(
         .transpose()
 }
 
+/// Folder holding the media downloaded from the assets CDN.
+#[tauri::command]
+pub async fn get_resources_dir(paths: State<'_, AppPaths>) -> AppResult<PathBuf> {
+    Ok(paths.resources_dir())
+}
+
 /// Bundled media grouped for the add/edit game modal.
 #[tauri::command]
 pub async fn list_assets() -> AppResult<AssetManifest> {
