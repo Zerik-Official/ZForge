@@ -19,8 +19,8 @@ export interface CoreRealm {
 
 /** Default realm names of TrinityCore and AzerothCore. */
 export const CORE_REALMS: CoreRealm[] = [
-  { realm: "Trinity", core: "TrinityCore", logo: "/assets/cores/trinitycore.png" },
-  { realm: "AzerothCore", core: "AzerothCore", logo: "/assets/cores/azerothcore.png" },
+  { realm: "Trinity", core: "TrinityCore", logo: "resource:cores/trinity-core.png" },
+  { realm: "AzerothCore", core: "AzerothCore", logo: "resource:cores/azeroth-core.png" },
 ];
 
 /**
