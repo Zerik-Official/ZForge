@@ -18,6 +18,8 @@ const FEATURES: { feature: Feature; icon: string }[] = [
   { feature: "whisper_reply", icon: "fa-reply" },
   { feature: "accounts", icon: "fa-user-shield" },
   { feature: "hidden_start", icon: "fa-eye-slash" },
+  { feature: "glue_screens", icon: "fa-earth-europe" },
+  { feature: "player_portraits", icon: "fa-id-badge" },
 ];
 
 function cleanVersion(version: string | null | undefined): string {
