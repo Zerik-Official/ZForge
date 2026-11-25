@@ -3,8 +3,10 @@
 use serde::Serialize;
 
 use crate::domain::app_config::{LocationPrivacy, PresenceOptions};
+use crate::services::presence::loading_screens;
 use crate::services::presence::strings::{PresenceStrings, RandomZone, fill};
 use crate::services::presence::zones::zone_image;
+use crate::services::servers;
 use crate::services::session::{
     CharacterInfo, GroupKind, InstanceInfo, InstanceKind, SessionPhase, SessionSnapshot,
 };
@@ -220,6 +222,20 @@ fn in_world(
                 activity.large_text = text(zone.name.clone());
             }
         }
+        (LocationPrivacy::Exact | LocationPrivacy::Zone, None) => {
+            // Just out of a loading screen the zone is not known yet: keep its image.
+            if let Some(screen) = &snapshot.loading_screen {
+                if let Some(url) =
+                    loading_screens::image_url(screen.background.as_ref(), screen.map_id)
+                {
+                    activity.large_image = url;
+                }
+                activity.large_text = screen
+                    .background
+                    .as_ref()
+                    .and_then(|background| text(background.name.clone()));
+            }
+        }
         _ => {}
     }
 
@@ -249,6 +265,44 @@ fn in_world(
     activity
 }
 
+/// A screen before the world, with the logo of the server or its core in the small image.
+fn glue(details: &str, snapshot: &SessionSnapshot, options: &PresenceOptions) -> PresenceActivity {
+    let mut activity = simple(details, snapshot, DEFAULT_IMAGE, options);
+    let badge = snapshot.realmlist.as_deref().and_then(|realmlist| {
+        servers::badge(realmlist, snapshot.realm.as_deref().unwrap_or_default())
+    });
+    if let Some(badge) = badge {
+        activity.small_image = Some(badge.image);
+        activity.small_text = text(badge.name);
+    }
+    activity
+}
+
+/// A loading screen: its background as the large image and the progress as the state.
+fn loading(
+    snapshot: &SessionSnapshot,
+    strings: &PresenceStrings,
+    options: &PresenceOptions,
+) -> PresenceActivity {
+    let reveals = matches!(
+        options.location,
+        LocationPrivacy::Exact | LocationPrivacy::Zone
+    );
+    let screen = snapshot.loading_screen.as_ref().filter(|_| reveals);
+    let image = screen
+        .and_then(|screen| loading_screens::image_url(screen.background.as_ref(), screen.map_id))
+        .unwrap_or_else(|| DEFAULT_IMAGE.to_owned());
+    let mut activity = simple(&strings.loading, snapshot, &image, options);
+    activity.large_text = screen
+        .and_then(|screen| screen.background.as_ref())
+        .and_then(|background| text(background.name.clone()));
+    activity.state = snapshot.loading_progress.and_then(|progress| {
+        let percent = (progress.clamp(0.0, 1.0) * 100.0).round().to_string();
+        text(fill(&strings.loading_progress, &[("percent", &percent)]))
+    });
+    activity
+}
+
 /// The activity to show for a session, or `None` to clear the presence.
 ///
 /// `decoy` is the zone shown instead of the real one when the location is random.
@@ -262,29 +316,11 @@ pub fn build(
         SessionPhase::Idle => return None,
         SessionPhase::Launching => simple(&strings.launching, snapshot, DEFAULT_IMAGE, options),
         SessionPhase::Running => simple(&strings.running, snapshot, DEFAULT_IMAGE, options),
-        SessionPhase::Login => simple(&strings.login, snapshot, DEFAULT_IMAGE, options),
-        SessionPhase::CharacterSelect => {
-            simple(&strings.character_select, snapshot, DEFAULT_IMAGE, options)
-        }
-        SessionPhase::Loading => {
-            let reveals = matches!(
-                options.location,
-                LocationPrivacy::Exact | LocationPrivacy::Zone
-            );
-            let map_id = snapshot
-                .loading_screen
-                .as_ref()
-                .and_then(|screen| screen.map_id)
-                .filter(|_| reveals);
-            let mut activity = simple(&strings.loading, snapshot, continent_image(map_id), options);
-            activity.large_text = snapshot
-                .loading_screen
-                .as_ref()
-                .filter(|_| reveals)
-                .and_then(|screen| screen.background.as_ref())
-                .and_then(|background| text(background.name.clone()));
-            activity
-        }
+        SessionPhase::Login => glue(&strings.login, snapshot, options),
+        SessionPhase::RealmList => glue(&strings.realm_list, snapshot, options),
+        SessionPhase::CharacterSelect => glue(&strings.character_select, snapshot, options),
+        SessionPhase::CharacterCreate => glue(&strings.character_create, snapshot, options),
+        SessionPhase::Loading => loading(snapshot, strings, options),
         SessionPhase::InWorld => in_world(snapshot, strings, options, decoy),
     })
 }
