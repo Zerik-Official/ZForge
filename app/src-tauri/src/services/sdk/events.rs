@@ -21,17 +21,23 @@ pub enum ClientScreen {
     Login,
     /// Character selection.
     CharacterSelect,
+    /// Character creation (SDK 2.4+).
+    CharacterCreate,
+    /// Realm selection wizard shown before the first character (SDK 2.4+).
+    RealmWizard,
     /// In the world.
     World,
 }
 
 impl ClientScreen {
-    fn from_code(code: i64) -> Self {
+    /// Screen from the code of `client.screenChanged`, or its name for screens without a code.
+    fn from_code(code: i64, name: &str) -> Self {
         match code {
             1 => Self::Login,
             2 => Self::CharacterSelect,
             3 => Self::World,
-            _ => Self::Unknown,
+            4 => Self::CharacterCreate,
+            _ => Self::from_name(name, false),
         }
     }
 
@@ -43,6 +49,8 @@ impl ClientScreen {
         match name {
             "login" => Self::Login,
             "charselect" => Self::CharacterSelect,
+            "charcreate" => Self::CharacterCreate,
+            "realmwizard" => Self::RealmWizard,
             _ => Self::Unknown,
         }
     }
@@ -68,6 +76,8 @@ pub struct LoadingBackground {
 pub enum SdkEvent {
     /// The glue screen changed.
     ScreenChanged(ClientScreen),
+    /// The realm list window opened (`true`) or closed (`false`) (SDK 2.4+).
+    RealmList(bool),
     /// A loading screen appeared; map and background are only sent by SDK 1.2+.
     LoadingStarted {
         /// Map being loaded.
@@ -114,7 +124,13 @@ impl SdkEvent {
                     .get("new")
                     .and_then(serde_json::Value::as_i64)
                     .unwrap_or(0),
+                wire.args
+                    .get("newName")
+                    .and_then(serde_json::Value::as_str)
+                    .unwrap_or_default(),
             )),
+            "client.realmListOpened" => Self::RealmList(true),
+            "client.realmListClosed" => Self::RealmList(false),
             "loading.startup" => Self::LoadingStarted {
                 map_id: wire.args.get("mapId").and_then(serde_json::Value::as_i64),
                 background: wire
@@ -242,6 +258,22 @@ mod tests {
             SdkEvent::parse(r#"{"event":"ZONE_CHANGED","args":[]}"#),
             Some(SdkEvent::Game { name, .. }) if name == "ZONE_CHANGED"
         ));
+        assert_eq!(
+            SdkEvent::parse(
+                r#"{"event":"client.screenChanged","args":{"old":2,"new":4,"newName":"charcreate"}}"#
+            ),
+            Some(SdkEvent::ScreenChanged(ClientScreen::CharacterCreate))
+        );
+        assert_eq!(
+            SdkEvent::parse(
+                r#"{"event":"client.screenChanged","args":{"old":1,"new":0,"newName":"realmwizard"}}"#
+            ),
+            Some(SdkEvent::ScreenChanged(ClientScreen::RealmWizard))
+        );
+        assert_eq!(
+            SdkEvent::parse(r#"{"event":"client.realmListOpened","args":{"realms":[]}}"#),
+            Some(SdkEvent::RealmList(true))
+        );
         assert_eq!(SdkEvent::parse("not json"), None);
     }
 
