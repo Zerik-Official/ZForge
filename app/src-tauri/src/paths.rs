@@ -71,4 +71,9 @@ impl AppPaths {
     pub fn themes_dir(&self) -> PathBuf {
         self.root.join("themes")
     }
+
+    /// Directory holding the media downloaded from the assets CDN.
+    pub fn resources_dir(&self) -> PathBuf {
+        self.root.join("resources")
+    }
 }
