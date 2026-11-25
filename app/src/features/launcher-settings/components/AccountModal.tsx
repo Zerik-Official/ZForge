@@ -6,6 +6,7 @@ import { t } from "@/locales/i18n";
 import { accountsApi, errorCode } from "@/services/api";
 import type { AccountDraft, AccountSummary } from "@/types/domains/accounts";
 import type { ServerEntry } from "@/types/domains/server";
+import { toDisplaySrc } from "@/utils/asset";
 import { portraitSrc } from "@/utils/characters";
 import { CORE_REALMS, isLocalRealmlist, LOCAL_SERVER_ICON } from "@/utils/servers";
 
@@ -67,7 +68,7 @@ export function AccountModal({ open, account, servers, onClose, onSaved }: Accou
       (realm) => !cores.some((entry) => entry.realm === realm),
     );
     return [
-      ...cores.map((entry) => ({ value: entry.realm, label: entry.realm, sublabel: entry.core, thumb: entry.logo })),
+      ...cores.map((entry) => ({ value: entry.realm, label: entry.realm, sublabel: entry.core, thumb: toDisplaySrc(entry.logo) })),
       ...plain.map((realm) => ({ value: realm, label: realm })),
     ];
   }, [servers, form.realmlist, account]);
