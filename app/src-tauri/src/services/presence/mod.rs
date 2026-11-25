@@ -7,6 +7,7 @@
 
 pub mod activity;
 pub mod assets;
+pub mod loading_screens;
 pub mod strings;
 pub mod zones;
 
