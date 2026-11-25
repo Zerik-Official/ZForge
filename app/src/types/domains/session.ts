@@ -4,7 +4,9 @@ export type SessionPhase =
   | "running"
   | "loading"
   | "login"
+  | "realm_list"
   | "character_select"
+  | "character_create"
   | "in_world";
 
 export type LaunchMode = "direct" | "sdk";
@@ -75,6 +77,10 @@ export interface SessionSnapshot {
   game_id: string | null;
   expansion: string | null;
   started_at: number | null;
+  /** Realm list host the game connects to, when known. */
+  realmlist: string | null;
+  /** Realm the launcher logs in to, when known. */
+  realm: string | null;
   loading_progress: number | null;
   loading_screen: LoadingScreenInfo | null;
   character: CharacterInfo | null;

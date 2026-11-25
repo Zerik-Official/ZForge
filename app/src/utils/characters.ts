@@ -1,10 +1,10 @@
 /**
  * @module utils/characters
- * Portraits, class icons and class colors of game characters. The images ship with the
- * launcher under `public/assets/characters`, so they show without an internet connection.
+ * Portraits, class icons and class colors of game characters. The images are downloaded on
+ * boot into `resources/characters`, so they show without an internet connection.
  */
 
-const BASE = "/assets/characters";
+import { resourceSrc } from "@/utils/asset";
 
 /** Race ids that have a portrait. */
 const PORTRAIT_RACES = new Set([1, 2, 3, 4, 5, 6, 7, 8, 10, 11]);
@@ -27,7 +27,9 @@ const CLASS_COLORS: Record<number, string> = {
 };
 
 /** Portrait shown when the race or gender of a character is unknown. */
-export const UNKNOWN_PORTRAIT = `${BASE}/portraits/unknown.webp`;
+export function unknownPortrait(): string {
+  return resourceSrc("characters/portraits/unknown.webp");
+}
 
 /**
  * Address of the portrait of a race and gender.
@@ -36,8 +38,8 @@ export const UNKNOWN_PORTRAIT = `${BASE}/portraits/unknown.webp`;
  * @returns The address, or the unknown portrait when there is none for them.
  */
 export function portraitSrc(race: number, gender: number): string {
-  if (!PORTRAIT_RACES.has(race) || (gender !== 0 && gender !== 1)) return UNKNOWN_PORTRAIT;
-  return `${BASE}/portraits/${race}-${gender}.webp`;
+  if (!PORTRAIT_RACES.has(race) || (gender !== 0 && gender !== 1)) return unknownPortrait();
+  return resourceSrc(`characters/portraits/${race}-${gender}.webp`);
 }
 
 /**
@@ -46,7 +48,7 @@ export function portraitSrc(race: number, gender: number): string {
  * @returns The address, or null for an unknown class.
  */
 export function classIconSrc(classId: number): string | null {
-  return CLASS_IDS.has(classId) ? `${BASE}/classes/${classId}.jpg` : null;
+  return CLASS_IDS.has(classId) ? resourceSrc(`characters/classes/${classId}.jpg`) : null;
 }
 
 /**

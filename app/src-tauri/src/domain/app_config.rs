@@ -40,8 +40,25 @@ pub struct AppConfig {
     pub dock_reorder: bool,
     /// Whether closing the window keeps the launcher running in the notification area.
     pub close_to_tray: bool,
+    /// What the launcher window does when a game starts.
+    pub launch_behavior: LaunchBehavior,
+    /// Whether the window comes back when the game closes, after hiding or minimizing it.
+    pub restore_after_game: bool,
     /// What Discord Rich Presence reveals about the game.
     pub presence: PresenceOptions,
+}
+
+/// What the launcher window does when a game starts.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum LaunchBehavior {
+    /// Stay as it is.
+    #[default]
+    Keep,
+    /// Minimize to the taskbar.
+    Minimize,
+    /// Hide in the notification area.
+    Tray,
 }
 
 /// How much of the character location Rich Presence shows.
@@ -169,6 +186,10 @@ pub struct AppConfigPatch {
     pub dock_reorder: Option<bool>,
     /// New close-to-tray flag.
     pub close_to_tray: Option<bool>,
+    /// New behavior when a game starts.
+    pub launch_behavior: Option<LaunchBehavior>,
+    /// New restore-after-game flag.
+    pub restore_after_game: Option<bool>,
     /// New Rich Presence options.
     pub presence: Option<PresenceOptions>,
 }
@@ -224,6 +245,12 @@ impl AppConfig {
         if let Some(close_to_tray) = patch.close_to_tray {
             self.close_to_tray = close_to_tray;
         }
+        if let Some(launch_behavior) = patch.launch_behavior {
+            self.launch_behavior = launch_behavior;
+        }
+        if let Some(restore_after_game) = patch.restore_after_game {
+            self.restore_after_game = restore_after_game;
+        }
         if let Some(presence) = patch.presence {
             self.presence = presence;
         }
@@ -251,6 +278,8 @@ impl Default for AppConfig {
             notifications: NotificationSettings::default(),
             dock_reorder: true,
             close_to_tray: false,
+            launch_behavior: LaunchBehavior::Keep,
+            restore_after_game: true,
             presence: PresenceOptions::default(),
         }
     }

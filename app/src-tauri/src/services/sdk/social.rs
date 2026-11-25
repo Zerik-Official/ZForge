@@ -3,6 +3,18 @@
 use serde::Deserialize;
 use serde::de::DeserializeOwned;
 
+/// Race, gender and class of the other player of a social event (SDK 2.4+).
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct SocialPlayer {
+    /// Race id.
+    pub race: u32,
+    /// `0` male, `1` female.
+    pub gender: u32,
+    /// Class id.
+    pub class_id: u32,
+}
+
 /// A friend from `friends.online` or `friends.offline`.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
@@ -15,6 +27,8 @@ pub struct FriendEvent {
     pub class_name: String,
     /// Localized zone name.
     pub area_name: String,
+    /// Race, gender and class of the other player (SDK 2.4+).
+    pub player: Option<SocialPlayer>,
 }
 
 /// A whisper from `chat.whisperReceived`.
@@ -29,6 +43,8 @@ pub struct WhisperEvent {
     pub battle_net: bool,
     /// Chat line id, used to answer this whisper with `chat.reply`; `0` when unknown.
     pub line_id: u64,
+    /// Race, gender and class of the other player (SDK 2.4+).
+    pub player: Option<SocialPlayer>,
 }
 
 /// A group invitation from `group.inviteReceived`.
@@ -37,6 +53,8 @@ pub struct WhisperEvent {
 pub struct InviteEvent {
     /// Player who sent the invitation.
     pub inviter_name: String,
+    /// Race, gender and class of the other player (SDK 2.4+).
+    pub player: Option<SocialPlayer>,
 }
 
 /// A summon from `summon.requested`.
@@ -47,6 +65,8 @@ pub struct SummonEvent {
     pub summoner_name: String,
     /// Localized destination.
     pub area_name: String,
+    /// Race, gender and class of the other player (SDK 2.4+).
+    pub player: Option<SocialPlayer>,
 }
 
 /// Dungeon of a Dungeon Finder proposal.
@@ -75,6 +95,8 @@ pub struct ProposalEvent {
 pub struct TradeRequestEvent {
     /// Player who wants to trade.
     pub requester_name: String,
+    /// Race, gender and class of the other player (SDK 2.4+).
+    pub player: Option<SocialPlayer>,
 }
 
 /// An open trade window from `trade.opened`.
@@ -83,6 +105,8 @@ pub struct TradeRequestEvent {
 pub struct TradeOpenedEvent {
     /// Player on the other side of the trade.
     pub trader_name: String,
+    /// Race, gender and class of the other player (SDK 2.4+).
+    pub player: Option<SocialPlayer>,
 }
 
 /// A duel request from `duel.requested`.
@@ -91,6 +115,8 @@ pub struct TradeOpenedEvent {
 pub struct DuelEvent {
     /// Player who sent the challenge.
     pub challenger_name: String,
+    /// Race, gender and class of the other player (SDK 2.4+).
+    pub player: Option<SocialPlayer>,
 }
 
 /// A battleground or arena invitation from `battlefield.ready`.
@@ -151,6 +177,20 @@ fn payload<T: DeserializeOwned + Default>(args: &serde_json::Value) -> T {
 }
 
 impl SocialEvent {
+    /// Race, gender and class of the other player of the event, when the SDK sent them.
+    pub fn player(&self) -> Option<SocialPlayer> {
+        match self {
+            Self::FriendOnline(friend) | Self::FriendOffline(friend) => friend.player,
+            Self::Whisper(whisper) => whisper.player,
+            Self::InviteReceived(invite) => invite.player,
+            Self::SummonRequested(summon) => summon.player,
+            Self::TradeRequested(request) => request.player,
+            Self::TradeOpened(trade) => trade.player,
+            Self::DuelRequested(duel) => duel.player,
+            _ => None,
+        }
+    }
+
     /// Decode an SDK event by name; `None` when it is not a social event.
     pub fn parse(name: &str, args: &serde_json::Value) -> Option<Self> {
         Some(match name {
@@ -186,6 +226,7 @@ mod tests {
         assert_eq!(
             SocialEvent::parse("friends.online", &friend),
             Some(SocialEvent::FriendOnline(FriendEvent {
+                player: None,
                 name: "Jaina".to_owned(),
                 level: 80,
                 class_name: "Mage".to_owned(),
@@ -199,6 +240,7 @@ mod tests {
         assert_eq!(
             SocialEvent::parse("chat.whisperReceived", &whisper),
             Some(SocialEvent::Whisper(WhisperEvent {
+                player: None,
                 author: "Thrall".to_owned(),
                 text: "hola".to_owned(),
                 battle_net: false,

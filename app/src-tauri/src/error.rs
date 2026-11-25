@@ -86,6 +86,10 @@ pub enum AppError {
     #[error("the SDK is not reachable")]
     SdkUnavailable,
 
+    /// The SDK pipe exists but stayed busy: the game did not take the request in time.
+    #[error("the SDK pipe stayed busy; the game did not take the request in time")]
+    SdkBusy,
+
     /// The SDK answered a JSON-RPC request with an error.
     #[error("SDK call {method} failed: {message}")]
     SdkRpc {
@@ -163,6 +167,7 @@ impl AppError {
             Self::Opener(_) => "opener",
             Self::GameExecutableMissing(_) => "game_executable_missing",
             Self::SdkUnavailable => "sdk_unavailable",
+            Self::SdkBusy => "sdk_busy",
             Self::SdkRpc { .. } => "sdk_rpc",
             Self::SdkInjectionFailed(_) => "sdk_injection_failed",
             Self::GameAlreadyRunning => "game_already_running",

@@ -22,16 +22,22 @@ pub enum Feature {
     Accounts,
     /// Starting the game in the background until the character is in the world.
     HiddenStart,
+    /// Realm list and character creation in the session and Rich Presence.
+    GlueScreens,
+    /// Portraits of the other player in notifications.
+    PlayerPortraits,
 }
 
 impl Feature {
     /// Every feature, in the order the launcher shows them.
-    pub const ALL: [Self; 5] = [
+    pub const ALL: [Self; 7] = [
         Self::LiveSession,
         Self::Notifications,
         Self::WhisperReply,
         Self::Accounts,
         Self::HiddenStart,
+        Self::GlueScreens,
+        Self::PlayerPortraits,
     ];
 
     /// First SDK version that supports the feature.
@@ -41,6 +47,7 @@ impl Feature {
             Self::Notifications => "2.1.0",
             Self::WhisperReply => "2.2.0",
             Self::Accounts | Self::HiddenStart => "2.2.1",
+            Self::GlueScreens | Self::PlayerPortraits => "2.4.0",
         }
     }
 

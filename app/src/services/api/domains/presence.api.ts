@@ -1,5 +1,5 @@
 import { call } from "../bridge";
-import type { PresenceActivity, PresenceSample, PresenceStrings } from "@/types/domains/presence";
+import type { PresenceActivity, PresenceSample, PresenceScene, PresenceStrings } from "@/types/domains/presence";
 import type { PresenceOptions } from "@/types/domains/settings";
 
 export class PresenceApi {
@@ -8,9 +8,9 @@ export class PresenceApi {
     return call("set_presence_strings", { strings });
   }
 
-  /** What Discord would show with these options; the sample is used while no character is in the world. */
-  previewPresence(options: PresenceOptions, sample: PresenceSample): Promise<PresenceActivity | null> {
-    return call("preview_presence", { options, sample });
+  /** What Discord would show with these options for a scene of the sample session or the running game. */
+  previewPresence(options: PresenceOptions, scene: PresenceScene, sample: PresenceSample): Promise<PresenceActivity | null> {
+    return call("preview_presence", { options, scene, sample });
   }
 
   /** Addresses of the images uploaded to the Discord application, by asset key. */

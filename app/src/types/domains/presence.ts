@@ -3,8 +3,11 @@ export interface PresenceStrings {
   launching: string;
   running: string;
   login: string;
+  realmList: string;
   characterSelect: string;
+  characterCreate: string;
   loading: string;
+  loadingProgress: string;
   character: string;
   characterXp: string;
   nameOnly: string;
@@ -54,7 +57,24 @@ export interface PresenceActivity {
   party: [number, number] | null;
 }
 
-/** Character and place the preview shows while no character is in the world. */
+/** Moment of a session the settings preview shows; `live` is the running game. */
+export type PresenceScene =
+  | "live"
+  | "launching"
+  | "login"
+  | "realm_list"
+  | "character_select"
+  | "character_create"
+  | "loading"
+  | "world"
+  | "party"
+  | "raid"
+  | "afk"
+  | "combat"
+  | "dead"
+  | "dungeon";
+
+/** Character and places the preview shows; the names are translated. */
 export interface PresenceSample {
   name: string;
   level: number;
@@ -64,5 +84,9 @@ export interface PresenceSample {
   subZone: string;
   mapId: number;
   mapAreaId: number | null;
+  dungeon: string;
+  raid: string;
   expansion: string | null;
+  realmlist: string | null;
+  realm: string | null;
 }

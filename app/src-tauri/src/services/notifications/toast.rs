@@ -42,6 +42,8 @@ pub struct Toast {
     pub input_placeholder: Option<String>,
     /// Buttons, in order.
     pub buttons: Vec<ToastButton>,
+    /// Image shown in a circle beside the text, as a `file:///` address.
+    pub image: Option<String>,
 }
 
 /// What the user did on a toast.
@@ -91,6 +93,13 @@ impl Toast {
         let visual = document.CreateElement(&HSTRING::from("visual"))?;
         let binding = document.CreateElement(&HSTRING::from("binding"))?;
         set(&binding, "template", "ToastGeneric")?;
+        if let Some(source) = &self.image {
+            let image = document.CreateElement(&HSTRING::from("image"))?;
+            set(&image, "placement", "appLogoOverride")?;
+            set(&image, "hint-crop", "circle")?;
+            set(&image, "src", source)?;
+            binding.AppendChild(&image)?;
+        }
         for line in [&self.title, &self.body] {
             let text = document.CreateElement(&HSTRING::from("text"))?;
             text.SetInnerText(&HSTRING::from(line.as_str()))?;
@@ -151,6 +160,7 @@ mod tests {
     #[test]
     fn builds_the_toast_xml() -> windows::core::Result<()> {
         let toast = Toast {
+            image: Some("file:///C:/portrait.png".to_owned()),
             title: "Thrall <whispers>".to_owned(),
             body: "a & b".to_owned(),
             reminder: false,

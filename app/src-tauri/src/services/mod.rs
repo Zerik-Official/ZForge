@@ -10,6 +10,7 @@ pub mod games;
 pub mod launcher;
 pub mod notifications;
 pub mod presence;
+pub mod resources;
 pub mod sdk;
 pub mod servers;
 pub mod session;

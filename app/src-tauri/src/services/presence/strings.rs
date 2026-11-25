@@ -18,10 +18,16 @@ pub struct PresenceStrings {
     pub running: String,
     /// Login screen.
     pub login: String,
+    /// Choosing a realm.
+    pub realm_list: String,
     /// Character selection.
     pub character_select: String,
+    /// Character creation.
+    pub character_create: String,
     /// Loading screen.
     pub loading: String,
+    /// Loading progress; placeholder `{percent}`.
+    pub loading_progress: String,
     /// Character line; placeholders `{name}`, `{level}`.
     pub character: String,
     /// Character line below the level cap; placeholders `{name}`, `{level}`, `{xp}`.

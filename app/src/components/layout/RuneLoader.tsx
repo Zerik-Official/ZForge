@@ -46,6 +46,8 @@ interface RuneLoaderProps {
   percent: number;
   /** Draws the central sigil once the boot is complete. */
   complete: boolean;
+  /** How busy a download is, from 0 to 1; the sparks around the ring flare faster with it. */
+  activity?: number;
 }
 
 /**
@@ -55,11 +57,12 @@ interface RuneLoaderProps {
  * and two sparks each move at their own speed and direction. When the boot completes the
  * central sigil is drawn. Every stroke uses the theme's primary color.
  */
-export function RuneLoader({ percent, complete }: RuneLoaderProps) {
+export function RuneLoader({ percent, complete, activity = 0 }: RuneLoaderProps) {
   const clamped = Math.max(0, Math.min(100, percent));
+  const pace: RuneStyle = { "--ray-pace": (1 - 0.7 * Math.max(0, Math.min(1, activity))).toFixed(2) };
 
   return (
-    <svg className="rune-loader" viewBox="0 0 400 400" aria-hidden="true">
+    <svg className="rune-loader" viewBox="0 0 400 400" aria-hidden="true" style={pace}>
       <defs>
         <filter id="rune-glow" x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur stdDeviation="2.4" result="blur" />

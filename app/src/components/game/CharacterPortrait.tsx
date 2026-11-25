@@ -1,4 +1,4 @@
-import { classColor, classIconSrc, portraitSrc, UNKNOWN_PORTRAIT } from "@/utils/characters";
+import { classColor, classIconSrc, portraitSrc, unknownPortrait } from "@/utils/characters";
 
 /**
  * Properties for the {@link CharacterPortrait} component.
@@ -31,7 +31,8 @@ export function CharacterPortrait({ race, gender, classId, size = 40, label = ""
         height={size}
         draggable={false}
         onError={(event) => {
-          if (!event.currentTarget.src.endsWith(UNKNOWN_PORTRAIT)) event.currentTarget.src = UNKNOWN_PORTRAIT;
+          const fallback = unknownPortrait();
+          if (fallback && event.currentTarget.src !== fallback) event.currentTarget.src = fallback;
         }}
         className="h-full w-full rounded-[7px] object-cover select-none"
         style={{ boxShadow: `0 0 0 1px ${color ?? "var(--border-strong)"}` }}

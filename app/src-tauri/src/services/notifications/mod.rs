@@ -18,9 +18,11 @@ use tokio::sync::broadcast::error::RecvError;
 use tokio::sync::{mpsc, watch};
 
 use crate::domain::app_config::NotificationSettings;
+use crate::paths::AppPaths;
 use crate::services::notifications::strings::{NotificationStrings, NotificationText};
 use crate::services::notifications::toast::{Activation, POWERSHELL_APP_ID, Toast, ToastButton};
 use crate::services::presence::strings::fill;
+use crate::services::resources;
 use crate::services::sdk::api::GameAction;
 use crate::services::sdk::social::SocialEvent;
 use crate::services::session::GameSession;
@@ -46,6 +48,8 @@ pub struct ToastSpec {
     pub buttons: Vec<(String, GameAction)>,
     /// Text box to answer a whisper.
     pub reply: Option<WhisperReply>,
+    /// Portrait of the other player, as a `file:///` address.
+    pub image: Option<String>,
 }
 
 /// A text box and button that answer a whisper with `chat.reply`.
@@ -143,9 +147,19 @@ impl NotificationService {
                 let Some(strings) = current.strings.as_ref() else {
                     continue;
                 };
-                let Some(spec) = build(&event, &current.settings, strings) else {
+                let Some(mut spec) = build(&event, &current.settings, strings) else {
                     continue;
                 };
+                if let (Some(player), Some(paths)) = (event.player(), app.try_state::<AppPaths>()) {
+                    spec.image = resources::toast_portrait(
+                        &paths.resources_dir(),
+                        player.race,
+                        player.gender,
+                    )
+                    .map(|path| {
+                        format!("file:///{}", path.display().to_string().replace('\\', "/"))
+                    });
+                }
                 if current.settings.only_when_unfocused && game_in_foreground(&app) {
                     continue;
                 }
@@ -212,6 +226,7 @@ fn show(spec: &ToastSpec, app_id: &str, answers: mpsc::UnboundedSender<ToastAnsw
         reminder: !spec.buttons.is_empty(),
         input_placeholder: spec.reply.as_ref().map(|reply| reply.placeholder.clone()),
         buttons,
+        image: spec.image.clone(),
     };
     let line_id = spec.reply.as_ref().and_then(|reply| reply.line_id);
     let result = toast.show(app_id, move |activation| {
@@ -425,6 +440,7 @@ pub fn build(
             .filter(|(label, _)| !label.trim().is_empty())
             .collect(),
         reply,
+        image: None,
     })
 }
 
@@ -467,6 +483,7 @@ mod tests {
     #[test]
     fn builds_toasts_with_answers() {
         let invite = SocialEvent::InviteReceived(InviteEvent {
+            player: None,
             inviter_name: "Jaina".to_owned(),
         });
         assert_eq!(
@@ -479,10 +496,12 @@ mod tests {
                     ("Rechazar".to_owned(), GameAction::DeclineInvite),
                 ],
                 reply: None,
+                image: None,
             })
         );
 
         let friend = SocialEvent::FriendOnline(FriendEvent {
+            player: None,
             name: "Thrall".to_owned(),
             level: 80,
             class_name: "Chamán".to_owned(),
@@ -502,6 +521,7 @@ mod tests {
     #[test]
     fn respects_settings_and_arena_rules() {
         let whisper = SocialEvent::Whisper(WhisperEvent {
+            player: None,
             author: "Arthas".to_owned(),
             text: "x".repeat(300),
             battle_net: false,
@@ -541,6 +561,7 @@ mod tests {
         );
 
         let trade = SocialEvent::TradeOpened(TradeOpenedEvent {
+            player: None,
             trader_name: "Thrall".to_owned(),
         });
         let toast = build(&trade, &enabled(), &strings());
@@ -556,6 +577,7 @@ mod tests {
     #[test]
     fn whispers_offer_a_reply_box() {
         let whisper = SocialEvent::Whisper(WhisperEvent {
+            player: None,
             author: "Jaina".to_owned(),
             text: "¿Vienes?".to_owned(),
             battle_net: false,

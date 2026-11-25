@@ -5,13 +5,14 @@ import { SettingsGroup, SettingsPage, SettingsRow } from "@/components/layout/Se
 import { SdkRequirement } from "@/components/sdk/SdkRequirement";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Select, type SelectOption } from "@/components/ui/Select";
+import { TooltipSimple } from "@/components/ui/Tooltip";
 import { useAccounts } from "@/hooks/useAccounts";
 import { featureStatus, useCapabilities } from "@/hooks/useCapabilities";
 import { useSession } from "@/hooks/useSession";
 import { t, useLocale } from "@/locales/i18n";
 import { api, errorCode, presenceApi } from "@/services/api";
 import { useGamesStore } from "@/store/gamesStore";
-import type { PresenceActivity, PresenceSample } from "@/types/domains/presence";
+import type { PresenceActivity, PresenceSample, PresenceScene } from "@/types/domains/presence";
 import type { SdkStatus } from "@/types/domains/sdk";
 import type { LocationPrivacy, PresenceOptions } from "@/types/domains/settings";
 import { toDisplaySrc } from "@/utils/asset";
@@ -33,12 +34,28 @@ const LOCATIONS: LocationPrivacy[] = ["exact", "zone", "random", "hidden"];
 /** Switches of what the presence reveals, in the order they are listed. */
 const SWITCHES = ["show_name", "show_level", "show_xp", "show_class", "show_status", "show_group", "show_elapsed"] as const;
 
-/** Place the preview uses for each expansion while no character is in the world. */
-const SAMPLE_PLACES: Record<string, { mapId: number; mapAreaId: number; zone: string; subZone: string }> = {
-  classic: { mapId: 0, mapAreaId: 302, zone: "stormwind", subZone: "tradeDistrict" },
-  tbc: { mapId: 530, mapAreaId: 481, zone: "shattrath", subZone: "terraceOfLight" },
-  wotlk: { mapId: 571, mapAreaId: 505, zone: "dalaran", subZone: "violetCitadel" },
-};
+/** Moments of a session the preview plays in order. */
+const SCENES: PresenceScene[] = [
+  "launching",
+  "login",
+  "realm_list",
+  "character_select",
+  "character_create",
+  "loading",
+  "world",
+  "party",
+  "raid",
+  "dungeon",
+  "combat",
+  "afk",
+  "dead",
+];
+
+const sceneButton =
+  "flex h-7 w-7 items-center justify-center rounded-md border border-(--border-strong) bg-(--bg-elevated) text-[10px] text-(--muted) transition-colors hover:bg-(--bg-hover) hover:text-(--text) cursor-pointer";
+
+/** Time each scene stays on screen while the sequence plays. */
+const SCENE_MS = 3500;
 
 /**
  * Rich Presence settings tab. The SDK itself is managed in the SDK tab; this
@@ -56,6 +73,26 @@ export function RichPresenceTab() {
   const [options, setOptions] = useState<PresenceOptions>(storedOptions ?? DEFAULT_OPTIONS);
   const [preview, setPreview] = useState<PresenceActivity | null>(null);
   const [assets, setAssets] = useState<Record<string, string>>({});
+  const live = session !== null && session.phase !== "idle";
+  const [pickedScene, setPickedScene] = useState<PresenceScene | null>(null);
+  const [playing, setPlaying] = useState(true);
+  const scene: PresenceScene = pickedScene ?? (live ? "live" : "launching");
+  const scenes: PresenceScene[] = live ? ["live", ...SCENES] : SCENES;
+
+  useEffect(() => {
+    if (!playing || scene === "live") return;
+    const timer = window.setTimeout(() => {
+      const index = SCENES.indexOf(scene);
+      setPickedScene(SCENES[(index + 1) % SCENES.length]);
+    }, SCENE_MS);
+    return () => window.clearTimeout(timer);
+  }, [playing, scene]);
+
+  function step(offset: number) {
+    const index = scenes.indexOf(scene);
+    setPickedScene(scenes[(index + offset + scenes.length) % scenes.length]);
+    setPlaying(false);
+  }
   const [status, setStatus] = useState<SdkStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -77,28 +114,32 @@ export function RichPresenceTab() {
   const game = games.find((entry) => entry.id === activeId) ?? games[0] ?? null;
 
   const sample = useMemo<PresenceSample>(() => {
-    const expansion = game?.expansion ?? "wotlk";
-    const place = SAMPLE_PLACES[expansion] ?? SAMPLE_PLACES.wotlk;
-    const latest = (accounts ?? [])
-      .flatMap((account) => account.characters)
-      .sort((a, b) => b.updated_at - a.updated_at)[0];
+    const account = [...(accounts ?? [])].sort((a, b) => {
+      const latest = (list: typeof a.characters) => Math.max(0, ...list.map((character) => character.updated_at));
+      return latest(b.characters) - latest(a.characters);
+    })[0];
+    const realm = account?.default_realm || account?.characters[0]?.realm || null;
     return {
-      name: latest?.name ?? t("launcher.settings.richPresence.preview.sampleName"),
-      level: latest?.level ?? 80,
-      raceId: latest?.race_id ?? 10,
-      classId: latest?.class_id ?? 4,
-      zone: t(`launcher.settings.richPresence.preview.places.${place.zone}`),
-      subZone: t(`launcher.settings.richPresence.preview.places.${place.subZone}`),
-      mapId: place.mapId,
-      mapAreaId: place.mapAreaId,
-      expansion,
+      name: "Zerik",
+      level: 79,
+      raceId: 11,
+      classId: 7,
+      zone: t("launcher.settings.richPresence.preview.places.stormwind"),
+      subZone: t("launcher.settings.richPresence.preview.places.tradeDistrict"),
+      mapId: 0,
+      mapAreaId: 302,
+      dungeon: t("launcher.settings.richPresence.preview.places.hallsOfStone"),
+      raid: t("launcher.settings.richPresence.preview.places.icecrownCitadel"),
+      expansion: game?.expansion ?? "wotlk",
+      realmlist: account?.realmlist ?? null,
+      realm,
     };
   }, [accounts, game]);
 
   useEffect(() => {
     let cancelled = false;
     presenceApi
-      .previewPresence(options, sample)
+      .previewPresence(options, scene, sample)
       .then((activity) => {
         if (!cancelled) setPreview(activity);
       })
@@ -106,7 +147,7 @@ export function RichPresenceTab() {
     return () => {
       cancelled = true;
     };
-  }, [options, sample, session]);
+  }, [options, scene, sample, session]);
 
   useEffect(() => {
     let cancelled = false;
@@ -182,17 +223,70 @@ export function RichPresenceTab() {
         <div className="flex items-baseline justify-between gap-4 px-0.5">
           <h2 className="text-[14px] font-semibold text-(--text-soft)">{t("launcher.settings.richPresence.preview.title")}</h2>
           <span className="text-[12px] text-(--muted-2)">
-            {session?.phase === "in_world"
-              ? t("launcher.settings.richPresence.preview.live")
-              : t("launcher.settings.richPresence.preview.sample")}
+            {scene === "live" ? t("launcher.settings.richPresence.preview.live") : t("launcher.settings.richPresence.preview.sample")}
           </span>
         </div>
-        <PresencePreview
-          activity={preview}
-          assets={assets}
-          fallbackImage={toDisplaySrc(game?.box || game?.icon || "")}
-          gameName={t("launcher.settings.richPresence.preview.gameName")}
-        />
+        <div className="grid grid-cols-[minmax(0,1fr)_17rem] gap-4 rounded-(--radius) border border-(--border) bg-(--bg-card) p-4">
+          <div className="flex flex-col justify-center rounded-[10px] bg-[#111214] p-3">
+            <PresencePreview
+              activity={preview}
+              assets={assets}
+              fallbackImage={toDisplaySrc(game?.icon || "")}
+              gameName={t("launcher.settings.richPresence.preview.gameName")}
+            />
+          </div>
+          <div className="flex flex-col gap-2.5">
+            <div className="flex items-center gap-1.5">
+              <TooltipSimple content={t("launcher.settings.richPresence.preview.previous")} side="top">
+                <button className={sceneButton} onClick={() => step(-1)} aria-label={t("launcher.settings.richPresence.preview.previous")}>
+                  <i className="fa-solid fa-backward-step" />
+                </button>
+              </TooltipSimple>
+              <TooltipSimple
+                content={playing ? t("launcher.settings.richPresence.preview.pause") : t("launcher.settings.richPresence.preview.play")}
+                side="top"
+              >
+                <button
+                  className={sceneButton}
+                  onClick={() => {
+                    if (scene === "live") setPickedScene("launching");
+                    setPlaying((value) => !value);
+                  }}
+                  aria-label={playing ? t("launcher.settings.richPresence.preview.pause") : t("launcher.settings.richPresence.preview.play")}
+                >
+                  <i className={`fa-solid ${playing && scene !== "live" ? "fa-pause" : "fa-play"}`} />
+                </button>
+              </TooltipSimple>
+              <TooltipSimple content={t("launcher.settings.richPresence.preview.next")} side="top">
+                <button className={sceneButton} onClick={() => step(1)} aria-label={t("launcher.settings.richPresence.preview.next")}>
+                  <i className="fa-solid fa-forward-step" />
+                </button>
+              </TooltipSimple>
+              <span className="ml-auto truncate text-[12px] font-medium text-(--text-soft)">
+                {t(`launcher.settings.richPresence.preview.scenes.${scene}`)}
+              </span>
+            </div>
+            <div role="radiogroup" aria-label={t("launcher.settings.richPresence.preview.title")} className="grid grid-cols-2 gap-1">
+              {scenes.map((entry) => (
+                <button
+                  key={entry}
+                  role="radio"
+                  aria-checked={entry === scene}
+                  onClick={() => {
+                    setPickedScene(entry);
+                    setPlaying(false);
+                  }}
+                  className={`truncate rounded-md px-2 py-1 text-left text-[11.5px] transition-colors cursor-pointer ${
+                    entry === scene ? "bg-(--bg-hover) text-(--text)" : "text-(--muted) hover:bg-(--bg-elevated) hover:text-(--text-soft)"
+                  }`}
+                >
+                  {entry === "live" ? <i className="fa-solid fa-circle mr-1.5 text-[6px] text-(--success)" /> : null}
+                  {t(`launcher.settings.richPresence.preview.scenes.${entry}`)}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       </section>
 
       <SettingsGroup title={t("launcher.settings.richPresence.privacy.title")}>

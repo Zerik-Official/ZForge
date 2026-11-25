@@ -15,9 +15,16 @@ export interface AppConfig {
   dock_reorder: boolean;
   /** Whether closing the window keeps the launcher running in the notification area. */
   close_to_tray: boolean;
+  /** What the launcher window does when a game starts. */
+  launch_behavior: LaunchBehavior;
+  /** Whether the window comes back when the game closes, after hiding or minimizing it. */
+  restore_after_game: boolean;
   /** What Discord Rich Presence reveals about the game. */
   presence: PresenceOptions;
 }
+
+/** What the launcher window does when a game starts. */
+export type LaunchBehavior = "keep" | "minimize" | "tray";
 
 /** How much of the character location Rich Presence shows. */
 export type LocationPrivacy = "exact" | "zone" | "random" | "hidden";

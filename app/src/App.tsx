@@ -11,12 +11,13 @@ import { usePresenceStrings } from "@/hooks/usePresenceStrings";
 import { useTrayStrings } from "@/hooks/useTrayStrings";
 import { useGamesStore } from "@/store/gamesStore";
 import { useThemeStore } from "@/store/themeStore";
-import { api } from "@/services/api";
+import { api, assetsApi } from "@/services/api";
+import { setResourcesDir } from "@/utils/asset";
 import { setLocale, type Locale } from "@/locales/i18n";
 
 export default function App() {
   const { conflicts, push: pushConflicts, resolve } = useConfigConflict();
-  const { step, done: bootDone } = useBoot(pushConflicts);
+  const { step, done: bootDone, download } = useBoot(pushConflicts);
   usePresenceStrings();
   useTrayStrings();
   useNotificationStrings();
@@ -44,8 +45,9 @@ export default function App() {
 
     void (async () => {
       try {
-        const config = await api.getAppConfig();
+        const [config, resourcesDir] = await Promise.all([api.getAppConfig(), assetsApi.getResourcesDir()]);
         if (cancelled) return;
+        setResourcesDir(resourcesDir);
 
         const lang = config.language as Locale | null;
         if (lang === "en" || lang === "es") {
@@ -101,6 +103,7 @@ export default function App() {
     >
       {!splashGone && !showLanguageSelector && (
         <SplashScreen
+          download={download}
           step={step}
           bootDone={bootDone}
           onDone={handleSplashDone}
@@ -119,7 +122,8 @@ export default function App() {
           transition: "opacity 0.3s ease",
         }}
       >
-        <LauncherShell />
+        {/* Mounted after the boot so the media downloaded during it already exist. */}
+        {bootDone ? <LauncherShell /> : null}
       </main>
 
       {conflicts[0] && (

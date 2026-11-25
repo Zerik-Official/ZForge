@@ -8,7 +8,8 @@
 import { useEffect, useState } from "react";
 import { t } from "@/locales/i18n";
 import { bootApi } from "@/services/api";
-import { onBootProgress, subscribe } from "@/services/api/events";
+import { onBootProgress, onResourcesProgress, subscribe } from "@/services/api/events";
+import type { ResourcesProgress } from "@/types/domains/boot";
 import type { ConfigConflict } from "@/types/domains/settings";
 
 export interface BootStep {
@@ -21,6 +22,8 @@ interface UseBootResult {
   step: BootStep;
   /** True once the startup sequence finished (successfully or not). */
   done: boolean;
+  /** Download of the missing resources, while it runs. */
+  download: ResourcesProgress | null;
 }
 
 function clampPercent(percent: number): number {
@@ -33,14 +36,20 @@ function clampPercent(percent: number): number {
 export function useBoot(onConflicts: (conflicts: ConfigConflict[]) => void): UseBootResult {
   const [step, setStep] = useState<BootStep>(() => ({ message: t("boot.connecting"), percent: 0 }));
   const [done, setDone] = useState(false);
+  const [download, setDownload] = useState<ResourcesProgress | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    const unsubscribe = subscribe(
+    const unsubscribeSteps = subscribe(
       onBootProgress((progress) => {
         if (!cancelled) {
           setStep({ message: t(progress.key, progress.params), percent: clampPercent(progress.percent) });
         }
+      }),
+    );
+    const unsubscribeDownload = subscribe(
+      onResourcesProgress((progress) => {
+        if (!cancelled) setDownload(progress.filesDone >= progress.filesTotal ? null : progress);
       }),
     );
 
@@ -62,9 +71,10 @@ export function useBoot(onConflicts: (conflicts: ConfigConflict[]) => void): Use
 
     return () => {
       cancelled = true;
-      unsubscribe();
+      unsubscribeSteps();
+      unsubscribeDownload();
     };
   }, [onConflicts]);
 
-  return { step, done };
+  return { step, done, download: done ? null : download };
 }
