@@ -42,6 +42,35 @@ fn forward_session_changes<R: Runtime>(app: &AppHandle<R>, session: &GameSession
     });
 }
 
+/// Move the window aside when a game starts and bring it back when it closes,
+/// following the launcher preferences.
+fn follow_games_with_window<R: Runtime>(app: &AppHandle<R>, session: &GameSession) {
+    let app = app.clone();
+    let mut changes = session.subscribe();
+    tauri::async_runtime::spawn(async move {
+        let mut was_active = changes.borrow().is_active();
+        let mut moved = false;
+        while changes.changed().await.is_ok() {
+            let active = changes.borrow_and_update().is_active();
+            if active == was_active {
+                continue;
+            }
+            was_active = active;
+            let Some(config) = app
+                .try_state::<AppConfigStore>()
+                .and_then(|store| store.get().ok())
+            else {
+                continue;
+            };
+            if active {
+                moved = tray::on_game_started(&app, config.launch_behavior);
+            } else if std::mem::take(&mut moved) && config.restore_after_game {
+                tray::restore_after_game(&app, config.close_to_tray);
+            }
+        }
+    });
+}
+
 /// Save the characters read after each automatic login.
 fn store_seen_characters<R: Runtime>(app: &AppHandle<R>, session: &GameSession) {
     let app = app.clone();
@@ -97,6 +126,7 @@ pub fn run() -> tauri::Result<()> {
             commands::app_config::get_app_config,
             commands::app_config::save_app_config,
             commands::assets::list_assets,
+            commands::assets::get_resources_dir,
             commands::assets::select_exe,
             commands::assets::select_custom_asset,
             commands::boot::run_boot,
@@ -165,6 +195,7 @@ pub fn run() -> tauri::Result<()> {
             app.manage(BootState::default());
             let session = GameSession::new();
             forward_session_changes(app.handle(), &session);
+            follow_games_with_window(app.handle(), &session);
             store_seen_characters(app.handle(), &session);
             app.manage(PresenceService::start(
                 DISCORD_CLIENT_ID,
