@@ -8,6 +8,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::{AppError, AppResult};
 use crate::paths::AppPaths;
+use crate::services::resources;
+
+/// Prefix of the references to files in the downloaded resources folder.
+pub const RESOURCE_PREFIX: &str = "resource:";
 
 include!(concat!(env!("OUT_DIR"), "/bundled_assets.rs"));
 
@@ -32,7 +36,7 @@ const EXPANSIONS: &[(&str, ExpansionMedia)] = &[
         "classic",
         ExpansionMedia {
             name: "World of Warcraft Classic",
-            video: "/assets/games/scenes/classic/wow_classic_portal.mp4",
+            video: "resource:videos/wow-classic-portal.mp4",
             poster: "/assets/games/logos/classic/wow_classic_blue.webp",
             icon: "/assets/games/icos/classic/ico/wow_classic.ico",
             box_art: "/assets/games/boxes/wow_box_classic.png",
@@ -42,7 +46,7 @@ const EXPANSIONS: &[(&str, ExpansionMedia)] = &[
         "tbc",
         ExpansionMedia {
             name: "The Burning Crusade",
-            video: "/assets/games/scenes/burning/wow_bc_dark_portal.mp4",
+            video: "resource:videos/wow-bc-dark-portal.mp4",
             poster: "/assets/games/logos/burning/wow_burning_crusade.webp",
             icon: "/assets/games/icos/burning/ico/wow_bc.ico",
             box_art: "/assets/games/boxes/wow_tbc_box.png",
@@ -52,7 +56,7 @@ const EXPANSIONS: &[(&str, ExpansionMedia)] = &[
         "wotlk",
         ExpansionMedia {
             name: "Wrath of the Lich King",
-            video: "/assets/games/scenes/wotlk/wow_lich_king_sword.mp4",
+            video: "resource:videos/wow-lich-king-sword.mp4",
             poster: "/assets/games/logos/wotlk/wow_wotlk.webp",
             icon: "/assets/games/icos/wotlk/png/wtlk_alter.png",
             box_art: "/assets/games/boxes/wow_wotlk_box.png",
@@ -73,8 +77,8 @@ pub fn expansion_media(expansion: &str) -> Option<&'static ExpansionMedia> {
 pub struct AssetManifest {
     /// Default media per expansion key.
     pub expansions: BTreeMap<&'static str, ExpansionMedia>,
-    /// Background videos.
-    pub available_videos: Vec<&'static str>,
+    /// Background videos, as `resource:` references to the downloaded files.
+    pub available_videos: Vec<String>,
     /// Logos.
     pub available_posters: Vec<&'static str>,
     /// Dock icons.
@@ -106,7 +110,10 @@ fn bundled(kind: &str, extensions: &[&str]) -> Vec<&'static str> {
 pub fn manifest() -> AssetManifest {
     AssetManifest {
         expansions: EXPANSIONS.iter().copied().collect(),
-        available_videos: bundled("scenes", &["mp4"]),
+        available_videos: resources::VIDEOS
+            .iter()
+            .map(|name| format!("{RESOURCE_PREFIX}videos/{name}"))
+            .collect(),
         available_posters: bundled("logos", &["png", "webp"]),
         available_icons: bundled("icos", &["ico", "png"]),
         available_boxes: bundled("boxes", &["png"]),
@@ -179,7 +186,12 @@ mod tests {
         let manifest = manifest();
         for (_, media) in EXPANSIONS {
             assert!(manifest.available_boxes.contains(&media.box_art));
-            assert!(manifest.available_videos.contains(&media.video));
+            assert!(
+                manifest
+                    .available_videos
+                    .iter()
+                    .any(|video| video == media.video)
+            );
         }
         assert!(expansion_media("wotlk").is_some());
         assert!(expansion_media("unknown").is_none());
