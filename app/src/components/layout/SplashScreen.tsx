@@ -1,4 +1,11 @@
-import { useEffect, useState, type TransitionEvent } from "react";
+import { useEffect, useMemo, useState, type TransitionEvent } from "react";
+import { DEFAULT_SCENE_ASSETS } from "@/components/boot/assets";
+import { MonolithLoader } from "@/components/boot/MonolithLoader";
+import type { BootQuality, SceneAssets } from "@/components/boot/MonolithScene";
+import { api } from "@/services/api";
+import { useThemeStore } from "@/store/themeStore";
+import type { BootQualitySetting } from "@/types/domains/settings";
+import { toDisplaySrc } from "@/utils/asset";
 import type { BootStep } from "@/hooks/useBoot";
 import { t } from "@/locales/i18n";
 import type { ResourcesProgress } from "@/types/domains/boot";
@@ -58,11 +65,16 @@ function DownloadMeter({ download }: { download: ResourcesProgress }) {
   );
 }
 
+/** Quality used with a custom theme, whose look the boot quality setting does not tune. */
+const THEMED_QUALITY: BootQuality = "medium";
+
 /**
  * Startup screen shown before the launcher layout appears.
  *
- * The rune ring fills as the backend reports boot steps. When the boot is done the
- * central sigil is drawn, and the screen fades out.
+ * A floating rune monolith lights up as the backend reports boot steps, with the status,
+ * a thin progress bar and the download below. When the boot is done the runes flare and
+ * the screen fades out. The rune ring is drawn instead when the quality is `off` or the
+ * 3D scene cannot run.
  *
  * @example
  * ```tsx
@@ -71,6 +83,35 @@ function DownloadMeter({ download }: { download: ResourcesProgress }) {
  */
 export function SplashScreen({ step, bootDone, onDone, download = null }: SplashScreenProps) {
   const [hiding, setHiding] = useState(false);
+  const [setting, setSetting] = useState<BootQualitySetting | null>(null);
+  const theme = useThemeStore((state) => state.theme);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .getAppConfig()
+      .then((config) => {
+        if (!cancelled) setSetting(config.boot_quality ?? "medium");
+      })
+      .catch(() => {
+        if (!cancelled) setSetting("medium");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const assets = useMemo<SceneAssets>(() => {
+    const boot = theme?.boot;
+    return {
+      model: boot?.model ? toDisplaySrc(boot.model) : DEFAULT_SCENE_ASSETS.model,
+      albedo: boot?.albedo ? toDisplaySrc(boot.albedo) : DEFAULT_SCENE_ASSETS.albedo,
+      mask: boot?.mask ? toDisplaySrc(boot.mask) : DEFAULT_SCENE_ASSETS.mask,
+    };
+  }, [theme]);
+  const quality: BootQuality | "off" | null = theme ? THEMED_QUALITY : setting;
+  const percent = bootDone ? 100 : step.percent;
+  const activity = download ? Math.min(1, download.bytesPerSecond / FULL_SPEED_BYTES) : 0;
 
   useEffect(() => {
     if (!bootDone) return;
@@ -98,19 +139,25 @@ export function SplashScreen({ step, bootDone, onDone, download = null }: Splash
       role="status"
       aria-live="polite"
     >
-      <RuneLoader
-        percent={bootDone ? 100 : step.percent}
-        complete={bootDone}
-        activity={download ? Math.min(1, download.bytesPerSecond / FULL_SPEED_BYTES) : 0}
-      />
+      {quality === "off" ? (
+        <RuneLoader percent={percent} complete={bootDone} activity={activity} />
+      ) : quality ? (
+        <MonolithLoader percent={percent} complete={bootDone} activity={activity} quality={quality} assets={assets} />
+      ) : null}
 
-      <div className="flex min-h-10 flex-col items-center gap-1.5">
-        <p key={step.message} className="animate-[fadeIn_0.2s_ease_both] text-[13.5px] text-(--text-soft)">
+      <div className={`flex w-80 flex-col items-center gap-2.5 ${quality === "off" ? "" : "absolute bottom-16"}`}>
+        <p key={step.message} className="animate-[fadeIn_0.2s_ease_both] text-[13.5px] text-(--text-soft) [text-shadow:0_1px_8px_var(--bg)]">
           {step.message}
         </p>
-        <p className="text-[12px] text-(--muted) tabular-nums">{Math.round(bootDone ? 100 : step.percent)} %</p>
+        <div className="relative h-0.75 w-full overflow-hidden rounded-full bg-(--border-strong)" aria-hidden="true">
+          <div
+            className="absolute inset-y-0 left-0 rounded-full bg-(--primary) shadow-[0_0_10px_var(--primary)] transition-[width] duration-500 ease-out"
+            style={{ width: `${percent}%` }}
+          />
+        </div>
+        <p className="text-[12px] text-(--muted) tabular-nums">{Math.round(percent)} %</p>
+        {download ? <DownloadMeter download={download} /> : null}
       </div>
-      {download ? <DownloadMeter download={download} /> : null}
       <BuildCorners />
     </div>
   );
