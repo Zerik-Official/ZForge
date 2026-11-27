@@ -23,6 +23,8 @@ export interface AppConfig {
   presence: PresenceOptions;
   /** How the launcher appears when Windows starts it at sign-in. */
   autostart_mode: AutostartMode;
+  /** Whether the boot checks the installed addons for problems and risky code. */
+  addon_audit: boolean;
 }
 
 /** How the launcher appears when Windows starts it at sign-in. */

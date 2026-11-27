@@ -1,5 +1,5 @@
 import { call } from "../bridge";
-import type { Addon, AddonAccount, AddonTarget } from "@/types/domains/addon";
+import type { Addon, AddonAccount, AddonTarget, GameAudit } from "@/types/domains/addon";
 
 export class AddonsApi {
   /** Accounts, realms and characters found in the game's `WTF` folder. */
@@ -27,6 +27,16 @@ export class AddonsApi {
 
   openAddonsFolder(gameId: string): Promise<void> {
     return call("open_addons_folder", { gameId });
+  }
+
+  /** Problems and risky code found in the addons of a game, from the boot check. */
+  getAudit(gameId: string): Promise<GameAudit> {
+    return call("get_addon_audit", { gameId });
+  }
+
+  /** Check the addons of a game again. */
+  audit(gameId: string): Promise<GameAudit> {
+    return call("audit_addons", { gameId });
   }
 }
 

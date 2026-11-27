@@ -198,6 +198,13 @@ export function GeneralTab() {
           description={t("launcher.settings.general.restoreAfterGameDescription")}
           disabled={launchBehavior === "keep"}
         />
+        <Checkbox
+          layout="row"
+          checked={config?.addon_audit ?? true}
+          onChange={(value) => void savePreference({ addon_audit: value })}
+          label={t("launcher.settings.general.addonAudit")}
+          description={t("launcher.settings.general.addonAuditDescription")}
+        />
       </SettingsGroup>
 
       <SettingsGroup title={t("launcher.settings.general.startup")}>

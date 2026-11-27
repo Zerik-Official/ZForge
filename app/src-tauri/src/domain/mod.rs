@@ -2,6 +2,7 @@
 
 pub mod account;
 pub mod addon;
+pub mod addon_audit;
 pub mod app_config;
 pub mod build_info;
 pub mod game;

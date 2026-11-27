@@ -36,3 +36,34 @@ export interface AddonAccount {
   name: string;
   realms: AddonRealm[];
 }
+
+/** How serious a finding of the addon check is. */
+export type AddonSeverity = "info" | "warning" | "danger";
+
+/** A problem in a `.toc` or a risky piece of code found in an addon. */
+export interface AddonFinding {
+  /** Rule that produced it; its title and explanation are translated from it. */
+  rule: string;
+  severity: AddonSeverity;
+  /** File inside the addon folder; empty for folder problems. */
+  file: string;
+  /** First line where it appears; `0` when it applies to the whole file. */
+  line: number;
+  /** How many times it appears in the file. */
+  count: number;
+  /** The code or `.toc` entry where it first appears. */
+  excerpt: string;
+}
+
+/** Findings of one addon, most serious first. */
+export interface AddonReport {
+  severity: AddonSeverity | null;
+  findings: AddonFinding[];
+}
+
+/** Findings of the installed addons of a game, by addon folder. */
+export interface GameAudit {
+  addons: Record<string, AddonReport>;
+  /** How many addon folders were checked. */
+  checked: number;
+}
