@@ -43,6 +43,7 @@ const ICON_STEM: &str = "icon";
 /// Version of the running launcher, compared with `requires`.
 pub const LAUNCHER_VERSION: &str = env!("CARGO_PKG_VERSION");
 const FONT_EXTENSIONS: &[&str] = &["ttf", "otf", "woff", "woff2"];
+const MODEL_EXTENSIONS: &[&str] = &["glb"];
 
 fn invalid(problem: ThemeProblem, detail: impl Into<String>) -> AppError {
     AppError::ThemeInvalid(ThemeError::new(problem, detail))
@@ -293,6 +294,9 @@ pub fn load(folder: &Path) -> AppResult<ThemeManifest> {
     }
     for font in &mut manifest.fonts {
         font.file = display_path(&resolve_file(&root, &font.file, FONT_EXTENSIONS)?);
+    }
+    if let Some(model) = manifest.boot.model.as_mut() {
+        *model = display_path(&resolve_file(&root, model, MODEL_EXTENSIONS)?);
     }
     for file in manifest.image_files_mut() {
         *file = display_path(&resolve_image(&root, file)?);

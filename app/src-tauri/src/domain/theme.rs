@@ -263,6 +263,26 @@ pub struct ThemeManifest {
     /// Layouts by settings category id, such as `graphics` or `effects`.
     #[serde(default)]
     pub layouts: BTreeMap<String, ThemeLayout>,
+    /// Files of the boot animation; the launcher monolith is used for the missing ones.
+    #[serde(default)]
+    pub boot: ThemeBoot,
+}
+
+/// Files that replace parts of the boot animation monolith.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ThemeBoot {
+    /// Binary glTF (`.glb`): the first mesh is the textured monolith, the next ones are
+    /// the rocks that float around it.
+    #[serde(default)]
+    pub model: Option<String>,
+    /// Color texture of the monolith front.
+    #[serde(default)]
+    pub albedo: Option<String>,
+    /// Energy mask: red for the rune channels, green for glowing cracks and blue for the
+    /// order in which the runes light up (dark first).
+    #[serde(default)]
+    pub mask: Option<String>,
 }
 
 /// Why a theme cannot be used.
@@ -413,6 +433,12 @@ impl ThemeManifest {
         }
         if let Some(panel) = controls.panel.as_mut() {
             files.push(&mut panel.file);
+        }
+        if let Some(albedo) = self.boot.albedo.as_mut() {
+            files.push(albedo);
+        }
+        if let Some(mask) = self.boot.mask.as_mut() {
+            files.push(mask);
         }
         files
     }

@@ -25,7 +25,12 @@ export interface AppConfig {
   autostart_mode: AutostartMode;
   /** Whether the boot checks the installed addons for problems and risky code. */
   addon_audit: boolean;
+  /** Detail of the boot animation with the built-in theme. */
+  boot_quality: BootQualitySetting;
 }
+
+/** Detail of the boot animation; `off` shows the rune ring. */
+export type BootQualitySetting = "off" | "low" | "medium" | "high";
 
 /** How the launcher appears when Windows starts it at sign-in. */
 export type AutostartMode = "window" | "tray";

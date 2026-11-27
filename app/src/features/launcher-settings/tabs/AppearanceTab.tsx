@@ -1,10 +1,12 @@
 import { PageState } from "@/components/layout/PageState";
-import { SettingsGroup, SettingsPage } from "@/components/layout/SettingsPage";
+import { SettingsGroup, SettingsPage, SettingsRow } from "@/components/layout/SettingsPage";
+import { Select, type SelectOption } from "@/components/ui/Select";
 import { useCallback, useEffect, useState } from "react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { t, useLocale } from "@/locales/i18n";
 import { api, errorCode, isApiError, themesApi } from "@/services/api";
 import { useThemeStore } from "@/store/themeStore";
+import type { BootQualitySetting } from "@/types/domains/settings";
 import { BUILT_IN_THEME, type ThemeError, type ThemeSummary } from "@/types/domains/theme";
 import { toDisplaySrc } from "@/utils/asset";
 import { ThemeDetailsModal } from "../components/ThemeDetailsModal";
@@ -31,6 +33,7 @@ export function AppearanceTab() {
   const loadTheme = useThemeStore((state) => state.load);
   const [themes, setThemes] = useState<ThemeSummary[] | null>(null);
   const [activeId, setActiveId] = useState<string>(BUILT_IN_THEME);
+  const [bootQuality, setBootQuality] = useState<BootQualitySetting>("medium");
   const [deleting, setDeleting] = useState<ThemeSummary | null>(null);
   const [viewing, setViewing] = useState<ThemeSummary | null>(null);
   const [busy, setBusy] = useState(false);
@@ -53,6 +56,7 @@ export function AppearanceTab() {
         if (cancelled) return;
         setThemes(list);
         setActiveId(config.theme || BUILT_IN_THEME);
+        setBootQuality(config.boot_quality ?? "medium");
       })
       .catch((e: unknown) => {
         if (!cancelled) setError(t(`common.errors.codes.${errorCode(e)}`));
@@ -118,6 +122,24 @@ export function AppearanceTab() {
 
   if (!themes) {
     return <PageState error={error} />;
+  }
+
+  const bootQualityOptions: SelectOption[] = (["high", "medium", "low", "off"] as BootQualitySetting[]).map((value) => ({
+    value,
+    label: t(`launcher.settings.appearance.boot.levels.${value}`),
+  }));
+
+  async function saveBootQuality(value: BootQualitySetting) {
+    const previous = bootQuality;
+    setBootQuality(value);
+    try {
+      const saved = await api.saveAppConfig({ boot_quality: value });
+      setBootQuality(saved.boot_quality);
+      setError(null);
+    } catch (e) {
+      setBootQuality(previous);
+      setError(t(`common.errors.codes.${errorCode(e)}`));
+    }
   }
 
   const builtIn: ThemeSummary = {
@@ -219,6 +241,20 @@ export function AppearanceTab() {
           );
         })}
       </SettingsGroup>
+
+      {activeId === BUILT_IN_THEME ? (
+        <SettingsGroup title={t("launcher.settings.appearance.boot.title")}>
+          <SettingsRow
+            label={t("launcher.settings.appearance.boot.quality")}
+            description={t(`launcher.settings.appearance.boot.descriptions.${bootQuality}`)}
+            control={
+              <div className="w-56">
+                <Select value={bootQuality} options={bootQualityOptions} onChange={(value) => void saveBootQuality(value as BootQualitySetting)} />
+              </div>
+            }
+          />
+        </SettingsGroup>
+      ) : null}
 
       <p className="max-w-[72ch] text-[12.5px] leading-relaxed text-(--muted)">{t("launcher.settings.appearance.help")}</p>
       {error ? <span className="text-[12.5px] text-(--danger)">{error}</span> : null}

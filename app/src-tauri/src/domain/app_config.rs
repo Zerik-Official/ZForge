@@ -52,6 +52,23 @@ pub struct AppConfig {
     pub autostart_mode: AutostartMode,
     /// Whether the boot checks the installed addons for problems and risky code.
     pub addon_audit: bool,
+    /// Detail of the boot animation with the built-in theme.
+    pub boot_quality: BootQuality,
+}
+
+/// Detail of the boot animation with the built-in theme.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum BootQuality {
+    /// The rune ring instead of the 3D scene.
+    Off,
+    /// Fewer rocks and embers, 30 frames per second and no antialiasing.
+    Low,
+    /// The default balance.
+    #[default]
+    Medium,
+    /// More rocks and embers and full resolution on high density screens.
+    High,
 }
 
 /// How the launcher appears when Windows starts it at sign-in.
@@ -216,6 +233,8 @@ pub struct AppConfigPatch {
     pub autostart_mode: Option<AutostartMode>,
     /// New addon check flag.
     pub addon_audit: Option<bool>,
+    /// New boot animation detail.
+    pub boot_quality: Option<BootQuality>,
 }
 
 /// Mark a field as present (including an explicit `null`).
@@ -287,6 +306,9 @@ impl AppConfig {
         if let Some(addon_audit) = patch.addon_audit {
             self.addon_audit = addon_audit;
         }
+        if let Some(boot_quality) = patch.boot_quality {
+            self.boot_quality = boot_quality;
+        }
     }
 }
 
@@ -317,6 +339,7 @@ impl Default for AppConfig {
             trusted_sdk: None,
             autostart_mode: AutostartMode::Window,
             addon_audit: true,
+            boot_quality: BootQuality::Medium,
         }
     }
 }
