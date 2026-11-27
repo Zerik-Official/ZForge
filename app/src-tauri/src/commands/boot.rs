@@ -17,6 +17,7 @@ use crate::services::sdk::manager::SdkContext;
 use crate::services::sdk::release::ReleaseClient;
 use crate::services::settings_schema::SchemaRegistry;
 use crate::services::system;
+use crate::services::updater::{self, PendingUpdate, UpdateInfo};
 use crate::storage::Database;
 use crate::storage::app_config::AppConfigStore;
 
@@ -36,6 +37,8 @@ pub struct BootProgress {
 pub struct BootReport {
     /// Games whose launcher settings and game files disagree.
     pub conflicts: Vec<ConfigConflict>,
+    /// A newer launcher version, when one was published.
+    pub update: Option<UpdateInfo>,
 }
 
 /// Runs the startup sequence once per application run.
@@ -72,6 +75,7 @@ pub async fn run_boot<R: Runtime>(
     installer: State<'_, SdkInstaller>,
     database: State<'_, Database>,
     schemas: State<'_, SchemaRegistry>,
+    pending_update: State<'_, PendingUpdate>,
 ) -> AppResult<BootReport> {
     boot.0
         .get_or_try_init(|| async {
@@ -134,6 +138,9 @@ pub async fn run_boot<R: Runtime>(
             }
             emit_capabilities_changed(&app);
 
+            emit_step(&app, "boot.checkingUpdate", 52, &[]);
+            let update = updater::check(&app, &pending_update).await;
+
             let games = database.list_games()?;
             emit_step(&app, "boot.loadingGames", 55, &[("count", games.len().to_string())]);
             let dynamic = system::dynamic_defaults(&app);
@@ -156,7 +163,7 @@ pub async fn run_boot<R: Runtime>(
                 }
             }
             emit_step(&app, "boot.finishing", 92, &[]);
-            Ok(BootReport { conflicts })
+            Ok(BootReport { conflicts, update })
         })
         .await
         .cloned()
