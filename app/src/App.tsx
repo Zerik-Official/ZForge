@@ -4,6 +4,7 @@ import { SplashScreen } from "@/components/layout/SplashScreen";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { LauncherShell } from "@/features/launcher/LauncherShell";
 import { ConfigConflictModal } from "@/features/game-settings/ConfigConflictModal";
+import { UpdateDialog } from "@/features/updates/UpdateDialog";
 import { useBoot } from "@/hooks/useBoot";
 import { useConfigConflict } from "@/hooks/useConfigConflict";
 import { useNotificationStrings } from "@/hooks/useNotificationStrings";
@@ -17,7 +18,8 @@ import { setLocale, type Locale } from "@/locales/i18n";
 
 export default function App() {
   const { conflicts, push: pushConflicts, resolve } = useConfigConflict();
-  const { step, done: bootDone, download } = useBoot(pushConflicts);
+  const { step, done: bootDone, download, update } = useBoot(pushConflicts);
+  const [updateDismissed, setUpdateDismissed] = useState(false);
   usePresenceStrings();
   useTrayStrings();
   useNotificationStrings();
@@ -111,6 +113,9 @@ export default function App() {
       )}
 
       {showLanguageSelector && <LanguageSelector onSelect={handleSelectLanguage} />}
+      {update && splashGone && !showLanguageSelector && !updateDismissed ? (
+        <UpdateDialog update={update} onClose={() => setUpdateDismissed(true)} />
+      ) : null}
       <WindowBar />
 
       <main
