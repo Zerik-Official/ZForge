@@ -9,9 +9,10 @@ interface GameCardProps {
   game: Game;
   onEdit: (game: Game) => void;
   onRemove: (id: string) => void;
+  onShortcut: (game: Game) => void;
 }
 
-export function GameCard({ game, onEdit, onRemove }: GameCardProps) {
+export function GameCard({ game, onEdit, onRemove, onShortcut }: GameCardProps) {
   useLocale();
   const cardRef = useRef<HTMLDivElement>(null);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
@@ -79,17 +80,32 @@ export function GameCard({ game, onEdit, onRemove }: GameCardProps) {
         <div className="pointer-events-none absolute inset-x-0 top-0 h-16 rounded-t-[10px] bg-linear-to-b from-black/70 to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
 
         <div className="absolute inset-x-2 top-2 flex -translate-y-1.5 items-center justify-between opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100">
-          <TooltipSimple content={t("common.edit")} side="bottom" align="center" sideOffset={6}>
-            <button
-              className="card-icon-btn"
-              onClick={(event) => {
-                event.stopPropagation();
-                onEdit(game);
-              }}
-            >
-              <i className="fa-solid fa-pen text-[11px]" />
-            </button>
-          </TooltipSimple>
+          <span className="flex items-center gap-1.5">
+            <TooltipSimple content={t("common.edit")} side="bottom" align="center" sideOffset={6}>
+              <button
+                className="card-icon-btn"
+                aria-label={t("common.edit")}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onEdit(game);
+                }}
+              >
+                <i className="fa-solid fa-pen text-[11px]" />
+              </button>
+            </TooltipSimple>
+            <TooltipSimple content={t("launcher.shortcut.title")} side="bottom" align="center" sideOffset={6}>
+              <button
+                className="card-icon-btn"
+                aria-label={t("launcher.shortcut.title")}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onShortcut(game);
+                }}
+              >
+                <i className="fa-solid fa-share-from-square text-[11px]" />
+              </button>
+            </TooltipSimple>
+          </span>
           <TooltipSimple content={t("common.delete")} side="bottom" align="center" sideOffset={6}>
             <button
               className="card-icon-btn card-icon-btn--danger"
