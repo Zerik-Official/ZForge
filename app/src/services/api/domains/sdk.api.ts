@@ -20,6 +20,11 @@ export class SdkApi {
     return call("check_sdk_update");
   }
 
+  /** Use the installed SDK binaries although they differ from the published release. */
+  trustSdk(): Promise<void> {
+    return call("trust_sdk");
+  }
+
   getSdkLicense(): Promise<string> {
     return call("get_sdk_license");
   }
