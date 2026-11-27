@@ -475,7 +475,104 @@
       "installed": "Installed: {names}",
       "deleted": "{name} was deleted",
       "confirmDelete": "Delete addon",
-      "confirmDeleteDescription": "Delete the folder of {name}? Its saved settings in WTF are kept."
+      "confirmDeleteDescription": "Delete the folder of {name}? Its saved settings in WTF are kept.",
+      "audit": {
+        "title": "Check of {name}",
+        "count": "{count} findings",
+        "times": "{count} times in the file",
+        "severity": {
+          "danger": "Danger",
+          "warning": "Review",
+          "info": "Info"
+        },
+        "badge": {
+          "danger": "Risk",
+          "warning": "Review",
+          "info": "Check"
+        },
+        "summary": "{count} addons can move your items or gold without telling you",
+        "summaryDescription": "The check found code that deletes items, hands over gold or confirms dialogs for you. Check that they only do it when you ask.",
+        "show": "Show addons",
+        "disclaimer": "The check looks for known patterns in the addon code. Many of them have legitimate uses, and it cannot guarantee that an addon is safe: install addons only from sources you trust.",
+        "rules": {
+          "delete_items": {
+            "title": "Deletes items",
+            "description": "Calls DeleteCursorItem, which destroys the item on your cursor. It is fine in options such as \"delete gray items\" that you turn on; it is dangerous if it happens without you asking."
+          },
+          "send_gold": {
+            "title": "Sends gold by mail",
+            "description": "Puts gold in a mail (SetSendMailMoney). Mail addons use it when you type the amount; an addon doing it on its own can empty your gold."
+          },
+          "give_gold": {
+            "title": "Hands over gold",
+            "description": "Picks up your gold or adds it to a trade (PickupPlayerMoney, AddTradeMoney). It is rarely needed outside an action of yours."
+          },
+          "guild_bank_withdraw": {
+            "title": "Withdraws guild bank gold",
+            "description": "Takes gold from the guild bank (WithdrawGuildBankMoney). Check that it only happens when you ask."
+          },
+          "auto_confirm": {
+            "title": "Confirms dialogs for you",
+            "description": "Clicks the accept button of a confirmation window or answers the delete item dialog. This can skip the confirmations that protect your items."
+          },
+          "guild_control": {
+            "title": "Manages the guild",
+            "description": "Removes, demotes, changes the leader of or disbands the guild. It is normal in commands such as /gkick; check that it does not act on its own."
+          },
+          "accept_trade": {
+            "title": "Accepts trades",
+            "description": "Clicks accept in the trade window. Some addons use it to speed up trades you check."
+          },
+          "send_mail": {
+            "title": "Sends mail",
+            "description": "Sends mail. It is expected in mail addons; check who it sends to and what if you do not use one."
+          },
+          "dynamic_code": {
+            "title": "Runs generated code",
+            "description": "Creates and runs code while the game runs (loadstring or RunScript). It is common in libraries such as Ace3 and in WeakAuras."
+          },
+          "remote_code": {
+            "title": "Runs code received from other players",
+            "description": "Runs code created while the game runs in a file that also receives messages from other players (addon messages or whispers). ElvUI shares profiles this way, but it is also how an addon can be controlled remotely."
+          },
+          "logout": {
+            "title": "Logs out or quits the game",
+            "description": "Calls Logout or Quit. It is usually a button or an option of yours."
+          },
+          "auction": {
+            "title": "Uses the auction house",
+            "description": "Posts items or bids. It is expected in auction addons."
+          },
+          "environment": {
+            "title": "Changes function environments",
+            "description": "Uses setfenv to isolate or change the environment of other functions. Custom code systems use it."
+          },
+          "obfuscated": {
+            "title": "Packed or obfuscated code",
+            "description": "Contains encoded text or huge strings without spaces. Sometimes it is compressed data; it is also a way to hide what the code does."
+          },
+          "toc_missing": {
+            "title": "Missing .toc",
+            "description": "The folder has no .toc with its own name, so the game does not load it as an addon."
+          },
+          "toc_missing_file": {
+            "title": "Files missing from the .toc",
+            "description": "The .toc lists files that are not in the folder. The addon may fail or half work."
+          },
+          "toc_no_interface": {
+            "title": "No interface version",
+            "description": "The .toc does not say which game version it was made for (## Interface)."
+          },
+          "missing_dependency": {
+            "title": "Missing dependencies",
+            "description": "It needs addons that are not installed."
+          },
+          "outdated": {
+            "title": "Made for another version",
+            "description": "Its interface version differs from the game. It may still work with \"Load out of date AddOns\"."
+          }
+        }
+      }
     },
     "window": {
       "minimize": "Minimize",
@@ -634,7 +731,8 @@
     "checkingResources": "Checking the launcher media…",
     "downloadingResources": "Downloading the launcher media… {done} of {total}",
     "speed": "{size} of {total} · {speed}",
-    "checkingUpdate": "Looking for launcher updates…"
+    "checkingUpdate": "Looking for launcher updates…",
+    "checkingAddons": "Checking the addons of {name}"
   },
   "session": {
     "phase": {
