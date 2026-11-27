@@ -17,3 +17,6 @@ pub const ACCOUNTS_CHANGED: &str = "accounts://changed";
 
 /// Progress of the media downloaded from the assets CDN during the boot.
 pub const RESOURCES_PROGRESS: &str = "resources://progress";
+
+/// Progress of the launcher update download.
+pub const UPDATE_PROGRESS: &str = "update://progress";
