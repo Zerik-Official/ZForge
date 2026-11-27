@@ -19,6 +19,7 @@ use crate::domain::app_config::AutostartMode;
 use crate::domain::shortcut::AUTOSTART_ARG;
 use crate::paths::AppPaths;
 use crate::services::accounts;
+use crate::services::addon_audit::AddonAuditor;
 use crate::services::notifications::NotificationService;
 use crate::services::presence::PresenceService;
 use crate::services::presence::assets::PresenceAssets;
@@ -203,6 +204,8 @@ pub fn run() -> tauri::Result<()> {
             commands::addons::install_addons,
             commands::addons::delete_addon,
             commands::addons::open_addons_folder,
+            commands::addons::get_addon_audit,
+            commands::addons::audit_addons,
             commands::themes::list_themes,
             commands::themes::get_active_theme,
             commands::themes::import_theme,
@@ -220,6 +223,7 @@ pub fn run() -> tauri::Result<()> {
                 tools = %paths.tools_dir().display(),
                 "ZForge host started"
             );
+            let auditor = AddonAuditor::new(paths.addon_audit_file());
             let config_store = AppConfigStore::new(paths.config_file());
             let startup_config = config_store.get().unwrap_or_default();
             app.manage(config_store);
@@ -231,6 +235,7 @@ pub fn run() -> tauri::Result<()> {
             app.manage(PresenceAssets::default());
             app.manage(PendingUpdate::default());
             app.manage(BootState::default());
+            app.manage(auditor);
             let startup_state = StartupState::from_args(std::env::args());
             let start_in_tray = StartupState::started_by_autostart()
                 && startup_config.autostart_mode == AutostartMode::Tray;
