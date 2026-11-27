@@ -64,6 +64,8 @@ export interface ThemeManifest {
   controls: ThemeControls;
   /** Layouts by settings category id. */
   layouts: Record<string, ThemeLayout>;
+  /** Absolute paths of files that replace parts of the boot animation monolith. */
+  boot: { model: string | null; albedo: string | null; mask: string | null };
 }
 
 /** Why a theme cannot be used, with the field, file or position concerned. */
