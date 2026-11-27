@@ -76,4 +76,9 @@ impl AppPaths {
     pub fn resources_dir(&self) -> PathBuf {
         self.root.join("resources")
     }
+
+    /// Icons generated for the desktop shortcuts of the games.
+    pub fn shortcut_icons_dir(&self) -> PathBuf {
+        self.root.join("shortcuts")
+    }
 }
