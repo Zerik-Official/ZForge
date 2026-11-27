@@ -48,6 +48,19 @@ pub struct AppConfig {
     pub presence: PresenceOptions,
     /// Hashes of SDK binaries the user chose to use although they differ from the release.
     pub trusted_sdk: Option<String>,
+    /// How the launcher appears when Windows starts it at sign-in.
+    pub autostart_mode: AutostartMode,
+}
+
+/// How the launcher appears when Windows starts it at sign-in.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AutostartMode {
+    /// Open the window.
+    #[default]
+    Window,
+    /// Start hidden, with only the icon in the notification area.
+    Tray,
 }
 
 /// What the launcher window does when a game starts.
@@ -197,6 +210,8 @@ pub struct AppConfigPatch {
     /// New trusted SDK hashes; `Some(None)` clears them.
     #[serde(deserialize_with = "present")]
     pub trusted_sdk: Option<Option<String>>,
+    /// New way to appear when started with Windows.
+    pub autostart_mode: Option<AutostartMode>,
 }
 
 /// Mark a field as present (including an explicit `null`).
@@ -262,6 +277,9 @@ impl AppConfig {
         if let Some(trusted_sdk) = patch.trusted_sdk {
             self.trusted_sdk = trusted_sdk;
         }
+        if let Some(autostart_mode) = patch.autostart_mode {
+            self.autostart_mode = autostart_mode;
+        }
     }
 }
 
@@ -290,6 +308,7 @@ impl Default for AppConfig {
             restore_after_game: true,
             presence: PresenceOptions::default(),
             trusted_sdk: None,
+            autostart_mode: AutostartMode::Window,
         }
     }
 }
