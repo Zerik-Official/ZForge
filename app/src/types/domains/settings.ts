@@ -21,7 +21,12 @@ export interface AppConfig {
   restore_after_game: boolean;
   /** What Discord Rich Presence reveals about the game. */
   presence: PresenceOptions;
+  /** How the launcher appears when Windows starts it at sign-in. */
+  autostart_mode: AutostartMode;
 }
+
+/** How the launcher appears when Windows starts it at sign-in. */
+export type AutostartMode = "window" | "tray";
 
 /** What the launcher window does when a game starts. */
 export type LaunchBehavior = "keep" | "minimize" | "tray";
