@@ -3,6 +3,7 @@ import type { BootStep } from "@/hooks/useBoot";
 import { t } from "@/locales/i18n";
 import type { ResourcesProgress } from "@/types/domains/boot";
 import { formatBytes, formatSpeed } from "@/utils/formatters";
+import { BuildCorners } from "./BuildStamp";
 import { RuneLoader } from "./RuneLoader";
 
 /** Time the finished rune stays on screen so the central sigil can be drawn. */
@@ -110,6 +111,7 @@ export function SplashScreen({ step, bootDone, onDone, download = null }: Splash
         <p className="text-[12px] text-(--muted) tabular-nums">{Math.round(bootDone ? 100 : step.percent)} %</p>
       </div>
       {download ? <DownloadMeter download={download} /> : null}
+      <BuildCorners />
     </div>
   );
 }
