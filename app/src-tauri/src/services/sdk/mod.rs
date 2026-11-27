@@ -11,6 +11,7 @@ pub mod capabilities;
 pub mod events;
 pub mod installation;
 pub mod installer;
+pub mod integrity;
 pub mod manager;
 mod pipe;
 pub mod release;
