@@ -25,6 +25,7 @@ use crate::services::sdk::release::ReleaseClient;
 use crate::services::session::GameSession;
 use crate::services::settings_schema::SchemaRegistry;
 use crate::services::tray;
+use crate::services::updater::PendingUpdate;
 use crate::storage::Database;
 use crate::storage::app_config::AppConfigStore;
 
@@ -118,6 +119,7 @@ pub fn run() -> tauri::Result<()> {
         .plugin(logging::plugin())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
             commands::accounts::list_accounts,
             commands::accounts::save_account,
@@ -140,6 +142,7 @@ pub fn run() -> tauri::Result<()> {
             commands::sdk::install_sdk,
             commands::sdk::check_sdk_update,
             commands::sdk::get_sdk_license,
+            commands::sdk::trust_sdk,
             commands::sdk::open_external_url,
             commands::servers::list_servers,
             commands::servers::save_custom_server,
@@ -150,6 +153,7 @@ pub fn run() -> tauri::Result<()> {
             commands::presence::preview_presence,
             commands::presence::get_presence_assets,
             commands::tray::set_tray_strings,
+            commands::updater::install_update,
             commands::notifications::set_notification_strings,
             commands::settings::get_settings_schema,
             commands::settings::list_settings_versions,
@@ -192,6 +196,7 @@ pub fn run() -> tauri::Result<()> {
             app.manage(ReleaseClient::new()?);
             app.manage(SdkInstaller::default());
             app.manage(PresenceAssets::default());
+            app.manage(PendingUpdate::default());
             app.manage(BootState::default());
             let session = GameSession::new();
             forward_session_changes(app.handle(), &session);

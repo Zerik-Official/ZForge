@@ -15,6 +15,8 @@ export interface SdkStatus {
   latest_url: string | null;
   update_available: boolean;
   installing: boolean;
+  /** Whether the installed binaries are the published ones; null without a valid SDK. */
+  integrity: SdkIntegrity | null;
 }
 
 export interface SdkDownloadProgress {
@@ -37,3 +39,10 @@ export interface SdkLatestInfo {
   browser_download_url: string;
   size: number | null;
 }
+
+/** Whether the installed SDK version and hashes match its GitHub release. */
+export type SdkIntegrity =
+  | { state: "verified" }
+  | { state: "trusted"; files: string[] }
+  | { state: "mismatch"; files: string[]; unknown_version: boolean }
+  | { state: "unknown" };

@@ -46,6 +46,8 @@ pub struct AppConfig {
     pub restore_after_game: bool,
     /// What Discord Rich Presence reveals about the game.
     pub presence: PresenceOptions,
+    /// Hashes of SDK binaries the user chose to use although they differ from the release.
+    pub trusted_sdk: Option<String>,
 }
 
 /// What the launcher window does when a game starts.
@@ -192,6 +194,9 @@ pub struct AppConfigPatch {
     pub restore_after_game: Option<bool>,
     /// New Rich Presence options.
     pub presence: Option<PresenceOptions>,
+    /// New trusted SDK hashes; `Some(None)` clears them.
+    #[serde(deserialize_with = "present")]
+    pub trusted_sdk: Option<Option<String>>,
 }
 
 /// Mark a field as present (including an explicit `null`).
@@ -254,6 +259,9 @@ impl AppConfig {
         if let Some(presence) = patch.presence {
             self.presence = presence;
         }
+        if let Some(trusted_sdk) = patch.trusted_sdk {
+            self.trusted_sdk = trusted_sdk;
+        }
     }
 }
 
@@ -281,6 +289,7 @@ impl Default for AppConfig {
             launch_behavior: LaunchBehavior::Keep,
             restore_after_game: true,
             presence: PresenceOptions::default(),
+            trusted_sdk: None,
         }
     }
 }

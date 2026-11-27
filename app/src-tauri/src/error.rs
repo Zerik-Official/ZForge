@@ -146,6 +146,14 @@ pub enum AppError {
     /// An addon archive has too many files or is too large once extracted.
     #[error("the addon archive is too large")]
     AddonArchiveTooLarge,
+
+    /// The installed SDK differs from its published release and the user has not accepted it.
+    #[error("the installed SDK does not match its published release")]
+    SdkIntegrityMismatch,
+
+    /// The launcher update could not be downloaded, verified or installed.
+    #[error("launcher update failed: {0}")]
+    UpdateFailed(String),
 }
 
 impl AppError {
@@ -181,6 +189,8 @@ impl AppError {
             Self::AddonNameInvalid(_) => "addon_name_invalid",
             Self::AddonArchiveEmpty => "addon_archive_empty",
             Self::AddonArchiveTooLarge => "addon_archive_too_large",
+            Self::UpdateFailed(_) => "update_failed",
+            Self::SdkIntegrityMismatch => "sdk_integrity_mismatch",
         }
     }
 }

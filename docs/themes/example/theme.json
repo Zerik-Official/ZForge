@@ -5,7 +5,7 @@
   "author": "Zerik",
   "version": "1.0.0",
   "description": "Gold and dark brown colors with the Video settings laid out in panels.",
-  "requires": ">=0.1.0",
+  "requires": ">=0.0.1",
   "colors": {
     "bg": "#0b0806",
     "bg-soft": "#120d09",
@@ -17,6 +17,7 @@
     "primary": "#c8a24a",
     "primary-hover": "#e0bb5c",
     "primary-active": "#a8852f",
+    "on-primary": "#1a1408",
     "primary-dim": "rgba(200, 162, 74, 0.16)",
     "primary-soft": "rgba(200, 162, 74, 0.08)",
     "primary-glow": "rgba(200, 162, 74, 0.35)",

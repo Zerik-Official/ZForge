@@ -88,7 +88,14 @@ const LOGIN_ERROR_CODES: &[&str] = &[
     "not_on_character_select_screen",
     "character_not_found",
     "enter_world_timeout",
+    "returned_to_character_list",
 ];
+
+/// SDK reasons whose code is shorter than the reason itself.
+const LOGIN_ERROR_ALIASES: &[(&str, &str)] = &[(
+    "the_game_returned_to_the_character_list_after_entering_the_world",
+    "returned_to_character_list",
+)];
 
 /// WoW UI events that trigger an immediate state refresh.
 const WATCHED_EVENTS: &[&str] = &[
@@ -318,6 +325,10 @@ fn login_error_code(error: &AppError) -> String {
     match error {
         AppError::SdkRpc { message, .. } => {
             let code = message.trim().to_ascii_lowercase().replace(' ', "_");
+            let code = LOGIN_ERROR_ALIASES
+                .iter()
+                .find(|(reason, _)| *reason == code)
+                .map_or(code, |(_, alias)| (*alias).to_owned());
             if LOGIN_ERROR_CODES.contains(&code.as_str()) {
                 code
             } else {
@@ -1188,6 +1199,12 @@ mod tests {
             "character_not_found"
         );
         assert_eq!(login_error_code(&rpc("something new")), "unknown_error");
+        assert_eq!(
+            login_error_code(&rpc(
+                "the game returned to the character list after entering the world"
+            )),
+            "returned_to_character_list"
+        );
         assert_eq!(
             login_error_code(&AppError::SdkUnavailable),
             "sdk_unavailable"

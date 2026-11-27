@@ -164,6 +164,7 @@ mod tests {
             latest_url: None,
             update_available: false,
             installing: false,
+            integrity: None,
         }
     }
 

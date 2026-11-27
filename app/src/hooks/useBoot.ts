@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 import { t } from "@/locales/i18n";
 import { bootApi } from "@/services/api";
 import { onBootProgress, onResourcesProgress, subscribe } from "@/services/api/events";
-import type { ResourcesProgress } from "@/types/domains/boot";
+import type { ResourcesProgress, UpdateInfo } from "@/types/domains/boot";
 import type { ConfigConflict } from "@/types/domains/settings";
 
 export interface BootStep {
@@ -24,6 +24,8 @@ interface UseBootResult {
   done: boolean;
   /** Download of the missing resources, while it runs. */
   download: ResourcesProgress | null;
+  /** A newer launcher version found during the boot. */
+  update: UpdateInfo | null;
 }
 
 function clampPercent(percent: number): number {
@@ -37,6 +39,7 @@ export function useBoot(onConflicts: (conflicts: ConfigConflict[]) => void): Use
   const [step, setStep] = useState<BootStep>(() => ({ message: t("boot.connecting"), percent: 0 }));
   const [done, setDone] = useState(false);
   const [download, setDownload] = useState<ResourcesProgress | null>(null);
+  const [update, setUpdate] = useState<UpdateInfo | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -59,6 +62,7 @@ export function useBoot(onConflicts: (conflicts: ConfigConflict[]) => void): Use
         if (cancelled) return;
         setStep({ message: t("boot.ready"), percent: 100 });
         onConflicts(report.conflicts);
+        setUpdate(report.update);
       })
       .catch((error: unknown) => {
         if (cancelled) return;
@@ -76,5 +80,5 @@ export function useBoot(onConflicts: (conflicts: ConfigConflict[]) => void): Use
     };
   }, [onConflicts]);
 
-  return { step, done, download: done ? null : download };
+  return { step, done, download: done ? null : download, update };
 }

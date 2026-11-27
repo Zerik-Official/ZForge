@@ -58,7 +58,9 @@
         "addon_name_invalid": "That name cannot be used as a folder name.",
         "addon_archive_empty": "The zip has no addon: no folder contains a .toc file with its own name.",
         "addon_archive_too_large": "The zip is too large or has too many files.",
-        "sdk_busy": "The game did not answer the SDK in time. Try again in a moment."
+        "sdk_busy": "The game did not answer the SDK in time. Try again in a moment.",
+        "update_failed": "The update could not be installed. Try again later.",
+        "sdk_integrity_mismatch": "The installed SDK does not match its published release."
       }
     },
     "configConflict": {
@@ -219,7 +221,28 @@
         },
         "autoUpdate": "Update the SDK automatically",
         "autoUpdateDescription": "When enabled, the launcher checks GitHub at startup, downloads a newer SDK if there is one and repairs a damaged one.",
-        "featuresTitle": "What the SDK enables"
+        "featuresTitle": "What the SDK enables",
+        "integrity": {
+          "trust": "Use these files",
+          "reinstall": "Reinstall",
+          "unknownVersion": "The installed version is not a published release of the SDK.",
+          "verified": {
+            "title": "Verified files",
+            "description": "The SDK and the injector match the published release of this version."
+          },
+          "trusted": {
+            "title": "Files you chose to use",
+            "description": "They differ from the published release ({files}), but you chose to use them."
+          },
+          "mismatch": {
+            "title": "Files that differ from the release",
+            "description": "{files} do not match the published release of this version. They may have been modified or damaged."
+          },
+          "unknown": {
+            "title": "Files not verified",
+            "description": "The published release could not be read to compare the files. They are checked again when there is a connection."
+          }
+        }
       },
       "richPresence": {
         "title": "Rich Presence",
@@ -570,7 +593,8 @@
     "failed": "Startup finished with errors.",
     "checkingResources": "Checking the launcher media…",
     "downloadingResources": "Downloading the launcher media… {done} of {total}",
-    "speed": "{size} of {total} · {speed}"
+    "speed": "{size} of {total} · {speed}",
+    "checkingUpdate": "Looking for launcher updates…"
   },
   "session": {
     "phase": {
@@ -614,7 +638,8 @@
       "character_not_found": "That character does not exist on the realm.",
       "enter_world_timeout": "The world took too long to load.",
       "sdk_unavailable": "The SDK did not respond while logging in.",
-      "unknown_error": "The automatic login failed."
+      "unknown_error": "The automatic login failed.",
+      "returned_to_character_list": "The character went back to the character list three times after entering the world."
     }
   },
   "capabilities": {
@@ -847,10 +872,24 @@
       "pickAccount": "Choose an account to log in",
       "searchCharacter": "Search by name or class",
       "noCharacterMatches": "No character matches"
+    },
+    "integrity": {
+      "title": "This SDK is not the published one",
+      "description": "The installed SDK files do not match the GitHub release of their version: they may have been modified or damaged. Use them only if you trust where they came from, or reinstall the SDK in Settings › SDK.",
+      "useAnyway": "Use it anyway"
     }
   },
   "tray": {
     "open": "Open ZForge",
     "quit": "Quit"
+  },
+  "update": {
+    "title": "ZForge {version} is available",
+    "subtitle": "You have version {current}.",
+    "noNotes": "This version has no notes.",
+    "downloading": "Downloading the update…",
+    "install": "Update and restart",
+    "installing": "Updating…",
+    "later": "Later"
   }
 }

@@ -18,4 +18,5 @@ pub mod settings_schema;
 pub mod system;
 pub mod themes;
 pub mod tray;
+pub mod updater;
 pub mod wtf;
