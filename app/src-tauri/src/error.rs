@@ -154,6 +154,14 @@ pub enum AppError {
     /// The launcher update could not be downloaded, verified or installed.
     #[error("launcher update failed: {0}")]
     UpdateFailed(String),
+
+    /// The desktop shortcut could not be written.
+    #[error("could not create the shortcut: {0}")]
+    ShortcutFailed(String),
+
+    /// Starting with Windows could not be turned on or off.
+    #[error("could not change starting with Windows: {0}")]
+    AutostartFailed(String),
 }
 
 impl AppError {
@@ -191,6 +199,8 @@ impl AppError {
             Self::AddonArchiveTooLarge => "addon_archive_too_large",
             Self::UpdateFailed(_) => "update_failed",
             Self::SdkIntegrityMismatch => "sdk_integrity_mismatch",
+            Self::ShortcutFailed(_) => "shortcut_failed",
+            Self::AutostartFailed(_) => "autostart_failed",
         }
     }
 }
