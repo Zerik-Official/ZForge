@@ -7,7 +7,9 @@ import { useSession } from "@/hooks/useSession";
 import { t, useLocale } from "@/locales/i18n";
 import { addonsApi, errorCode } from "@/services/api";
 import { useGamesStore } from "@/store/gamesStore";
-import type { Addon, AddonAccount, AddonTarget } from "@/types/domains/addon";
+import type { Addon, AddonAccount, AddonReport, AddonTarget, GameAudit } from "@/types/domains/addon";
+import { AddonAuditModal } from "./AddonAuditModal";
+import { SEVERITY_STYLE } from "./severity";
 import { SearchSelect, type SearchSelectOption } from "./SearchSelect";
 
 type Filter = "all" | "enabled" | "disabled" | "problems";
@@ -50,8 +52,10 @@ function characterOptions(account: AddonAccount | undefined): SearchSelectOption
   return [{ value: WHOLE_ACCOUNT, label: t("launcher.addons.wholeAccount") }, ...characters];
 }
 
-function hasProblem(addon: Addon): boolean {
-  return addon.outdated || addon.missingDependencies.length > 0;
+/** Whether an addon has a `.toc` problem or something the addon check wants reviewed. */
+function hasProblem(addon: Addon, report: AddonReport | undefined): boolean {
+  const flagged = report?.severity === "warning" || report?.severity === "danger";
+  return addon.outdated || addon.missingDependencies.length > 0 || flagged;
 }
 
 function errorText(error: unknown): string {
@@ -79,6 +83,8 @@ export function AddonsView() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [audit, setAudit] = useState<GameAudit | null>(null);
+  const [inspecting, setInspecting] = useState<Addon | null>(null);
 
   const gameId = games.some((game) => game.id === chosenGameId) ? chosenGameId : (activeId ?? games[0]?.id ?? "");
   const target = useMemo(() => buildTarget(accountName, characterValue), [accountName, characterValue]);
@@ -104,10 +110,26 @@ export function AddonsView() {
     };
   }, [gameId]);
 
+  useEffect(() => {
+    if (!gameId) return;
+    let cancelled = false;
+    addonsApi
+      .getAudit(gameId)
+      .then((result) => {
+        if (!cancelled) setAudit(result);
+      })
+      .catch((e: unknown) => console.error("Could not read the addon check", e));
+    return () => {
+      cancelled = true;
+    };
+  }, [gameId]);
+
   const refresh = useCallback(async () => {
     if (!gameId) return;
     try {
-      setAddons(await addonsApi.listAddons(gameId, target));
+      const [list, checked] = await Promise.all([addonsApi.listAddons(gameId, target), addonsApi.audit(gameId)]);
+      setAddons(list);
+      setAudit(checked);
       setError(null);
     } catch (e) {
       setError(errorText(e));
@@ -137,11 +159,11 @@ export function AddonsView() {
     return (addons ?? []).filter((addon) => {
       if (filter === "enabled" && !addon.enabled) return false;
       if (filter === "disabled" && addon.enabled) return false;
-      if (filter === "problems" && !hasProblem(addon)) return false;
+      if (filter === "problems" && !hasProblem(addon, audit?.addons[addon.folder])) return false;
       if (!needle) return true;
       return [addon.title, addon.folder, addon.author, addon.notes].some((part) => part.toLowerCase().includes(needle));
     });
-  }, [addons, query, filter]);
+  }, [addons, query, filter, audit]);
 
   async function setEnabled(folders: string[], enabled: boolean) {
     if (!target || folders.length === 0) return;
@@ -205,6 +227,7 @@ export function AddonsView() {
   const gameOptions: SelectOption[] = games.map((game) => ({ value: game.id, label: game.name }));
   const filters: Filter[] = ["all", "enabled", "disabled", "problems"];
   const enabledCount = (addons ?? []).filter((addon) => addon.enabled).length;
+  const dangerCount = Object.values(audit?.addons ?? {}).filter((report) => report.severity === "danger").length;
 
   return (
     <div className="flex h-full flex-col gap-4 px-12 pt-12 pb-8">
@@ -272,6 +295,23 @@ export function AddonsView() {
           </div>
         )}
       </div>
+
+      {dangerCount > 0 ? (
+        <Notice
+          tone="danger"
+          icon="fa-solid fa-shield-halved"
+          title={t("launcher.addons.audit.summary", { count: dangerCount })}
+          description={t("launcher.addons.audit.summaryDescription")}
+          action={
+            <button
+              className="ghost-btn shrink-0 rounded-[7px] px-3 py-1.5 text-[12.5px] cursor-pointer"
+              onClick={() => setFilter("problems")}
+            >
+              {t("launcher.addons.audit.show")}
+            </button>
+          }
+        />
+      ) : null}
 
       {gameRunning ? (
         <Notice tone="warning" icon="fa-solid fa-triangle-exclamation" title={t("launcher.addons.gameRunning")} />
@@ -358,6 +398,9 @@ export function AddonsView() {
                       {t("launcher.addons.outdated", { interface: addon.interface ?? "" })}
                     </span>
                   ) : null}
+                  {audit?.addons[addon.folder]?.severity ? (
+                    <AuditBadge report={audit.addons[addon.folder]} onOpen={() => setInspecting(addon)} />
+                  ) : null}
                   {addon.missingDependencies.length > 0 ? (
                     <span className="rounded-md bg-(--danger)/10 px-2 py-0.5 text-[11px] text-(--danger)">
                       {t("launcher.addons.missingDependencies", { names: addon.missingDependencies.join(", ") })}
@@ -380,6 +423,12 @@ export function AddonsView() {
       {notice ? <span className="text-[12.5px] text-(--text-soft)">{notice}</span> : null}
       {error ? <span className="text-[12.5px] text-(--danger)">{error}</span> : null}
 
+      <AddonAuditModal
+        title={inspecting?.title ?? null}
+        report={inspecting ? (audit?.addons[inspecting.folder] ?? null) : null}
+        onClose={() => setInspecting(null)}
+      />
+
       <ConfirmDialog
         open={deleting !== null}
         icon="fa-solid fa-trash"
@@ -392,5 +441,20 @@ export function AddonsView() {
         onCancel={() => setDeleting(null)}
       />
     </div>
+  );
+}
+
+/** Clickable badge with the most serious finding of the addon check. */
+function AuditBadge({ report, onOpen }: { report: AddonReport; onOpen: () => void }) {
+  if (!report.severity) return null;
+  const style = SEVERITY_STYLE[report.severity];
+  return (
+    <button
+      className={`flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-semibold transition-[filter] hover:brightness-125 cursor-pointer ${style.badge}`}
+      onClick={onOpen}
+    >
+      <i className={`${style.icon} text-[10px]`} aria-hidden="true" />
+      {t(`launcher.addons.audit.badge.${report.severity}`, { count: report.findings.length })}
+    </button>
   );
 }
