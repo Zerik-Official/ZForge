@@ -152,7 +152,9 @@
         },
         "about": "Acerca de",
         "version": "Versión",
-        "versionDescription": "Versión del launcher y commit del que se compiló. Pasa el ratón por el commit para ver su fecha y haz clic para abrirlo en GitHub."
+        "versionDescription": "Versión del launcher y commit del que se compiló. Pasa el ratón por el commit para ver su fecha y haz clic para abrirlo en GitHub.",
+        "addonAudit": "Analizar los addons al iniciar",
+        "addonAuditDescription": "Revisa en cada arranque los addons instalados: problemas de sus .toc y código que puede mover tus objetos u oro. Si lo desactivas, Addons no muestra los avisos del análisis."
       },
       "appearance": {
         "title": "Apariencia",
