@@ -475,7 +475,104 @@
       "installed": "Instalados: {names}",
       "deleted": "Se borró {name}",
       "confirmDelete": "Borrar addon",
-      "confirmDeleteDescription": "¿Borrar la carpeta de {name}? Su configuración guardada en WTF se conserva."
+      "confirmDeleteDescription": "¿Borrar la carpeta de {name}? Su configuración guardada en WTF se conserva.",
+      "audit": {
+        "title": "Análisis de {name}",
+        "count": "{count} hallazgos",
+        "times": "{count} veces en el archivo",
+        "severity": {
+          "danger": "Peligro",
+          "warning": "Revisar",
+          "info": "Información"
+        },
+        "badge": {
+          "danger": "Riesgo",
+          "warning": "Revisar",
+          "info": "Análisis"
+        },
+        "summary": "{count} addons pueden mover tus objetos u oro sin avisarte",
+        "summaryDescription": "El análisis encontró código que borra objetos, entrega oro o confirma diálogos por ti. Revisa si lo hacen solo cuando tú lo pides.",
+        "show": "Ver addons",
+        "disclaimer": "El análisis busca patrones conocidos en el código del addon. Muchos tienen usos legítimos, y no puede garantizar que un addon sea seguro: instala addons solo de fuentes de confianza.",
+        "rules": {
+          "delete_items": {
+            "title": "Borra objetos",
+            "description": "Llama a DeleteCursorItem, que destruye el objeto que llevas en el cursor. Es legítimo en opciones como \"borrar objetos grises\" que tú activas; es peligroso si ocurre sin que lo pidas."
+          },
+          "send_gold": {
+            "title": "Envía oro por correo",
+            "description": "Pone oro en un correo (SetSendMailMoney). Los addons de correo lo usan cuando tú escribes la cantidad; un addon que lo haga solo puede vaciarte el oro."
+          },
+          "give_gold": {
+            "title": "Entrega oro",
+            "description": "Coge oro de tu personaje o lo añade a un comercio (PickupPlayerMoney, AddTradeMoney). Rara vez hace falta fuera de una acción tuya."
+          },
+          "guild_bank_withdraw": {
+            "title": "Retira oro del banco de hermandad",
+            "description": "Saca oro del banco de la hermandad (WithdrawGuildBankMoney). Revisa que solo ocurra cuando lo pides."
+          },
+          "auto_confirm": {
+            "title": "Confirma diálogos por ti",
+            "description": "Pulsa el botón de aceptar de una ventana de confirmación o responde al diálogo de borrar objeto. Así se pueden saltar las confirmaciones que protegen tus objetos."
+          },
+          "guild_control": {
+            "title": "Gestiona la hermandad",
+            "description": "Expulsa, degrada, cambia el líder o disuelve la hermandad. Es normal en comandos como /gkick; revisa que no lo haga por su cuenta."
+          },
+          "accept_trade": {
+            "title": "Acepta comercios",
+            "description": "Pulsa aceptar en la ventana de comercio. Algunos addons lo usan para agilizar comercios que tú revisas."
+          },
+          "send_mail": {
+            "title": "Envía correo",
+            "description": "Envía correos. Es lo normal en addons de correo; revisa a quién y qué envía si no usas uno."
+          },
+          "dynamic_code": {
+            "title": "Ejecuta código generado",
+            "description": "Crea y ejecuta código en tiempo de juego (loadstring o RunScript). Es habitual en librerías como Ace3 y en WeakAuras."
+          },
+          "remote_code": {
+            "title": "Ejecuta código recibido de otros jugadores",
+            "description": "Ejecuta código creado en tiempo de juego en un archivo que también recibe mensajes de otros jugadores (addon o susurros). Es como se comparten perfiles en ElvUI, pero también la forma de controlar un addon a distancia."
+          },
+          "logout": {
+            "title": "Desconecta o cierra el juego",
+            "description": "Llama a Logout o Quit. Suele ser un botón o una opción tuya."
+          },
+          "auction": {
+            "title": "Opera en la casa de subastas",
+            "description": "Pone objetos en subasta o puja. Es lo esperado en addons de subastas."
+          },
+          "environment": {
+            "title": "Cambia el entorno de funciones",
+            "description": "Usa setfenv para aislar o modificar el entorno de otras funciones. Lo usan los sistemas de código personalizado."
+          },
+          "obfuscated": {
+            "title": "Código empaquetado u ofuscado",
+            "description": "Contiene texto codificado o cadenas enormes sin espacios. A veces son datos comprimidos; también es una forma de esconder lo que hace el código."
+          },
+          "toc_missing": {
+            "title": "Falta el .toc",
+            "description": "La carpeta no tiene un .toc con su mismo nombre, así que el juego no la carga como addon."
+          },
+          "toc_missing_file": {
+            "title": "Faltan archivos del .toc",
+            "description": "El .toc lista archivos que no están en la carpeta. El addon puede fallar o funcionar a medias."
+          },
+          "toc_no_interface": {
+            "title": "Sin versión de interfaz",
+            "description": "El .toc no indica para qué versión del juego se hizo (## Interface)."
+          },
+          "missing_dependency": {
+            "title": "Faltan dependencias",
+            "description": "Necesita addons que no están instalados."
+          },
+          "outdated": {
+            "title": "Hecho para otra versión",
+            "description": "Su versión de interfaz no coincide con la del juego. Puede funcionar igual si activas \"Cargar addons desactualizados\"."
+          }
+        }
+      }
     },
     "window": {
       "minimize": "Minimizar",
@@ -634,7 +731,8 @@
     "checkingResources": "Comprobando los recursos del launcher…",
     "downloadingResources": "Descargando los recursos del launcher… {done} de {total}",
     "speed": "{size} de {total} · {speed}",
-    "checkingUpdate": "Buscando actualizaciones del launcher…"
+    "checkingUpdate": "Buscando actualizaciones del launcher…",
+    "checkingAddons": "Analizando los addons de {name}"
   },
   "session": {
     "phase": {
