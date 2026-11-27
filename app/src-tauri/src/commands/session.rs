@@ -14,10 +14,13 @@ use crate::services::launcher::{self, LaunchOptions};
 use crate::services::sdk::auth::{self, SessionToken};
 use crate::services::sdk::capabilities::Feature;
 use crate::services::sdk::installation;
+use crate::services::sdk::integrity;
+use crate::services::sdk::release::ReleaseClient;
 use crate::services::session::{GameSession, LaunchMode, ServerTarget, SessionSnapshot};
 use crate::services::settings_schema::SchemaRegistry;
 use crate::services::system;
 use crate::storage::Database;
+use crate::storage::app_config::AppConfigStore;
 
 /// Current game session.
 #[tauri::command]
@@ -36,12 +39,15 @@ pub async fn get_session(session: State<'_, GameSession>) -> AppResult<SessionSn
 /// enters the world with the character; a hidden launch shows the window
 /// once that finished. The choice is remembered for the game.
 #[tauri::command]
+#[allow(clippy::too_many_arguments)]
 pub async fn launch_game<R: Runtime>(
     app: AppHandle<R>,
     database: State<'_, Database>,
     schemas: State<'_, SchemaRegistry>,
     paths: State<'_, AppPaths>,
     session: State<'_, GameSession>,
+    releases: State<'_, ReleaseClient>,
+    config: State<'_, AppConfigStore>,
     game_id: String,
     choice: Option<LaunchChoice>,
 ) -> AppResult<()> {
@@ -108,6 +114,14 @@ pub async fn launch_game<R: Runtime>(
         return Err(AppError::AccountRequiresSdk);
     }
     options.hidden = choice.headless;
+    if let Some(sdk) = &sdk {
+        let trusted = config.get()?.trusted_sdk;
+        let checked =
+            integrity::verify(releases.http(), &paths.tools_dir(), sdk, trusted.as_deref()).await;
+        if checked.needs_confirmation() {
+            return Err(AppError::SdkIntegrityMismatch);
+        }
+    }
 
     match sdk {
         Some(sdk) => {
