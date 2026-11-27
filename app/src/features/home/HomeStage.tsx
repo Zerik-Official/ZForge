@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { accountsApi, api, errorCode } from "@/services/api";
+import { accountsApi, api, errorCode, sdkApi } from "@/services/api";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useGamesStore } from "@/store/gamesStore";
 import { toDisplaySrc } from "@/utils/asset";
 import type { Game } from "@/types/domains/game";
@@ -29,6 +30,7 @@ export function HomeStage({ onGoGames }: HomeStageProps) {
   const session = useSession();
   const [requesting, setRequesting] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [integrityPrompt, setIntegrityPrompt] = useState(false);
   const { accounts } = useAccounts();
   const capabilities = useCapabilities();
   const accountsFeature = featureStatus(capabilities, "accounts");
@@ -80,6 +82,10 @@ export function HomeStage({ onGoGames }: HomeStageProps) {
     try {
       await api.launchGame(active.id, launchChoice);
     } catch (error) {
+      if (errorCode(error) === "sdk_integrity_mismatch") {
+        setIntegrityPrompt(true);
+        return;
+      }
       console.error("Could not launch the game", error);
       setLaunchError({ gameId: active.id, text: t(`common.errors.codes.${errorCode(error)}`) });
     } finally {
@@ -147,6 +153,25 @@ export function HomeStage({ onGoGames }: HomeStageProps) {
       </div>
 
       <GameSettingsModal open={settingsOpen} game={active} onClose={() => setSettingsOpen(false)} />
+      <ConfirmDialog
+        open={integrityPrompt}
+        destructive
+        icon="fa-solid fa-shield-halved"
+        title={t("home.integrity.title")}
+        description={t("home.integrity.description")}
+        confirmLabel={t("home.integrity.useAnyway")}
+        cancelLabel={t("common.cancel")}
+        onCancel={() => setIntegrityPrompt(false)}
+        onConfirm={() => {
+          setIntegrityPrompt(false);
+          sdkApi
+            .trustSdk()
+            .then(() => handlePlay())
+            .catch((error: unknown) =>
+              setLaunchError({ gameId: active.id, text: t(`common.errors.codes.${errorCode(error)}`) }),
+            );
+        }}
+      />
     </div>
   );
 }
