@@ -200,6 +200,22 @@
           "archive_too_large": "The zip is {detail} once extracted (64 MiB at most).",
           "archive_unreadable": "The zip could not be read: {detail}",
           "unreadable": "A file of the theme could not be read: {detail}"
+        },
+        "boot": {
+          "title": "Boot animation",
+          "quality": "Quality",
+          "levels": {
+            "high": "High",
+            "medium": "Medium",
+            "low": "Low",
+            "off": "Off"
+          },
+          "descriptions": {
+            "high": "3D monolith with more rocks and particles, at full resolution on high density screens.",
+            "medium": "3D monolith balanced for most computers.",
+            "low": "3D monolith with less detail at 30 frames per second, for modest computers.",
+            "off": "The rune ring instead of the 3D monolith, for computers without graphics acceleration."
+          }
         }
       },
       "sdk": {
