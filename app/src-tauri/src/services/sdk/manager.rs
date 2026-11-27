@@ -9,6 +9,7 @@ use crate::domain::app_config::AppConfigPatch;
 use crate::error::AppResult;
 use crate::services::sdk::installation::{self, Installation};
 use crate::services::sdk::installer::{DownloadProgress, SdkInstaller};
+use crate::services::sdk::integrity::{self, SdkIntegrity};
 use crate::services::sdk::release::ReleaseClient;
 use crate::services::sdk::{ERROR_SDK_CORRUPTED, version};
 use crate::storage::app_config::AppConfigStore;
@@ -48,6 +49,8 @@ pub struct SdkStatus {
     pub update_available: bool,
     /// An installation is running.
     pub installing: bool,
+    /// Whether the installed binaries are the published ones; `None` without a valid SDK.
+    pub integrity: Option<SdkIntegrity>,
 }
 
 /// Dependencies of every SDK operation.
@@ -80,6 +83,18 @@ impl SdkContext<'_> {
             }
         };
         let valid = found.as_ref().is_some_and(Installation::is_valid);
+        let integrity = match found.as_ref().filter(|found| found.is_valid()) {
+            Some(found) => Some(
+                integrity::verify(
+                    self.releases.http(),
+                    self.tools_dir,
+                    found,
+                    config.trusted_sdk.as_deref(),
+                )
+                .await,
+            ),
+            None => None,
+        };
         let installed = found.is_some();
         let version = found.as_ref().map(|found| found.version.clone());
         let update_available = match (&latest, &version) {
@@ -109,6 +124,7 @@ impl SdkContext<'_> {
             latest_url: latest.map(|latest| latest.browser_download_url),
             update_available,
             installing: self.installer.is_busy(),
+            integrity,
         })
     }
 
