@@ -4,11 +4,14 @@ use serde::Serialize;
 use tauri::{AppHandle, Emitter, Runtime, State};
 use tauri_plugin_opener::OpenerExt;
 
+use crate::domain::app_config::AppConfigPatch;
 use crate::error::{AppError, AppResult};
 use crate::events;
 use crate::paths::AppPaths;
 use crate::services::sdk::capabilities::Capabilities;
+use crate::services::sdk::installation;
 use crate::services::sdk::installer::{DownloadProgress, SdkInstaller};
+use crate::services::sdk::integrity;
 use crate::services::sdk::manager::{SdkContext, SdkStatus};
 use crate::services::sdk::release::{ReleaseClient, SdkRelease};
 use crate::storage::app_config::AppConfigStore;
@@ -114,6 +117,25 @@ pub async fn check_sdk_update(releases: State<'_, ReleaseClient>) -> AppResult<O
             Ok(None)
         }
     }
+}
+
+/// Use the installed SDK binaries although they differ from the published release.
+///
+/// Only these exact files are trusted: any later change asks again.
+#[tauri::command]
+pub async fn trust_sdk(
+    paths: State<'_, AppPaths>,
+    config: State<'_, AppConfigStore>,
+) -> AppResult<()> {
+    let installed =
+        installation::find_valid(&paths.tools_dir())?.ok_or(AppError::SdkUnavailable)?;
+    let fingerprint = integrity::fingerprint(&installed).ok_or(AppError::SdkUnavailable)?;
+    tracing::warn!(version = %installed.version, "The user trusted SDK binaries that differ from the release");
+    config.update(AppConfigPatch {
+        trusted_sdk: Some(Some(fingerprint)),
+        ..AppConfigPatch::default()
+    })?;
+    Ok(())
 }
 
 /// The SDK license text.
