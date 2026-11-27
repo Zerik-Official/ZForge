@@ -152,7 +152,9 @@
         },
         "about": "About",
         "version": "Version",
-        "versionDescription": "Launcher version and the commit it was built from. Hover the commit to see its date and click it to open it on GitHub."
+        "versionDescription": "Launcher version and the commit it was built from. Hover the commit to see its date and click it to open it on GitHub.",
+        "addonAudit": "Check addons on startup",
+        "addonAuditDescription": "On every boot, check the installed addons for .toc problems and code that can move your items or gold. When off, Addons shows no check warnings."
       },
       "appearance": {
         "title": "Appearance",
