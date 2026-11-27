@@ -50,6 +50,8 @@ pub struct AppConfig {
     pub trusted_sdk: Option<String>,
     /// How the launcher appears when Windows starts it at sign-in.
     pub autostart_mode: AutostartMode,
+    /// Whether the boot checks the installed addons for problems and risky code.
+    pub addon_audit: bool,
 }
 
 /// How the launcher appears when Windows starts it at sign-in.
@@ -212,6 +214,8 @@ pub struct AppConfigPatch {
     pub trusted_sdk: Option<Option<String>>,
     /// New way to appear when started with Windows.
     pub autostart_mode: Option<AutostartMode>,
+    /// New addon check flag.
+    pub addon_audit: Option<bool>,
 }
 
 /// Mark a field as present (including an explicit `null`).
@@ -280,6 +284,9 @@ impl AppConfig {
         if let Some(autostart_mode) = patch.autostart_mode {
             self.autostart_mode = autostart_mode;
         }
+        if let Some(addon_audit) = patch.addon_audit {
+            self.addon_audit = addon_audit;
+        }
     }
 }
 
@@ -309,6 +316,7 @@ impl Default for AppConfig {
             presence: PresenceOptions::default(),
             trusted_sdk: None,
             autostart_mode: AutostartMode::Window,
+            addon_audit: true,
         }
     }
 }
