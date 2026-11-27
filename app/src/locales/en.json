@@ -60,7 +60,9 @@
         "addon_archive_too_large": "The zip is too large or has too many files.",
         "sdk_busy": "The game did not answer the SDK in time. Try again in a moment.",
         "update_failed": "The update could not be installed. Try again later.",
-        "sdk_integrity_mismatch": "The installed SDK does not match its published release."
+        "sdk_integrity_mismatch": "The installed SDK does not match its published release.",
+        "shortcut_failed": "The desktop shortcut could not be created.",
+        "autostart_failed": "Starting with Windows could not be changed."
       }
     },
     "configConflict": {
@@ -138,7 +140,19 @@
           "tray": "Hide in the notification area"
         },
         "restoreAfterGame": "Bring the launcher back when the game closes",
-        "restoreAfterGameDescription": "Shows the window again after it was minimized or hidden for the game."
+        "restoreAfterGameDescription": "Shows the window again after it was minimized or hidden for the game.",
+        "startup": "Windows startup",
+        "autostart": "Start with Windows",
+        "autostartDescription": "Open the launcher when you sign in to Windows.",
+        "autostartMode": "When starting with Windows",
+        "autostartModeDescription": "Show the window, or keep the launcher as an icon in the notification area.",
+        "autostartModes": {
+          "window": "Show the window",
+          "tray": "Only in the notification area"
+        },
+        "about": "About",
+        "version": "Version",
+        "versionDescription": "Launcher version and the commit it was built from. Hover the commit to see its date and click it to open it on GitHub."
       },
       "appearance": {
         "title": "Appearance",
@@ -466,6 +480,32 @@
     "window": {
       "minimize": "Minimize",
       "close": "Close"
+    },
+    "build": {
+      "version": "v{version}",
+      "noCommit": "No commit",
+      "commitDate": "Commit from {date}",
+      "commitDateUnknown": "Unknown commit date",
+      "dirty": "Built with uncommitted changes",
+      "openCommit": "Click to see it on GitHub",
+      "commitLabel": "Commit {commit}"
+    },
+    "shortcut": {
+      "title": "Create shortcut",
+      "subtitle": "On the desktop, for {name}",
+      "mode": "When opened",
+      "modes": {
+        "open": "Open the launcher on this game",
+        "launch": "Launch the game"
+      },
+      "modeDescriptions": {
+        "open": "Opens the launcher, or brings it to the front if it is already open, with this game selected on Home.",
+        "launch": "Opens the launcher and launches the game right away, with the last choice for the game or with the account you pick."
+      },
+      "lastChoice": "Last choice for the game",
+      "created": "Shortcut created on the desktop",
+      "create": "Create shortcut",
+      "createAgain": "Create again"
     }
   },
   "addGame": {
