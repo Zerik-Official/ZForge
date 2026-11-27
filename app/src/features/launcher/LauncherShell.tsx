@@ -6,6 +6,11 @@ import { GamesView } from "@/features/games/GamesView";
 import { AddonsView } from "@/features/addons/AddonsView";
 import { LauncherSettingsView, type LauncherSettingsTab } from "@/features/launcher-settings/LauncherSettingsView";
 import { t, useLocale } from "@/locales/i18n";
+import { systemApi } from "@/services/api";
+import { onShortcutAction, subscribe } from "@/services/api/events";
+import { useGamesStore } from "@/store/gamesStore";
+import { useLaunchRequestStore } from "@/store/launchRequestStore";
+import type { ShortcutAction } from "@/types/domains/system";
 import "@/styles/launcher.css";
 
 const SIDEBAR_KEY = "zforge.sidebar";
@@ -56,6 +61,27 @@ export function LauncherShell() {
       return next;
     });
   }, []);
+
+  const setActive = useGamesStore((state) => state.setActive);
+  const requestLaunch = useLaunchRequestStore((state) => state.requestLaunch);
+
+  // A game shortcut selects its game on Home and, when it says so, launches it: the one the
+  // launcher was started with, and any opened later while it runs.
+  useEffect(() => {
+    function follow(action: ShortcutAction) {
+      setView("home");
+      void setActive(action.game_id);
+      if (action.launch) requestLaunch(action);
+    }
+    const unsubscribe = subscribe(onShortcutAction(follow));
+    systemApi
+      .takeShortcutAction()
+      .then((action) => {
+        if (action) follow(action);
+      })
+      .catch((error: unknown) => console.error("Could not read the shortcut action", error));
+    return unsubscribe;
+  }, [setActive, requestLaunch]);
 
   useEffect(() => {
     function handleKey(event: KeyboardEvent) {
