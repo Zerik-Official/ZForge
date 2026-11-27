@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useGamesStore } from "@/store/gamesStore";
 import type { Game } from "@/types/domains/game";
 import { GameCard } from "./GameCard";
+import { ShortcutModal } from "./ShortcutModal";
 import { AddGameModal } from "./AddGameModal";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { t, useLocale } from "@/locales/i18n";
@@ -17,6 +18,7 @@ export function GamesView() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Game | null>(null);
   const [pendingRemove, setPendingRemove] = useState<Game | null>(null);
+  const [shortcutGame, setShortcutGame] = useState<Game | null>(null);
 
   /** Open the modal to create a new game. */
   function openCreate() {
@@ -58,7 +60,7 @@ export function GamesView() {
       ) : (
         <div className="flex flex-wrap gap-6">
           {games.map((game) => (
-            <GameCard key={game.id} game={game} onEdit={openEdit} onRemove={handleRemove} />
+            <GameCard key={game.id} game={game} onEdit={openEdit} onRemove={handleRemove} onShortcut={setShortcutGame} />
           ))}
           <button
             className="flex h-53.75 w-37 flex-col items-center justify-center gap-2 rounded-[10px] border border-dashed border-(--border-strong) text-(--muted) transition-colors hover:border-(--muted-2) hover:bg-(--bg-card) hover:text-(--text) cursor-pointer"
@@ -71,6 +73,8 @@ export function GamesView() {
       )}
 
       <AddGameModal open={modalOpen} initial={editing} onClose={() => setModalOpen(false)} />
+
+      {shortcutGame ? <ShortcutModal key={shortcutGame.id} game={shortcutGame} onClose={() => setShortcutGame(null)} /> : null}
 
       <ConfirmDialog
         open={pendingRemove !== null}
