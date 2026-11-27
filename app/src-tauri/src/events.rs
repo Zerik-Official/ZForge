@@ -20,3 +20,7 @@ pub const RESOURCES_PROGRESS: &str = "resources://progress";
 
 /// Progress of the launcher update download.
 pub const UPDATE_PROGRESS: &str = "update://progress";
+
+/// A game shortcut was opened while the launcher was running; payload:
+/// [`crate::domain::shortcut::ShortcutAction`].
+pub const SHORTCUT_ACTION: &str = "shortcut://action";

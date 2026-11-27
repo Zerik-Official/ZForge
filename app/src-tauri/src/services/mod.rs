@@ -15,6 +15,8 @@ pub mod sdk;
 pub mod servers;
 pub mod session;
 pub mod settings_schema;
+pub mod shortcuts;
+pub mod startup;
 pub mod system;
 pub mod themes;
 pub mod tray;

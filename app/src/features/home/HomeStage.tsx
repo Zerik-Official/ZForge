@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 import { accountsApi, api, errorCode, sdkApi } from "@/services/api";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useGamesStore } from "@/store/gamesStore";
+import { useLaunchRequestStore } from "@/store/launchRequestStore";
 import { toDisplaySrc } from "@/utils/asset";
 import type { Game } from "@/types/domains/game";
 import { GameSettingsModal } from "@/features/game-settings/GameSettingsModal";
@@ -31,6 +32,7 @@ export function HomeStage({ onGoGames }: HomeStageProps) {
   const [requesting, setRequesting] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [integrityPrompt, setIntegrityPrompt] = useState(false);
+  const [lastAttempt, setLastAttempt] = useState<{ gameId: string; choice: LaunchChoice } | null>(null);
   const { accounts } = useAccounts();
   const capabilities = useCapabilities();
   const accountsFeature = featureStatus(capabilities, "accounts");
@@ -54,6 +56,58 @@ export function HomeStage({ onGoGames }: HomeStageProps) {
     };
   }, [activeGameId]);
 
+  /** Keep the account only when it exists and the SDK can log in with it. */
+  function usableChoice(wanted: LaunchChoice): LaunchChoice {
+    const known = accounts?.some((account) => account.id === wanted.account_id) ?? false;
+    return known && accountsFeature?.available !== false
+      ? { ...wanted, headless: wanted.headless && hiddenStartFeature?.available !== false }
+      : NO_CHOICE;
+  }
+
+  async function startGame(gameId: string, wanted: LaunchChoice) {
+    setLastAttempt({ gameId, choice: wanted });
+    setRequesting(true);
+    setLaunchError(null);
+    try {
+      await api.launchGame(gameId, wanted);
+    } catch (error) {
+      if (errorCode(error) === "sdk_integrity_mismatch") {
+        setIntegrityPrompt(true);
+        return;
+      }
+      console.error("Could not launch the game", error);
+      setLaunchError({ gameId, text: t(`common.errors.codes.${errorCode(error)}`) });
+    } finally {
+      setRequesting(false);
+    }
+  }
+
+  // A shortcut that launches its game: start it once the game is selected and the
+  // accounts and SDK features are known, with the shortcut account or the saved choice.
+  const launchRequest = useLaunchRequestStore((state) => state.request);
+  const takeLaunchRequest = useLaunchRequestStore((state) => state.take);
+  const runLaunchRequest = useEffectEvent(async () => {
+    const request = takeLaunchRequest();
+    if (!request) return;
+    if (session !== null && session.phase !== "idle") return;
+    const wanted: LaunchChoice = request.account_id
+      ? {
+          account_id: request.account_id,
+          realm: request.realm ?? "",
+          character: request.character ?? "",
+          headless: request.headless,
+        }
+      : await accountsApi.getLaunchChoice(request.game_id).catch(() => NO_CHOICE);
+    await startGame(request.game_id, usableChoice(wanted));
+  });
+  const launchReady =
+    launchRequest !== null && activeGameId === launchRequest.game_id && accounts !== null && capabilities !== null;
+  useEffect(() => {
+    if (!launchReady) return;
+    const timer = setTimeout(() => void runLaunchRequest(), 0);
+    return () => clearTimeout(timer);
+  }, [launchReady]);
+
   if (games.length === 0) {
     return <EmptyState onAdd={onGoGames} />;
   }
@@ -63,11 +117,7 @@ export function HomeStage({ onGoGames }: HomeStageProps) {
   const sessionActive = session !== null && session.phase !== "idle";
   const launching = requesting || sessionActive;
 
-  const knownAccount = accounts?.some((account) => account.id === choice.account_id) ?? false;
-  const launchChoice: LaunchChoice =
-    knownAccount && accountsFeature?.available !== false
-      ? { ...choice, headless: choice.headless && hiddenStartFeature?.available !== false }
-      : NO_CHOICE;
+  const launchChoice = usableChoice(choice);
   const loginError = session?.game_id === active.id ? session.login_error : null;
   const errorText = loginError
     ? t(`session.loginErrors.${loginError}`)
@@ -77,20 +127,7 @@ export function HomeStage({ onGoGames }: HomeStageProps) {
 
   async function handlePlay() {
     if (launching) return;
-    setRequesting(true);
-    setLaunchError(null);
-    try {
-      await api.launchGame(active.id, launchChoice);
-    } catch (error) {
-      if (errorCode(error) === "sdk_integrity_mismatch") {
-        setIntegrityPrompt(true);
-        return;
-      }
-      console.error("Could not launch the game", error);
-      setLaunchError({ gameId: active.id, text: t(`common.errors.codes.${errorCode(error)}`) });
-    } finally {
-      setRequesting(false);
-    }
+    await startGame(active.id, launchChoice);
   }
 
   const dock = games.filter((game) => game.show_on_main);
@@ -166,7 +203,7 @@ export function HomeStage({ onGoGames }: HomeStageProps) {
           setIntegrityPrompt(false);
           sdkApi
             .trustSdk()
-            .then(() => handlePlay())
+            .then(() => (lastAttempt ? startGame(lastAttempt.gameId, lastAttempt.choice) : handlePlay()))
             .catch((error: unknown) =>
               setLaunchError({ gameId: active.id, text: t(`common.errors.codes.${errorCode(error)}`) }),
             );

@@ -15,6 +15,8 @@ use tokio::sync::broadcast::error::RecvError;
 
 use crate::commands::boot::BootState;
 use crate::config::DISCORD_CLIENT_ID;
+use crate::domain::app_config::AutostartMode;
+use crate::domain::shortcut::AUTOSTART_ARG;
 use crate::paths::AppPaths;
 use crate::services::accounts;
 use crate::services::notifications::NotificationService;
@@ -24,7 +26,8 @@ use crate::services::sdk::installer::SdkInstaller;
 use crate::services::sdk::release::ReleaseClient;
 use crate::services::session::GameSession;
 use crate::services::settings_schema::SchemaRegistry;
-use crate::services::tray;
+use crate::services::startup::{self, StartupState};
+use crate::services::tray::{self, TrayStrings};
 use crate::services::updater::PendingUpdate;
 use crate::storage::Database;
 use crate::storage::app_config::AppConfigStore;
@@ -108,6 +111,24 @@ fn closes_to_tray<R: Runtime>(app: &AppHandle<R>) -> bool {
     enabled && tray::exists(app)
 }
 
+/// Show the window, or keep it hidden with only the tray icon when Windows started the
+/// launcher in the notification area. The window starts hidden (`tauri.conf.json`).
+fn show_or_tray<R: Runtime>(app: &AppHandle<R>, in_tray: bool) {
+    if in_tray {
+        let strings = TrayStrings {
+            open: "Open".to_owned(),
+            quit: "Quit".to_owned(),
+        };
+        match tray::update(app, &strings, true) {
+            Ok(()) => return,
+            Err(error) => {
+                tracing::warn!(%error, "Could not create the tray icon; showing the window")
+            }
+        }
+    }
+    tray::show_main_window(app);
+}
+
 /// Build and run the Tauri application until the main window closes.
 ///
 /// # Errors
@@ -116,6 +137,13 @@ fn closes_to_tray<R: Runtime>(app: &AppHandle<R>) -> bool {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() -> tauri::Result<()> {
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            startup::on_second_instance(app, &args);
+        }))
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            Some(vec![AUTOSTART_ARG]),
+        ))
         .plugin(logging::plugin())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
@@ -164,6 +192,11 @@ pub fn run() -> tauri::Result<()> {
             commands::settings::pull_game_settings,
             commands::system::get_display_resolution,
             commands::system::list_audio_devices,
+            commands::system::get_build_info,
+            commands::startup::get_autostart,
+            commands::startup::set_autostart,
+            commands::startup::take_shortcut_action,
+            commands::startup::create_game_shortcut,
             commands::addons::list_addon_accounts,
             commands::addons::list_addons,
             commands::addons::set_addons_enabled,
@@ -198,6 +231,14 @@ pub fn run() -> tauri::Result<()> {
             app.manage(PresenceAssets::default());
             app.manage(PendingUpdate::default());
             app.manage(BootState::default());
+            let startup_state = StartupState::from_args(std::env::args());
+            let start_in_tray = StartupState::started_by_autostart()
+                && startup_config.autostart_mode == AutostartMode::Tray;
+            if start_in_tray {
+                startup_state.mark_in_tray();
+            }
+            app.manage(startup_state);
+            show_or_tray(app.handle(), start_in_tray);
             let session = GameSession::new();
             forward_session_changes(app.handle(), &session);
             follow_games_with_window(app.handle(), &session);

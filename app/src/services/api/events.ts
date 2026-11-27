@@ -2,6 +2,7 @@ import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import type { BootProgress, ResourcesProgress, UpdateProgress } from "@/types/domains/boot";
 import type { SdkDownloadProgress } from "@/types/domains/sdk";
 import type { SessionSnapshot } from "@/types/domains/session";
+import type { ShortcutAction } from "@/types/domains/system";
 
 /** Event names emitted by the backend (see `src-tauri/src/events.rs`). */
 const EVENTS = {
@@ -12,6 +13,7 @@ const EVENTS = {
   sessionChanged: "session://changed",
   accountsChanged: "accounts://changed",
   capabilitiesChanged: "capabilities://changed",
+  shortcutAction: "shortcut://action",
 } as const;
 
 export function onBootProgress(handler: (step: BootProgress) => void): Promise<UnlistenFn> {
@@ -40,6 +42,11 @@ export function onCapabilitiesChanged(handler: () => void): Promise<UnlistenFn> 
 
 export function onAccountsChanged(handler: () => void): Promise<UnlistenFn> {
   return listen(EVENTS.accountsChanged, () => handler());
+}
+
+/** A game shortcut was opened while the launcher was running. */
+export function onShortcutAction(handler: (action: ShortcutAction) => void): Promise<UnlistenFn> {
+  return listen<ShortcutAction>(EVENTS.shortcutAction, (event) => handler(event.payload));
 }
 
 /**

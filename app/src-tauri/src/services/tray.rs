@@ -134,8 +134,8 @@ fn quit_launcher<R: Runtime>(app: &AppHandle<R>) {
     app.exit(0);
 }
 
-/// Bring the main window back from the tray.
-fn show_main_window<R: Runtime>(app: &AppHandle<R>) {
+/// Bring the main window back from the tray or from behind other windows.
+pub fn show_main_window<R: Runtime>(app: &AppHandle<R>) {
     let Some(window) = app.get_webview_window(MAIN_WINDOW) else {
         return;
     };

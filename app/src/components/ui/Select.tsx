@@ -26,6 +26,8 @@ interface SelectProps {
   onChange: (value: string) => void;
   /** Text shown when no option is currently selected. @default "Seleccionar" */
   placeholder?: string;
+  /** Shows the current value without letting it change. */
+  disabled?: boolean;
 }
 
 /**
@@ -44,7 +46,7 @@ interface SelectProps {
  * />
  * ```
  */
-export function Select({ value, options, onChange, placeholder = "Seleccionar" }: SelectProps) {
+export function Select({ value, options, onChange, placeholder = "Seleccionar", disabled = false }: SelectProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const skin = useThemeControls()?.select ?? null;
@@ -71,8 +73,9 @@ export function Select({ value, options, onChange, placeholder = "Seleccionar" }
     <div className="select-root" ref={rootRef}>
       <button
         type="button"
-        className="select-trigger cursor-pointer"
+        className={`select-trigger ${disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
         style={skin ? frameStyle(skin.frame) : undefined}
+        disabled={disabled}
         onClick={() => setOpen((prev) => !prev)}
       >
         <span className="flex min-w-0 items-center gap-2">
@@ -86,7 +89,7 @@ export function Select({ value, options, onChange, placeholder = "Seleccionar" }
         )}
       </button>
 
-      {open ? (
+      {open && !disabled ? (
         <div className="select-menu" style={skin ? frameStyle(skin.frame) : undefined}>
           {options.map((option) => (
             <button

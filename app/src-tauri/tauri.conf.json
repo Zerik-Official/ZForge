@@ -20,7 +20,8 @@
         "maximizable": false,
         "decorations": false,
         "center": true,
-        "backgroundColor": "#07070b"
+        "visible": false,
+        "backgroundColor": "#131615"
       }
     ],
     "security": {

@@ -3,10 +3,12 @@
 pub mod account;
 pub mod addon;
 pub mod app_config;
+pub mod build_info;
 pub mod game;
 pub mod game_settings;
 pub mod server;
 pub mod settings_schema;
+pub mod shortcut;
 pub mod theme;
 
 use std::time::{SystemTime, UNIX_EPOCH};

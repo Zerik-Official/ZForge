@@ -1,5 +1,5 @@
-//! Build script that generates the Tauri context, Windows resources and the
-//! bundled asset catalogue.
+//! Build script that generates the Tauri context, Windows resources, the
+//! bundled asset catalogue and the commit the launcher is built from.
 //!
 //! Files under `public/assets/games` are embedded in the frontend bundle, so the
 //! backend cannot list them at runtime; their public URLs are collected here and
@@ -8,6 +8,7 @@
 use std::error::Error;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 
 const ASSETS_ROOT: &str = "../public/assets/games";
 const ASSETS_URL_PREFIX: &str = "/assets/games";
@@ -82,9 +83,51 @@ fn forward_discord_client_id() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+/// Output of a git command run at the repository root, or `None` when git is not
+/// available or the command fails.
+fn git(args: &[&str]) -> Option<String> {
+    let output = Command::new("git")
+        .args(args)
+        .current_dir("../..")
+        .output()
+        .ok()?;
+    if !output.status.success() {
+        return None;
+    }
+    Some(String::from_utf8_lossy(&output.stdout).trim().to_owned())
+}
+
+/// Expose the commit the launcher is built from as `ZFORGE_COMMIT`, its ISO 8601
+/// date as `ZFORGE_COMMIT_DATE` and `ZFORGE_COMMIT_DIRTY=1` when tracked files have
+/// uncommitted changes. Nothing is set when git is not available.
+fn forward_build_commit() {
+    println!("cargo:rerun-if-changed=../../.git/HEAD");
+    println!("cargo:rerun-if-changed=../../.git/refs/heads");
+    println!("cargo:rerun-if-changed=../../.git/index");
+    println!("cargo:rerun-if-env-changed=GITHUB_SHA");
+
+    let commit = std::env::var("GITHUB_SHA")
+        .ok()
+        .filter(|sha| !sha.is_empty())
+        .or_else(|| git(&["rev-parse", "HEAD"]));
+    let Some(commit) = commit else {
+        return;
+    };
+    println!("cargo:rustc-env=ZFORGE_COMMIT={commit}");
+    if let Some(date) = git(&["log", "-1", "--format=%cI", &commit]) {
+        println!("cargo:rustc-env=ZFORGE_COMMIT_DATE={date}");
+    }
+    let dirty = git(&["status", "--porcelain", "--untracked-files=no"])
+        .is_some_and(|status| !status.is_empty());
+    if dirty {
+        println!("cargo:rustc-env=ZFORGE_COMMIT_DIRTY=1");
+    }
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     write_asset_catalogue()?;
     forward_discord_client_id()?;
+    forward_build_commit();
     tauri_build::build();
     Ok(())
 }

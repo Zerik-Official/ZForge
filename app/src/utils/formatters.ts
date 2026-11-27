@@ -17,3 +17,9 @@ export function formatEta(seconds: number): string {
   const s = Math.round(seconds % 60);
   return `${m}m ${s}s`;
 }
+/** Date and time of an ISO 8601 timestamp in the interface language, or `null` if invalid. */
+export function formatDateTime(iso: string, locale: string): string | null {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return null;
+  return new Intl.DateTimeFormat(locale, { dateStyle: "long", timeStyle: "short" }).format(date);
+}
