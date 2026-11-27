@@ -1,0 +1,84 @@
+name: Release
+
+# Pushing a tag such as v0.0.1 builds the signed NSIS installer and publishes it with the
+# updater manifest (latest.json). The notes come from docs/releases/<tag>.md, followed by
+# the pull requests GitHub lists for the tag.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the version and the release notes
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $version = $tag.TrimStart("v")
+          $conf = Get-Content app/src-tauri/tauri.conf.json -Raw | ConvertFrom-Json
+          if ($conf.version -ne $version) {
+            Write-Error "tauri.conf.json is at $($conf.version), but the tag is $tag"
+            exit 1
+          }
+          $package = Get-Content app/package.json -Raw | ConvertFrom-Json
+          if ($package.version -ne $version) {
+            Write-Error "package.json is at $($package.version), but the tag is $tag"
+            exit 1
+          }
+          $notes = "docs/releases/$tag.md"
+          if (-not (Test-Path $notes)) {
+            Write-Error "Missing release notes: $notes"
+            exit 1
+          }
+
+      - uses: oven-sh/setup-bun@v2
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: app/src-tauri
+
+      - name: Install frontend dependencies
+        working-directory: app
+        run: bun install --frozen-lockfile
+
+      - name: Create the draft release with its notes
+        id: draft
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $version = $tag.TrimStart("v")
+          gh release create $tag --draft --title "ZForge $version" --notes-file "docs/releases/$tag.md" --generate-notes
+          $id = gh api "repos/${{ github.repository }}/releases" --jq ".[] | select(.tag_name == `"$tag`") | .id"
+          "id=$id" >> $env:GITHUB_OUTPUT
+
+      - name: Build and upload the signed installer
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          ZFORGE_DISCORD_CLIENT_ID: ${{ vars.ZFORGE_DISCORD_CLIENT_ID }}
+        with:
+          projectPath: app
+          tauriScript: bun run tauri
+          releaseId: ${{ steps.draft.outputs.id }}
+          includeUpdaterJson: true
+          updaterJsonPreferNsis: true
+
+      - name: Publish the release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release edit "${{ github.ref_name }}" --draft=false --latest
