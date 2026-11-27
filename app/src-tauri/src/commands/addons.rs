@@ -15,6 +15,7 @@ use crate::error::{AppError, AppResult};
 use crate::services::addon_audit::AddonAuditor;
 use crate::services::addons;
 use crate::storage::Database;
+use crate::storage::app_config::AppConfigStore;
 
 fn game(database: &Database, game_id: &str) -> AppResult<Game> {
     database
@@ -111,13 +112,18 @@ pub async fn open_addons_folder<R: Runtime>(
 }
 
 /// Problems and risky code found in the addons of a game: the results of the boot
-/// check, or a new check when the game was not checked during this run.
+/// check, or a new check when the game was not checked during this run. Empty when the
+/// addon check is turned off.
 #[tauri::command]
 pub async fn get_addon_audit(
     database: State<'_, Database>,
     auditor: State<'_, AddonAuditor>,
+    config: State<'_, AppConfigStore>,
     game_id: String,
 ) -> AppResult<GameAudit> {
+    if !config.get()?.addon_audit {
+        return Ok(GameAudit::default());
+    }
     if let Some(audit) = auditor.latest(&game_id)? {
         return Ok(audit);
     }
@@ -126,12 +132,17 @@ pub async fn get_addon_audit(
 }
 
 /// Check the addons of a game again, for example after installing or deleting one.
+/// Empty when the addon check is turned off.
 #[tauri::command]
 pub async fn audit_addons(
     database: State<'_, Database>,
     auditor: State<'_, AddonAuditor>,
+    config: State<'_, AppConfigStore>,
     game_id: String,
 ) -> AppResult<GameAudit> {
+    if !config.get()?.addon_audit {
+        return Ok(GameAudit::default());
+    }
     let game = game(&database, &game_id)?;
     auditor.audit(&game.id, &game_root(&game), &game.expansion)
 }
