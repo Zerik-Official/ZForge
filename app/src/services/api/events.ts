@@ -1,5 +1,5 @@
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-import type { BootProgress, ResourcesProgress } from "@/types/domains/boot";
+import type { BootProgress, ResourcesProgress, UpdateProgress } from "@/types/domains/boot";
 import type { SdkDownloadProgress } from "@/types/domains/sdk";
 import type { SessionSnapshot } from "@/types/domains/session";
 
@@ -7,6 +7,7 @@ import type { SessionSnapshot } from "@/types/domains/session";
 const EVENTS = {
   bootProgress: "boot://progress",
   resourcesProgress: "resources://progress",
+  updateProgress: "update://progress",
   sdkDownloadProgress: "sdk://download-progress",
   sessionChanged: "session://changed",
   accountsChanged: "accounts://changed",
@@ -19,6 +20,10 @@ export function onBootProgress(handler: (step: BootProgress) => void): Promise<U
 
 export function onResourcesProgress(handler: (progress: ResourcesProgress) => void): Promise<UnlistenFn> {
   return listen<ResourcesProgress>(EVENTS.resourcesProgress, (event) => handler(event.payload));
+}
+
+export function onUpdateProgress(handler: (progress: UpdateProgress) => void): Promise<UnlistenFn> {
+  return listen<UpdateProgress>(EVENTS.updateProgress, (event) => handler(event.payload));
 }
 
 export function onSdkDownloadProgress(handler: (progress: SdkDownloadProgress) => void): Promise<UnlistenFn> {
