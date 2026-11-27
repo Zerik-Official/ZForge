@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "ZForge",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "identifier": "com.zforge.launcher",
   "build": {
     "frontendDist": "../dist",
@@ -27,19 +27,37 @@
       "csp": null,
       "assetProtocol": {
         "enable": true,
-        "scope": ["$APPDATA/assets/custom/**", "$APPDATA/themes/**", "$APPDATA/resources/**"]
+        "scope": [
+          "$APPDATA/assets/custom/**",
+          "$APPDATA/themes/**",
+          "$APPDATA/resources/**"
+        ]
       }
     }
   },
   "bundle": {
     "active": true,
-    "targets": ["nsis"],
+    "targets": [
+      "nsis"
+    ],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDYzNDQ5NEUyMjhEMkY2QzkKUldUSjl0SW80cFJFWXpxYnFyZm1Rb0hQcWtJVWNXV3h3bk5maDBTb0hyV0RkV2QyVzZxV3FOSngK",
+      "endpoints": [
+        "https://github.com/Zerik-Official/ZForge/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }
