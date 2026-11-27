@@ -6,11 +6,18 @@ import { Checkbox } from "@/components/ui/Checkbox";
 import { featureStatus, useCapabilities } from "@/hooks/useCapabilities";
 import { useSdkInstall } from "@/hooks/useSdkInstall";
 import { t, useLocale } from "@/locales/i18n";
-import { api, errorCode } from "@/services/api";
+import { api, errorCode, sdkApi } from "@/services/api";
 import type { Feature } from "@/types/domains/capabilities";
-import type { SdkStatus } from "@/types/domains/sdk";
+import type { SdkIntegrity, SdkStatus } from "@/types/domains/sdk";
 import { formatBytes, formatEta, formatSpeed } from "@/utils/formatters";
 import { SdkInfoModal } from "../components/SdkInfoModal";
+
+const INTEGRITY_ICONS: Record<SdkIntegrity["state"], string> = {
+  verified: "fa-shield-halved text-(--success)",
+  trusted: "fa-shield-halved text-(--warning)",
+  mismatch: "fa-triangle-exclamation text-(--danger)",
+  unknown: "fa-circle-question",
+};
 
 const FEATURES: { feature: Feature; icon: string }[] = [
   { feature: "live_session", icon: "fa-gamepad" },
@@ -160,6 +167,42 @@ export function SdkTab() {
           ) : null}
           {installError ? <span className="text-[12.5px] text-(--danger)">{installError}</span> : null}
         </div>
+        {status.integrity ? (
+          <SettingsRow
+            icon={`fa-solid ${INTEGRITY_ICONS[status.integrity.state]}`}
+            label={t(`launcher.settings.sdk.integrity.${status.integrity.state}.title`)}
+            description={
+              status.integrity.state === "mismatch" && status.integrity.unknown_version
+                ? t("launcher.settings.sdk.integrity.unknownVersion")
+                : status.integrity.state === "mismatch" || status.integrity.state === "trusted"
+                  ? t(`launcher.settings.sdk.integrity.${status.integrity.state}.description`, {
+                      files: status.integrity.files.join(", "),
+                    })
+                  : t(`launcher.settings.sdk.integrity.${status.integrity.state}.description`)
+            }
+            control={
+              status.integrity.state === "mismatch" || status.integrity.state === "trusted" ? (
+                <>
+                  {status.integrity.state === "mismatch" ? (
+                    <button
+                      className="ghost-btn rounded-[7px] px-3 py-1.5 text-[12.5px] cursor-pointer"
+                      onClick={() => void sdkApi.trustSdk().then(refreshStatus)}
+                    >
+                      {t("launcher.settings.sdk.integrity.trust")}
+                    </button>
+                  ) : null}
+                  <button
+                    className="play-btn rounded-[7px] px-3 py-1.5 text-[12.5px] font-semibold disabled:opacity-40 cursor-pointer"
+                    onClick={() => void handleInstall()}
+                    disabled={installing}
+                  >
+                    {t("launcher.settings.sdk.integrity.reinstall")}
+                  </button>
+                </>
+              ) : null
+            }
+          />
+        ) : null}
         <Checkbox
           layout="row"
           checked={status.discord_auto_update}
