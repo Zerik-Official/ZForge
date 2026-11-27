@@ -77,6 +77,11 @@ impl AppPaths {
         self.root.join("resources")
     }
 
+    /// Cached results of the addon check.
+    pub fn addon_audit_file(&self) -> PathBuf {
+        self.root.join("addon_audit.json")
+    }
+
     /// Icons generated for the desktop shortcuts of the games.
     pub fn shortcut_icons_dir(&self) -> PathBuf {
         self.root.join("shortcuts")
