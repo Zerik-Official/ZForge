@@ -18,3 +18,4 @@ pub mod settings;
 pub mod system;
 pub mod themes;
 pub mod tray;
+pub mod updater;
