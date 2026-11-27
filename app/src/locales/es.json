@@ -60,7 +60,9 @@
         "addon_archive_too_large": "El zip es demasiado grande o tiene demasiados archivos.",
         "sdk_busy": "El juego no respondió al SDK a tiempo. Inténtalo de nuevo en un momento.",
         "update_failed": "No se pudo instalar la actualización. Inténtalo más tarde.",
-        "sdk_integrity_mismatch": "El SDK instalado no coincide con su versión publicada."
+        "sdk_integrity_mismatch": "El SDK instalado no coincide con su versión publicada.",
+        "shortcut_failed": "No se pudo crear el acceso directo en el escritorio.",
+        "autostart_failed": "No se pudo cambiar el inicio con Windows."
       }
     },
     "configConflict": {
@@ -138,7 +140,19 @@
           "tray": "Minimizar a la bandeja"
         },
         "restoreAfterGame": "Volver a mostrar el launcher al cerrar el juego",
-        "restoreAfterGameDescription": "Muestra la ventana de nuevo si se minimizó o se ocultó para el juego."
+        "restoreAfterGameDescription": "Muestra la ventana de nuevo si se minimizó o se ocultó para el juego.",
+        "startup": "Inicio de Windows",
+        "autostart": "Iniciar con Windows",
+        "autostartDescription": "Abre el launcher al iniciar sesión en Windows.",
+        "autostartMode": "Al iniciar con Windows",
+        "autostartModeDescription": "Mostrar la ventana, o dejar el launcher solo como icono en la bandeja del sistema.",
+        "autostartModes": {
+          "window": "Mostrar la ventana",
+          "tray": "Solo en la bandeja"
+        },
+        "about": "Acerca de",
+        "version": "Versión",
+        "versionDescription": "Versión del launcher y commit del que se compiló. Pasa el ratón por el commit para ver su fecha y haz clic para abrirlo en GitHub."
       },
       "appearance": {
         "title": "Apariencia",
@@ -466,6 +480,32 @@
     "window": {
       "minimize": "Minimizar",
       "close": "Cerrar"
+    },
+    "build": {
+      "version": "v{version}",
+      "noCommit": "Sin commit",
+      "commitDate": "Commit del {date}",
+      "commitDateUnknown": "Fecha del commit desconocida",
+      "dirty": "Compilado con cambios sin commitear",
+      "openCommit": "Clic para verlo en GitHub",
+      "commitLabel": "Commit {commit}"
+    },
+    "shortcut": {
+      "title": "Crear acceso directo",
+      "subtitle": "En el escritorio, para {name}",
+      "mode": "Al abrirlo",
+      "modes": {
+        "open": "Abrir el launcher con este juego",
+        "launch": "Lanzar el juego"
+      },
+      "modeDescriptions": {
+        "open": "Abre el launcher, o lo trae al frente si ya está abierto, con este juego seleccionado en Inicio.",
+        "launch": "Abre el launcher y lanza el juego directamente, con la última elección del juego o con la cuenta que elijas."
+      },
+      "lastChoice": "Última elección del juego",
+      "created": "Acceso directo creado en el escritorio",
+      "create": "Crear acceso directo",
+      "createAgain": "Crear de nuevo"
     }
   },
   "addGame": {
