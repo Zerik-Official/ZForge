@@ -165,7 +165,8 @@ pub async fn run_boot<R: Runtime>(
                     }
                 }
             }
-            for game in &games {
+            let check_addons = config.get().is_ok_and(|config| config.addon_audit);
+            for game in games.iter().filter(|_| check_addons) {
                 emit_step(&app, "boot.checkingAddons", 90, &[("name", game.name.clone())]);
                 let root = Path::new(&game.exe_path).parent().unwrap_or_else(|| Path::new(""));
                 if let Err(error) = auditor.audit(&game.id, root, &game.expansion) {
